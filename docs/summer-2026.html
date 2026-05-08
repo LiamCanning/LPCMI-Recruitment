@@ -10332,6 +10332,18 @@ function refreshOutreachIndex() {
 function getClubOutreach(clubName) {
   return OUTREACH_BY_CLUB.get(clubName) || [];
 }
+// Returns outreach entries scoped to a specific player (or all if playerName is falsy)
+function getClubOutreachScoped(clubName, playerName) {
+  var all = OUTREACH_BY_CLUB.get(clubName) || [];
+  if (!playerName) return all;
+  return all.filter(function(e) { return (e.player || 'General') === playerName; });
+}
+// When a position filter maps unambiguously to one player, return that player name
+function activeContextPlayer() {
+  if (!activeStripPos) return null;
+  var matches = (typeof POS_PLAYER_MAP !== 'undefined' && POS_PLAYER_MAP[activeStripPos]) ? POS_PLAYER_MAP[activeStripPos] : [];
+  return (matches && matches.length === 1) ? matches[0] : null;
+}
 const OL_STATUS_ORDER = { in_talks: 0, contacted: 1, to_contact: 2, rejected: 3 };
 const OL_STATUS_LABEL = { to_contact: 'To Contact', contacted: 'Contacted', in_talks: 'In Talks', rejected: 'Rejected' };
 const OL_STATUS_CLASS = { to_contact: 'ot-s-to_contact', contacted: 'ot-s-contacted', in_talks: 'ot-s-in_talks', rejected: 'ot-s-rejected' };
@@ -10427,7 +10439,7 @@ function getFilteredSorted() {
     if (activeLeagues.size && !activeLeagues.has(c.league)) return false;
     else if (!activeLeagues.size && activeLeague && c.league !== activeLeague) return false;
     if (englishStaffOnly && !clubHasBritishStaff(c)) return false;
-    if (outreachFilter && !getClubOutreach(c.name).length) return false;
+    if (outreachFilter && !getClubOutreachScoped(c.name, activeContextPlayer()).length) return false;
     if (searchQuery) {
       const q = searchQuery;
       return c._searchText.includes(q);
@@ -11145,7 +11157,7 @@ function _buildClubCardHtml(c) {
     contactsHtml = '<div class="cg-contact-empty">No staff contacts</div>';
   }
 
-  var olEntries = getClubOutreach(c.name);
+  var olEntries = getClubOutreachScoped(c.name, activeContextPlayer());
   var olStatus = bestClubStatus(olEntries);
   var olBadge = olStatus
     ? '<span class="cg-ol-badge ' + esc(OL_STATUS_CLASS[olStatus]) + '">' + esc(OL_STATUS_LABEL[olStatus] || olStatus) + '</span>'
@@ -11308,7 +11320,7 @@ function renderClubGridByStatus(container, filtered) {
   // Group clubs by their best outreach status
   var groups = {}; STATUS_ORDER.forEach(function(s){ groups[s] = []; });
   filtered.forEach(function(c) {
-    var entries = getClubOutreach(c.name);
+    var entries = getClubOutreachScoped(c.name, activeContextPlayer());
     var status = bestClubStatus(entries) || 'to_contact';
     if (!groups[status]) groups[status] = [];
     groups[status].push(c);
@@ -11329,7 +11341,7 @@ function renderClubGridByStatus(container, filtered) {
       var isActive = c.id === activeDrawerClub;
       var clr = esc(c.colour || '#1c1e25');
       var crestHtml = clubCrestHtml(c, 'cg-crest');
-      var olEntries = getClubOutreach(c.name);
+      var olEntries = getClubOutreachScoped(c.name, activeContextPlayer());
       var topEntry = olEntries[0];
       var contactLine = topEntry
         ? '<span class="ol-sg-contact">' + esc(topEntry.contact || '') + (topEntry.role ? ' · ' + esc(topEntry.role) : '') + '</span>'
@@ -11384,7 +11396,7 @@ function rebuildTopBarPosPills(baseData) {
     if (activeLeagues.size && !activeLeagues.has(c.league)) return false;
     else if (!activeLeagues.size && activeLeague && c.league !== activeLeague) return false;
     if (englishStaffOnly && !clubHasBritishStaff(c)) return false;
-    if (outreachFilter && !getClubOutreach(c.name).length) return false;
+    if (outreachFilter && !getClubOutreachScoped(c.name, activeContextPlayer()).length) return false;
     if (searchQuery) {
       const q = searchQuery;
       if (!c.name.toLowerCase().includes(q) && !c.league.toLowerCase().includes(q) &&
