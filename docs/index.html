@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LPCMI Recruitment Intelligence</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="prefetch" href="index.html">
+<link rel="prefetch" href="summer-2026.html">
+<link rel="prefetch" href="master-database.html">
+<link rel="prefetch" href="league-tables.html">
+<link rel="prefetch" href="all.html">
+<meta property="og:title" content="LPCMI Recruitment Intelligence">
+<meta property="og:description" content="Player recruitment tracking — squad analysis, contract monitoring &amp; transfer intelligence">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://liamcanning.github.io/LPCMI-Recruitment/">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@100..900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   LPCMI Football Tracker — Design Tokens
+   ───────────────────────────────────────────────────────────────────────
+   Single source of truth for colour, typography, spacing, radius and
+   shadow values. Loaded FIRST on every page by build_spreadsheet.py.
+
+   Token naming convention: --lp-<role>-<variant>
+     • Surface  (background layers)
+     • Ink      (text)
+     • Border   (lines, dividers)
+     • Accent   (interactive primary colour)
+     • Brand    (LPCMI navy — kept for sidebar/branded surfaces)
+     • Status   (semantic context: success / warn / info / danger)
+     • Outreach (status pill colours — Pass 2 will consolidate component)
+     • Font / Radius / Shadow / Layout / Motion
+
+   The bottom of this file contains a COMPATIBILITY SHIM that aliases
+   every legacy variable name (--primary, --accent, --bg, --text, etc.
+   and --lp-bg, --lp-card, --lp-ink, etc.) to its canonical token.
+   This shim is removed in Pass 5 once all references are updated.
+
+   This file MUST not change visual output on its own — it preserves
+   every existing colour value. Visual passes (1-5) evolve the tokens.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surface: background layers ──────────────────────────────────── */
+  --lp-surface-app:     #f6f8fb;   /* outer body background */
+  --lp-surface-canvas:  #f8fafc;   /* page content background */
+  --lp-surface-raised:  #ffffff;   /* cards, modals, dropdowns */
+  --lp-surface-sunken:  #f1f5f9;   /* table headers, hover bg */
+
+  /* ── Ink: text ───────────────────────────────────────────────────── */
+  --lp-ink-strong:      #0f172a;   /* strongest body ink */
+  --lp-ink-primary:     #1e293b;   /* default body text */
+  --lp-ink-muted:       #64748b;   /* secondary / muted text */
+  --lp-ink-disabled:    #94a3b8;   /* disabled, placeholder */
+  --lp-ink-inverse:     #ffffff;   /* text on dark surfaces */
+
+  /* ── Border ──────────────────────────────────────────────────────── */
+  --lp-border-subtle:   #e2e8f0;   /* default 1px hairlines */
+  --lp-border-soft:     #f1f5f9;   /* very subtle dividers */
+  --lp-border-strong:   #cbd5e1;   /* hover-state borders */
+  --lp-border-focus:    #3b82f6;   /* focus ring colour */
+
+  /* ── Accent: interactive primary ─────────────────────────────────── */
+  --lp-accent:          #3b82f6;
+  --lp-accent-hover:    #2563eb;
+  --lp-accent-ink:      #1d4ed8;   /* deeper accent for ink-on-light */
+  --lp-accent-bg:       #eff6ff;   /* tinted bg for accent surfaces */
+  --lp-accent-soft:     rgba(59,130,246,0.10);
+
+  /* ── Brand: LPCMI navy (sidebar header, branded surfaces) ────────── */
+  --lp-brand-primary:   #1c1e25;
+  --lp-brand-primary-2: #282b34;
+  --lp-brand-primary-3: #3a3f4c;
+  --lp-brand-primary-grad: linear-gradient(140deg, #14161c 0%, #1c1e25 55%, #282b34 100%);
+  --lp-brand-soft:      rgba(28,30,37,0.08);
+
+  /* ── Status: semantic context colours ────────────────────────────── */
+  --lp-status-success:     #16a34a;
+  --lp-status-success-bg:  #dcfce7;
+  --lp-status-success-ink: #166534;
+  --lp-status-success-bd:  #86efac;
+
+  --lp-status-warn:        #ca8a04;
+  --lp-status-warn-bg:     #fef9c3;
+  --lp-status-warn-ink:    #854d0e;
+  --lp-status-warn-bd:     #fde68a;
+
+  --lp-status-info:        #2563eb;
+  --lp-status-info-bg:     #dbeafe;
+  --lp-status-info-ink:    #1e40af;
+
+  --lp-status-danger:      #dc2626;
+  --lp-status-danger-bg:   #fef2f2;
+  --lp-status-danger-ink:  #991b1b;
+
+  /* ── Outreach: status pill palette
+        (Pass 2 will introduce a unified .pill component reading
+         from these tokens; for Pass 0 they centralise the values
+         currently hard-coded in outreach-log.css.) ────────────────── */
+  --lp-outreach-queued-bg:     #e2e8f0;
+  --lp-outreach-queued-fg:     #475569;
+  --lp-outreach-contacted-bg:  #f1f5f9;
+  --lp-outreach-contacted-fg:  #475569;
+  --lp-outreach-in-talks-bg:   #dcfce7;
+  --lp-outreach-in-talks-fg:   #16a34a;
+  --lp-outreach-offered-bg:    #bbf7d0;
+  --lp-outreach-offered-fg:    #14532d;
+  --lp-outreach-rejected-bg:   #fee2e2;
+  --lp-outreach-rejected-fg:   #991b1b;
+
+  /* ── Typography ─────────────────────────────────────────────────── */
+  /* Unified system-font stack — renders as SF Pro on Mac, Segoe on Windows.
+     No web font load needed for a local HTML tool. */
+  --lp-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+
+  /* Type scale — bumped one step to match Summer 2026 v2 aesthetic */
+  --lp-text-2xs:  12px;   /* micro labels, badges */
+  --lp-text-xs:   13px;   /* secondary labels, table meta */
+  --lp-text-sm:   14px;   /* primary UI text, table cells */
+  --lp-text-base: 15px;   /* body, controls, inputs */
+  --lp-text-md:   17px;   /* large controls, icon buttons */
+  --lp-text-lg:   21px;   /* card / section headings */
+  --lp-text-xl:   28px;   /* page titles */
+
+  /* Weights — standard values (400/500/700) for clean rendering */
+  --lp-weight-regular:  400;
+  --lp-weight-medium:   500;
+  --lp-weight-semibold: 700;
+
+  /* Line-heights */
+  --lp-leading-tight:   1.2;
+  --lp-leading-base:    1.45;
+  --lp-leading-relaxed: 1.6;
+
+  /* ── Radius (3 levels) ──────────────────────────────────────────── */
+  --lp-radius-ctrl:    8px;    /* controls, inputs, buttons, chips */
+  --lp-radius-surface: 12px;   /* cards, modals, panels */
+  --lp-radius-pill:    999px;  /* pills, tags, avatars */
+
+  /* ── Shadow (Pass 0: existing values — Pass 4 unifies elevation) ── */
+  --lp-shadow-xs:  0 1px 2px rgba(15,23,42,0.04);
+  --lp-shadow-sm:  0 2px 6px rgba(15,23,42,0.05);
+  --lp-shadow:     0 8px 24px rgba(15,23,42,0.06);
+  --lp-shadow-lg:  0 20px 48px rgba(15,23,42,0.10);
+
+  --lp-shadow-flat:       0 1px 2px rgba(0,0,0,0.04),
+                          0 4px 16px rgba(15,30,60,0.07),
+                          inset 0 1px 0 rgba(255,255,255,0.9);
+  --lp-shadow-lift:       0 8px 32px rgba(15,30,60,0.13),
+                          inset 0 1px 0 rgba(255,255,255,0.9);
+  --lp-shadow-btn:        0 1px 2px rgba(15,30,60,0.06),
+                          inset 0 1px 0 rgba(255,255,255,0.8);
+  --lp-shadow-btn-active: 0 1px 4px rgba(15,30,60,0.18),
+                          inset 0 1px 0 rgba(255,255,255,0.3);
+
+  /* ── Spacing scale (4/8 grid) ───────────────────────────────────── */
+  --lp-space-1:  4px;
+  --lp-space-2:  8px;
+  --lp-space-3:  12px;
+  --lp-space-4:  16px;
+  --lp-space-6:  24px;
+  --lp-space-8:  32px;
+  --lp-space-12: 48px;
+  --lp-space-16: 64px;
+
+  /* ── Layout ──────────────────────────────────────────────────────── */
+  --lp-sidebar-w:    250px;
+  --lp-page-pad:     24px;   /* horizontal page padding */
+
+  /* ── Motion (Pass 4 will adopt these for transitions) ────────────── */
+  --lp-ease:     cubic-bezier(0.22, 1, 0.36, 1);
+  --lp-duration: 120ms;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COMPATIBILITY SHIM — legacy aliases
+   ───────────────────────────────────────────────────────────────────────
+   Maps every variable name currently in use across the templates to its
+   canonical token above. This shim exists so Pass 0 can strip duplicate
+   :root blocks from each template without touching any var(--legacy)
+   reference. Removed in Pass 5 once references are migrated.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* shared-sidebar.css (--lp-* legacy names that don't match new scheme) */
+  --lp-font:         var(--lp-font-sans);
+  --lp-ink:          var(--lp-ink-strong);
+  --lp-ink-2:        var(--lp-ink-primary);
+  --lp-muted:        var(--lp-ink-muted);
+  --lp-muted-2:      var(--lp-ink-disabled);
+  --lp-border:       var(--lp-border-subtle);
+  /* --lp-border-soft kept identical — already canonical */
+  --lp-bg:           var(--lp-surface-app);
+  --lp-card:         var(--lp-surface-raised);
+  --lp-primary:      var(--lp-brand-primary);
+  --lp-primary-grad: var(--lp-brand-primary-grad);
+  --lp-radius:       var(--lp-radius-surface);  /* 10px */
+  --lp-radius-sm:    var(--lp-radius-ctrl);     /* 6px */
+  /* --lp-shadow-* keep their canonical values above */
+
+  /* master-db.css / position-page.css / summer2026.css unprefixed */
+  --primary:         var(--lp-brand-primary);
+  --primary-light:   var(--lp-brand-primary-2);
+  --primary-mid:     var(--lp-brand-primary-3);
+  --accent:          var(--lp-accent);
+  --bg:              var(--lp-surface-canvas);
+  --card:            var(--lp-surface-raised);
+  --text:            var(--lp-ink-primary);
+  --text-muted:      var(--lp-ink-muted);
+  --muted:           var(--lp-ink-muted);
+  --border:          var(--lp-border-subtle);
+  --radius:          var(--lp-radius-surface);  /* 10px */
+  --shadow:          var(--lp-shadow);
+  --shadow-sm:       var(--lp-shadow-sm);
+  --shadow-lg:       var(--lp-shadow-lg);
+
+  --green:           var(--lp-status-success);
+  --green-bg:        var(--lp-status-success-bg);
+  --green-dark:      var(--lp-status-success-ink);
+  --green-border:    var(--lp-status-success-bd);
+
+  --yellow:          var(--lp-status-warn);
+  --yellow-bg:       var(--lp-status-warn-bg);
+  --yellow-dark:     var(--lp-status-warn-ink);
+  --yellow-border:   var(--lp-status-warn-bd);
+
+  --blue:            var(--lp-status-info);
+  --blue-bg:         var(--lp-status-info-bg);
+  --blue-dark:       var(--lp-status-info-ink);
+
+  --red:             var(--lp-status-danger);
+  --red-bg:          var(--lp-status-danger-bg);
+
+  /* keeps-polish.css */
+  --shadow-flat:        var(--lp-shadow-flat);
+  --shadow-lift:        var(--lp-shadow-lift);
+  --shadow-btn:         var(--lp-shadow-btn);
+  --shadow-btn-active:  var(--lp-shadow-btn-active);
+  --accent-soft:        var(--lp-accent-soft);
+  --primary-soft:       var(--lp-brand-soft);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LPCMI — Unified interactive component styles (Pass 4)
+   Replaces: .keeps-btn, .btn-primary, .btn-outline, .opp-outreach-btn,
+             .team-outreach-btn, .rec-outreach-btn and all button
+             hardcodes with a single .btn base + variant system.
+   Tokens: design-tokens.css loaded first.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Base .btn ─────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--lp-radius-ctrl);
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-weight-medium);
+  font-family: inherit;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  text-decoration: none;
+  transition: background var(--lp-duration) ease-out,
+              border-color var(--lp-duration) ease-out,
+              color var(--lp-duration) ease-out,
+              box-shadow var(--lp-duration) ease-out;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+.btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-surface-raised), 0 0 0 4px var(--lp-border-focus);
+}
+.btn:disabled,
+.btn[disabled],
+.btn.btn--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Variants ──────────────────────────────────────────────────────────── */
+
+/* Primary — solid accent fill */
+.btn--primary,
+.btn-primary {
+  background: var(--lp-accent);
+  color: #fff;
+  border-color: var(--lp-accent);
+}
+.btn--primary:hover,
+.btn-primary:hover {
+  background: var(--lp-accent-hover);
+  border-color: var(--lp-accent-hover);
+}
+.btn--primary:active,
+.btn-primary:active {
+  background: var(--lp-accent-hover);
+  filter: brightness(0.92);
+}
+
+/* Secondary — tinted surface */
+.btn--secondary {
+  background: var(--lp-surface-sunken);
+  color: var(--lp-ink-primary);
+  border-color: var(--lp-border-subtle);
+}
+.btn--secondary:hover {
+  background: var(--lp-border-subtle);
+  border-color: var(--lp-border-strong);
+}
+
+/* Ghost — transparent with border */
+.btn--ghost,
+.btn-outline {
+  background: transparent;
+  color: var(--lp-ink-muted);
+  border-color: var(--lp-border-subtle);
+}
+.btn--ghost:hover,
+.btn-outline:hover {
+  background: var(--lp-surface-sunken);
+  color: var(--lp-ink-primary);
+  border-color: var(--lp-border-strong);
+}
+
+/* Danger */
+.btn--danger {
+  background: var(--lp-status-danger-bg);
+  color: var(--lp-status-danger-ink);
+  border-color: transparent;
+}
+.btn--danger:hover {
+  background: var(--lp-status-danger);
+  color: #fff;
+}
+
+/* ── Size modifier ─────────────────────────────────────────────────────── */
+.btn--sm {
+  padding: 3px 10px;
+  font-size: var(--lp-text-xs);
+  border-radius: var(--lp-radius-ctrl);
+}
+
+/* ── Legacy button aliases → new visual system ─────────────────────────── */
+
+/* keeps-btn → primary */
+.keeps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--lp-radius-ctrl);
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-weight-medium);
+  font-family: inherit;
+  cursor: pointer;
+  color: #fff;
+  background: var(--lp-accent);
+  border: none;
+  outline: none;
+  transition: background var(--lp-duration) ease-out;
+}
+.keeps-btn:hover  { background: var(--lp-accent-hover); }
+.keeps-btn:active { background: var(--lp-accent-hover); filter: brightness(0.92); }
+.keeps-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-surface-raised), 0 0 0 4px var(--lp-border-focus);
+}
+
+/* outreach action buttons → primary-sm style */
+.opp-outreach-btn,
+.team-outreach-btn,
+.rec-outreach-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: var(--lp-radius-ctrl);
+  font-size: var(--lp-text-2xs);
+  font-weight: var(--lp-weight-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--lp-accent);
+  color: #fff;
+  border: none;
+  outline: none;
+  white-space: nowrap;
+  transition: background var(--lp-duration) ease-out;
+}
+.opp-outreach-btn:hover,
+.team-outreach-btn:hover,
+.rec-outreach-btn:hover:not(.rec-outreach-disabled) {
+  background: var(--lp-accent-hover);
+}
+.opp-outreach-btn.outreach-active,
+.team-outreach-btn.outreach-active,
+.rec-outreach-btn.outreach-active {
+  background: var(--lp-status-success);
+  color: #fff;
+  cursor: default;
+}
+.rec-outreach-btn.rec-outreach-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.opp-outreach-btn:focus-visible,
+.team-outreach-btn:focus-visible,
+.rec-outreach-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-surface-raised), 0 0 0 4px var(--lp-border-focus);
+}
+
+/* inline compose button */
+.outreach-inline-compose {
+  display: inline-flex;
+  align-items: center;
+  background: var(--lp-accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  padding: 3px 10px;
+  border-radius: var(--lp-radius-ctrl);
+  font-size: var(--lp-text-xs);
+  font-weight: var(--lp-weight-medium);
+  font-family: inherit;
+  outline: none;
+  transition: background var(--lp-duration) ease-out;
+}
+.outreach-inline-compose:hover    { background: var(--lp-accent-hover); }
+.outreach-inline-compose:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-surface-raised), 0 0 0 4px var(--lp-border-focus);
+}
+
+/* send / cancel button pair */
+.outreach-send-btn {
+  background: var(--lp-accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  padding: 8px 20px;
+  border-radius: var(--lp-radius-ctrl);
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-weight-semibold);
+  font-family: inherit;
+  outline: none;
+  transition: background var(--lp-duration) ease-out;
+}
+.outreach-send-btn:hover { background: var(--lp-accent-hover); }
+.outreach-send-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-surface-raised), 0 0 0 4px var(--lp-border-focus);
+}
+.outreach-cancel-btn {
+  background: none;
+  border: 1.5px solid var(--lp-border-subtle);
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: var(--lp-radius-ctrl);
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-weight-medium);
+  color: var(--lp-ink-muted);
+  font-family: inherit;
+  outline: none;
+  transition: background var(--lp-duration) ease-out, border-color var(--lp-duration) ease-out;
+}
+.outreach-cancel-btn:hover {
+  background: var(--lp-surface-sunken);
+  border-color: var(--lp-border-strong);
+  color: var(--lp-ink-primary);
+}
+.outreach-cancel-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-surface-raised), 0 0 0 4px var(--lp-border-focus);
+}
+
+/* contact-picker add/manual */
+.cp-add-btn {
+  width: 100%;
+  padding: 9px;
+  background: var(--lp-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--lp-radius-ctrl);
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-weight-semibold);
+  cursor: pointer;
+  font-family: inherit;
+  outline: none;
+  transition: background var(--lp-duration) ease-out;
+}
+.cp-add-btn:hover    { background: var(--lp-accent-hover); }
+.cp-add-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.cp-add-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-surface-raised), 0 0 0 4px var(--lp-border-focus);
+}
+
+.cp-manual-btn {
+  background: var(--lp-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--lp-radius-ctrl);
+  padding: 8px 16px;
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-weight-medium);
+  cursor: pointer;
+  font-family: inherit;
+  align-self: flex-end;
+  outline: none;
+  transition: background var(--lp-duration) ease-out;
+}
+.cp-manual-btn:hover { background: var(--lp-accent-hover); }
+.cp-manual-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-surface-raised), 0 0 0 4px var(--lp-border-focus);
+}
+
+/* ── Toolbar select (native <select> with chevron) ─────────────────────── */
+.toolbar-select,
+select.keeps-select {
+  padding: 7px 30px 7px 12px;
+  border: 1px solid var(--lp-border-subtle);
+  border-radius: var(--lp-radius-ctrl);
+  background: var(--lp-surface-raised);
+  font-weight: var(--lp-weight-medium);
+  font-size: var(--lp-text-sm);
+  color: var(--lp-ink-primary);
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2364748b' d='M0 0l5 6 5-6z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: border-color var(--lp-duration) ease-out;
+  outline: none;
+}
+.toolbar-select:hover,
+select.keeps-select:hover {
+  border-color: var(--lp-border-strong);
+}
+.toolbar-select:focus,
+select.keeps-select:focus {
+  border-color: var(--lp-border-focus);
+  box-shadow: 0 0 0 3px var(--lp-accent-soft);
+}
+
+/* ── Segmented toggle ──────────────────────────────────────────────────── */
+.keeps-segmented {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--lp-surface-sunken);
+  padding: 3px;
+  border-radius: var(--lp-radius-ctrl);
+  border: 1px solid var(--lp-border-subtle);
+}
+.keeps-segmented > button,
+.keeps-segmented > .seg-btn {
+  padding: 5px 14px;
+  border: none;
+  background: transparent;
+  font-size: var(--lp-text-xs);
+  font-weight: var(--lp-weight-medium);
+  color: var(--lp-ink-muted);
+  font-family: inherit;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--lp-duration) ease-out, color var(--lp-duration) ease-out;
+  white-space: nowrap;
+  outline: none;
+}
+.keeps-segmented > .active,
+.keeps-segmented > button.active,
+.keeps-segmented > .seg-btn.active {
+  background: var(--lp-surface-raised);
+  color: var(--lp-ink-primary);
+  box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+}
+.keeps-segmented > :not(.active):hover {
+  color: var(--lp-ink-primary);
+  background: rgba(255,255,255,0.6);
+}
+.keeps-segmented > button:focus-visible,
+.keeps-segmented > .seg-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-border-focus) inset;
+}
+
+/* ── Flat table headers (replaces navy fill site-wide) ─────────────────── */
+thead th {
+  background: var(--lp-surface-sunken) !important;
+  color: var(--lp-ink-muted) !important;
+}
+thead th:hover {
+  background: var(--lp-border-subtle) !important;
+  color: var(--lp-ink-primary) !important;
+}
+thead th.sorted {
+  color: var(--lp-accent-ink) !important;
+}
+
+/* ── Card hover lift (no translate) ───────────────────────────────────── */
+.keeps-lift {
+  transition: box-shadow var(--lp-duration) ease-out, border-color var(--lp-duration) ease-out;
+  box-shadow: var(--lp-shadow-xs);
+}
+.keeps-lift:hover {
+  box-shadow: var(--lp-shadow-sm);
+  border-color: var(--lp-border-strong);
+}
+
+/* ── Universal focus ring for interactive elements ─────────────────────── */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--lp-surface-raised), 0 0 0 4px var(--lp-border-focus);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SITE-WIDE VISUAL REFRESH — propagates the Summer 2026 v2 aesthetic
+   to every page: Master DB, position pages, league tables, player sheets.
+   Loaded last via keeps-polish.css (every page).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Body base — bigger, bolder, Apple system font */
+body {
+  font-family: var(--lp-font-sans);
+  font-size: var(--lp-text-base);   /* was 14px, now 15px */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── All inputs, selects, textareas: rounded 8px with vivid focus ring ── */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="date"],
+select,
+textarea {
+  font-family: var(--lp-font-sans);
+  font-size: var(--lp-text-sm);
+  border-radius: var(--lp-radius-ctrl);
+  border: 1.5px solid #d1d5db;
+  padding: 7px 11px;
+  background: #ffffff;
+  color: #111827;
+  transition: border-color .12s, box-shadow .12s;
+  outline: none;
+}
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="email"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.18);
+}
+
+/* ── Generic pill/chip filter buttons site-wide ──────────────────────── */
+.filter-chip, .fp-chip, .seg-btn {
+  border-radius: var(--lp-radius-pill);
+  font-size: var(--lp-text-sm);
+  font-weight: 600;
+  border: 1.5px solid #d1d5db;
+  padding: 5px 14px;
+  background: #ffffff;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all .12s;
+  -webkit-user-select: none; user-select: none;
+}
+.filter-chip:hover, .fp-chip:hover {
+  border-color: #2563eb; color: #1d4ed8; background: #eff6ff;
+}
+.filter-chip.active, .fp-chip.active, .seg-btn.active {
+  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+  color: #fff; border-color: #1d4ed8;
+  box-shadow: 0 2px 6px rgba(29,78,216,.30);
+}
+
+/* ── Table header cells across all views ─────────────────────────────── */
+th, .ol-table th, .pos-tbl th {
+  font-size: var(--lp-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  padding: 11px 14px;
+}
+
+/* ── Table rows: bigger line height, clear bottom border ─────────────── */
+td {
+  font-size: var(--lp-text-sm);
+  padding: 12px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #111827;
+  line-height: var(--lp-leading-base);
+}
+tr:hover td { background: #f9fafb; }
+
+/* ── Section / league header banners everywhere ───────────────────────── */
+.section-header, .league-header, .group-header, .db-section-hdr {
+  font-size: var(--lp-text-sm);
+  font-weight: 700;
+  color: #111827;
+  background: linear-gradient(180deg, #f3f4f6 0%, #f9fafb 100%);
+  border-bottom: 2px solid #e5e7eb;
+  padding: 10px 16px;
+  letter-spacing: .2px;
+}
+
+/* ── Cards across all pages ──────────────────────────────────────────── */
+.card, .keeps-card, .summer-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--lp-radius-surface);
+  box-shadow: none;
+  transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .15s;
+}
+.card:hover, .keeps-card:hover, .summer-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.10);
+}
+
+/* ── Primary action buttons everywhere ───────────────────────────────── */
+.btn--primary, .btn-primary, .keeps-btn.primary {
+  background: linear-gradient(135deg, #1d4ed8, #3b82f6) !important;
+  color: #fff !important;
+  border-color: #1d4ed8 !important;
+  border-radius: var(--lp-radius-ctrl) !important;
+  box-shadow: 0 2px 6px rgba(29,78,216,.28);
+  font-weight: 700 !important;
+  font-size: var(--lp-text-sm) !important;
+}
+.btn--primary:hover, .btn-primary:hover, .keeps-btn.primary:hover {
+  box-shadow: 0 4px 12px rgba(29,78,216,.36);
+  transform: translateY(-1px);
+}
+
+/* ── Scrollbar — thin + grey everywhere ──────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ── LPCMI Shared Sidebar + Shell ─────────────────────────────────────────
+   Pass 2 overhaul: flat surfaces, no glass, no gradients, unified active
+   signal (accent-blue everywhere), DM Sans font.
+   All --lp-* tokens live in design-tokens.css.
+   ─────────────────────────────────────────────────────────────────────── */
+
+/* ── Global base ──────────────────────────────────────────────────── */
+html { -webkit-text-size-adjust:100%; }
+body {
+  margin:0; padding:0;
+  font-family: var(--lp-font);
+  background: var(--lp-bg);
+  color: var(--lp-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  line-height: var(--lp-leading-base);
+  font-size: var(--lp-text-base);
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Clean flat app shell — no mesh gradient */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--lp-surface-canvas);
+}
+
+/* ── Sidebar — flat raised surface ───────────────────────────────── */
+.sidebar {
+  width: var(--lp-sidebar-w); flex-shrink: 0;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--lp-surface-raised);
+  border-right: 1px solid var(--lp-border-subtle);
+  display: flex; flex-direction: column;
+  z-index: 200;
+  overflow: hidden;
+  transition: transform .25s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* Sidebar header — light surface, brand shown via dot + dark text */
+.sidebar-header {
+  padding: 20px 20px 16px;
+  flex-shrink: 0;
+  background: var(--lp-surface-raised);
+  border-bottom: 1px solid var(--lp-border-subtle);
+  position: relative;
+}
+.sidebar-brand {
+  font-size: var(--lp-text-base);
+  font-weight: var(--lp-weight-semibold);
+  color: var(--lp-ink-strong);
+  letter-spacing: 0.1px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sidebar-brand::before {
+  content: "";
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22,163,74,0.14);
+  flex-shrink: 0;
+}
+.sidebar-tagline {
+  font-size: var(--lp-text-2xs);
+  color: var(--lp-ink-muted);
+  font-weight: var(--lp-weight-regular);
+  margin-top: 3px;
+  letter-spacing: 0.2px;
+}
+
+/* Collapse button inside the sidebar header — desktop only */
+.sidebar-collapse-btn {
+  position: absolute;
+  top: 16px; right: 12px;
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: var(--lp-surface-sunken);
+  color: var(--lp-ink-muted);
+  border: 1px solid var(--lp-border-subtle);
+  font-size: var(--lp-text-2xs);
+  font-weight: var(--lp-weight-semibold);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 3;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.sidebar-collapse-btn:hover {
+  background: var(--lp-accent-bg);
+  color: var(--lp-accent-ink);
+  border-color: var(--lp-accent);
+}
+
+/* Floating expand-button when sidebar is collapsed (desktop only) */
+.sidebar-expand-btn {
+  display: none;
+  position: fixed;
+  top: 18px; left: 10px;
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--lp-surface-raised);
+  color: var(--lp-ink-primary);
+  border: 1px solid var(--lp-border-subtle);
+  box-shadow: var(--lp-shadow-sm);
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-weight-semibold);
+  cursor: pointer;
+  align-items: center; justify-content: center;
+  z-index: 210;
+  transition: transform .15s, border-color .15s;
+}
+.sidebar-expand-btn:hover { transform: translateX(2px); border-color: var(--lp-accent); }
+
+/* Collapsed-sidebar state (desktop only) */
+@media (min-width: 961px) {
+  body.sidebar-collapsed .sidebar { transform: translateX(-100%); }
+  body.sidebar-collapsed .main-content { margin-left: 0; }
+  body.sidebar-collapsed .sidebar-expand-btn { display: flex; }
+}
+
+/* Sidebar nav list */
+.sidebar-nav {
+  flex: 1;
+  padding: 8px 8px 6px;
+  display: flex; flex-direction: column; gap: 1px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: var(--lp-border-subtle); border-radius: 4px; }
+
+.sidebar-section-label {
+  font-size: var(--lp-text-2xs);
+  font-weight: var(--lp-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--lp-ink-disabled);
+  padding: 14px 10px 5px;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Sidebar item */
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 7px;
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-weight-medium);
+  color: var(--lp-ink-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  text-decoration: none;
+  transition: background .12s ease, color .12s ease;
+}
+.sidebar-item:hover {
+  background: var(--lp-surface-sunken);
+  color: var(--lp-ink-primary);
+}
+/* Unified active signal: accent blue — same as tabs and pills */
+.sidebar-item.active {
+  background: var(--lp-accent-bg);
+  color: var(--lp-accent-ink);
+  font-weight: var(--lp-weight-semibold);
+}
+.si-icon {
+  font-size: var(--lp-text-base);
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  line-height: 1;
+  opacity: 0.75;
+}
+.sidebar-item.active .si-icon { opacity: 1; }
+.sidebar-item:hover .si-icon { opacity: 0.9; }
+.si-label { flex: 1; }
+.si-chevron {
+  font-size: var(--lp-text-2xs);
+  color: var(--lp-ink-disabled);
+  flex-shrink: 0;
+  transition: transform .18s ease;
+}
+.sidebar-group-btn.open .si-chevron,
+.sidebar-group.open .sidebar-group-btn .si-chevron {
+  transform: rotate(180deg);
+  color: var(--lp-ink-muted);
+}
+.sidebar-group-btn.open,
+.sidebar-group.open .sidebar-group-btn {
+  color: var(--lp-ink-primary);
+  background: var(--lp-surface-sunken);
+}
+
+/* Sub-menu — collapsible */
+.sidebar-group { display: block; }
+.sidebar-submenu {
+  display: none;
+  flex-direction: column;
+  gap: 1px;
+  margin: 1px 0 3px 6px;
+  padding-left: 14px;
+  border-left: 1.5px solid var(--lp-border-subtle);
+}
+.sidebar-group.open .sidebar-submenu { display: flex; }
+.sidebar-subitem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: var(--lp-text-xs);
+  font-weight: var(--lp-weight-medium);
+  color: var(--lp-ink-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  text-decoration: none;
+  transition: background .12s, color .12s;
+}
+.sidebar-subitem:hover {
+  background: var(--lp-surface-sunken);
+  color: var(--lp-ink-primary);
+}
+.sidebar-subitem.active {
+  background: var(--lp-accent-bg);
+  color: var(--lp-accent-ink);
+  font-weight: var(--lp-weight-semibold);
+}
+.sidebar-subitem .si-icon { font-size: var(--lp-text-sm); width: 16px; }
+
+/* Sidebar footer */
+.sidebar-footer {
+  padding: 12px 16px 14px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--lp-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sidebar-stat {
+  font-size: var(--lp-text-2xs);
+  color: var(--lp-ink-disabled);
+  line-height: var(--lp-leading-relaxed);
+  font-weight: var(--lp-weight-regular);
+}
+.sidebar-stat strong { color: var(--lp-ink-muted); font-weight: var(--lp-weight-semibold); }
+
+/* ── Main content ────────────────────────────────────────────────── */
+.main-content {
+  margin-left: var(--lp-sidebar-w);
+  flex: 1;
+  min-width: 0;
+  background: var(--lp-surface-canvas);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  transition: margin-left .25s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* ── Page header — flat, no glass ────────────────────────────────── */
+.page-hdr {
+  padding: 18px var(--lp-page-pad) 14px;
+  background: var(--lp-surface-raised);
+  border-bottom: 1px solid var(--lp-border-subtle);
+  flex-shrink: 0;
+}
+/* Back / breadcrumb link */
+.page-hdr-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--lp-text-xs);
+  font-weight: var(--lp-weight-medium);
+  color: var(--lp-ink-muted);
+  text-decoration: none;
+  margin-bottom: 8px;
+  padding: 3px 0;
+  transition: color var(--lp-duration) ease-out;
+}
+.page-hdr-back:hover { color: var(--lp-ink-primary); }
+.page-hdr-back::before { content: "←"; font-size: var(--lp-text-sm); }
+.page-hdr-title {
+  font-size: var(--lp-text-xl);
+  font-weight: var(--lp-weight-semibold);
+  color: var(--lp-ink-primary);
+  letter-spacing: -0.4px;
+  line-height: var(--lp-leading-tight);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-hdr-sub {
+  font-size: var(--lp-text-sm);
+  color: var(--lp-ink-muted);
+  margin-top: 3px;
+  font-weight: var(--lp-weight-regular);
+}
+
+/* ── Mobile: hamburger + overlay ─────────────────────────────────── */
+.sidebar-toggle {
+  display: none;
+  position: fixed; top: 12px; left: 12px; z-index: 300;
+  background: var(--lp-brand-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: var(--lp-text-base);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.2);
+  line-height: 1;
+  transition: opacity .15s;
+}
+.sidebar-toggle:active { opacity: 0.85; }
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.35);
+  z-index: 199;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.sidebar-overlay.open { display: block; opacity: 1; }
+
+@media (max-width: 960px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 260px;
+    box-shadow: 4px 0 24px rgba(15,23,42,0.12);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: flex; align-items: center; justify-content: center; }
+  .sidebar-collapse-btn { display: none; }
+  .sidebar-expand-btn { display: none !important; }
+  .main-content { margin-left: 0; }
+  .page-hdr { padding: 56px 20px 14px; }
+  .page-hdr-title { font-size: var(--lp-text-lg); }
+}
+@media (max-width: 600px) {
+  body { font-size: var(--lp-text-base); }
+  .page-hdr { padding: 54px 14px 12px; }
+  .page-hdr-title { font-size: var(--lp-text-md); }
+  .page-hdr-sub { font-size: var(--lp-text-xs); }
+}
+
+
+/* ── Dashboard layout ──────────────────────────────────── */
+.dash-wrap {
+  display:flex; flex-direction:column; height:100%; overflow:hidden;
+}
+
+/* ── Hero ──────────────────────────────────────────────── */
+/* Light hero that flows into the body — no hard dark/light seam.
+   Subtle gradient + bottom hairline give it gentle weight without
+   a heavy bar. Brand presence comes from the green dot + accent. */
+.dash-hero {
+  background:linear-gradient(180deg, #ffffff 0%, var(--lp-surface-canvas) 100%);
+  padding:32px var(--lp-page-pad) 28px;
+  flex-shrink:0;
+  border-bottom:1px solid var(--lp-border-subtle);
+  display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
+  flex-wrap:wrap;
+}
+.dash-hero-identity {
+  display:flex; flex-direction:column; gap:4px;
+}
+.dash-hero-sync {
+  display:inline-flex; align-items:center; gap:7px;
+  font-size:var(--lp-text-2xs); color:var(--lp-ink-muted);
+  font-weight:var(--lp-weight-semibold); letter-spacing:0.8px;
+  text-transform:uppercase;
+}
+.dash-hero-sync-dot {
+  width:7px; height:7px; border-radius:50%; background:#16a34a;
+  box-shadow:0 0 0 3px rgba(22,163,74,0.14);
+}
+.dash-hero-title {
+  margin:8px 0 0; font-size:30px; font-weight:var(--lp-weight-semibold);
+  color:var(--lp-ink-strong); letter-spacing:-0.5px; line-height:1.1;
+}
+.dash-hero-sub {
+  font-size:var(--lp-text-sm); color:var(--lp-ink-muted);
+  margin-top:4px; font-weight:var(--lp-weight-regular);
+}
+.dash-hero-stats {
+  display:flex; gap:36px; flex-shrink:0;
+}
+.dash-stat {
+  display:block; text-align:right; text-decoration:none;
+  position:relative; padding-bottom:6px;
+  transition: transform .15s ease;
+}
+.dash-stat::after {
+  content:''; position:absolute; left:0; right:0; bottom:0;
+  height:2px; background:var(--lp-accent); border-radius:2px;
+  transform:scaleX(0); transform-origin:right;
+  transition: transform .25s cubic-bezier(0.22,1,0.36,1);
+}
+.dash-stat:hover::after { transform:scaleX(1); }
+.dash-stat:hover .dash-stat-n { color:var(--lp-accent-ink); }
+.dash-stat:hover .dash-stat-l { color:var(--lp-ink-primary); }
+.dash-stat-n {
+  display:block; font-size:32px; font-weight:var(--lp-weight-semibold);
+  color:var(--lp-ink-strong); letter-spacing:-0.5px;
+  font-variant-numeric:tabular-nums; line-height:1;
+  transition: color .15s ease;
+}
+.dash-stat-l {
+  display:block; font-size:var(--lp-text-xs); color:var(--lp-ink-muted);
+  font-weight:var(--lp-weight-medium); margin-top:5px; letter-spacing:0;
+  transition: color .15s ease;
+}
+
+/* ── Body ──────────────────────────────────────────────── */
+.dash-body {
+  flex:1; overflow-y:auto; padding:28px var(--lp-page-pad) 40px;
+  display:flex; flex-direction:column; gap:32px;
+}
+
+/* ── Section ───────────────────────────────────────────── */
+.dash-section-hdr {
+  display:flex; align-items:center; gap:12px;
+  font-size:var(--lp-text-sm); font-weight:var(--lp-weight-semibold);
+  color:var(--lp-ink-muted); margin-bottom:14px; letter-spacing:0;
+}
+.dash-section-hdr::after {
+  content:''; flex:1; height:1px; background:var(--lp-border-subtle);
+}
+
+/* ── Card grids ────────────────────────────────────────── */
+.dash-intel-grid {
+  display:grid; grid-template-columns:repeat(2,1fr); gap:12px;
+}
+.dash-pos-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px;
+}
+
+/* ── Card ──────────────────────────────────────────────── */
+.dash-card {
+  display:flex; align-items:center; gap:14px;
+  background:var(--lp-surface-raised); border:1px solid var(--lp-border-subtle);
+  border-radius:12px; padding:18px 20px;
+  text-decoration:none; color:var(--lp-ink-primary);
+  transition:border-color var(--lp-duration) ease-out,
+             box-shadow var(--lp-duration) ease-out;
+}
+.dash-card:hover {
+  border-color:var(--lp-accent);
+  box-shadow:0 0 0 3px var(--lp-accent-soft), var(--lp-shadow-sm);
+}
+.dash-card--pos {
+  background:var(--lp-surface-sunken); padding:12px 16px;
+}
+.dc-icon-wrap {
+  width:38px; height:38px; border-radius:9px;
+  background:var(--lp-accent-bg); color:var(--lp-accent-ink);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.dc-icon-wrap--green { background:#ecfdf5; color:#059669; }
+.dc-icon-wrap--amber { background:#fffbeb; color:#b45309; }
+.dc-icon-wrap--violet { background:#f5f3ff; color:#6d28d9; }
+.dash-card--pos .dc-icon-wrap {
+  width:32px; height:32px; border-radius:8px;
+}
+.dc-body { flex:1; min-width:0; }
+.dc-title {
+  font-size:var(--lp-text-sm); font-weight:var(--lp-weight-semibold);
+  color:var(--lp-ink-primary);
+}
+.dc-desc {
+  font-size:var(--lp-text-xs); color:var(--lp-ink-muted); margin-top:2px;
+}
+.dc-arrow {
+  color:var(--lp-ink-disabled); flex-shrink:0;
+  opacity:0.3; transition:opacity var(--lp-duration) ease-out;
+}
+.dash-card:hover .dc-arrow { opacity:1; }
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width:960px) {
+  .dash-hero { padding:58px var(--lp-page-pad) 20px; flex-direction:column; align-items:flex-start; gap:16px; }
+  .dash-hero-stats { gap:20px; }
+  .dash-stat { text-align:left; }
+  .dash-body { padding:20px 20px 32px; }
+  .dash-intel-grid { grid-template-columns:1fr; }
+}
+@media (max-width:600px) {
+  .dash-hero { padding:56px 14px 18px; }
+  .dash-body { padding:18px 14px 28px; }
+  .dash-pos-grid { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app-layout">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">LPCMI</div>
+    <div class="sidebar-tagline">Recruitment Intelligence</div>
+    <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebarCollapse()" aria-label="Collapse sidebar" title="Collapse sidebar">&#10094;</button>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="sidebar-item" href="index.html"><span class="si-icon">&#127968;</span><span class="si-label">Dashboard</span></a>
+
+    <div class="sidebar-group" data-group="positions">
+      <button class="sidebar-item sidebar-group-btn" type="button" onclick="toggleSidebarGroup('positions', this)">
+        <span class="si-icon">&#9917;&#65039;</span><span class="si-label">Positions</span><span class="si-chevron">&#9662;</span>
+      </button>
+      <div class="sidebar-submenu" id="sidebar-sub-positions">
+        <a class="sidebar-subitem" href="goalkeeper.html"><span class="si-icon">&#129496;</span><span class="si-label">Goalkeepers</span></a>
+        <a class="sidebar-subitem" href="right-back.html"><span class="si-icon">&#129461;</span><span class="si-label">Right Backs</span></a>
+        <a class="sidebar-subitem" href="centre-forward.html"><span class="si-icon">&#9917;&#65039;</span><span class="si-label">Centre Forwards</span></a>
+        <a class="sidebar-subitem" href="all.html"><span class="si-icon">&#128202;</span><span class="si-label">All Positions</span></a>
+      </div>
+    </div>
+
+    <a class="sidebar-item" href="league-tables.html"><span class="si-icon">&#127942;</span><span class="si-label">League Tables</span></a>
+
+    <div class="sidebar-group" data-group="summer2026">
+      <button class="sidebar-item sidebar-group-btn" type="button" onclick="toggleSidebarGroup('summer2026', this)">
+        <span class="si-icon">&#9728;&#65039;</span><span class="si-label">Summer 2026</span><span class="si-chevron">&#9662;</span>
+      </button>
+      <div class="sidebar-submenu" id="sidebar-sub-summer2026">
+        <a class="sidebar-subitem" href="summer-2026.html"><span class="si-icon">&#128203;</span><span class="si-label">Club Requirements</span></a>
+        <a class="sidebar-subitem" href="club-editor.html"><span class="si-icon">&#9999;&#65039;</span><span class="si-label">Edit Requirements</span></a>
+      <a class="sidebar-subitem" href="master-database.html#tab=summer"><span class="si-icon">&#9993;&#65039;</span><span class="si-label">Summer Outreach</span></a>
+      </div>
+    </div>
+
+    <span class="sidebar-section-label">Database</span>
+    <a class="sidebar-item" href="master-database.html"><span class="si-icon">&#127967;</span><span class="si-label">League Directory</span></a>
+    <a class="sidebar-item" href="master-database.html#tab=search"><span class="si-icon">&#128269;</span><span class="si-label">Staff Search</span></a>
+    <a class="sidebar-item" href="master-database.html#tab=roles"><span class="si-icon">&#127919;</span><span class="si-label">Key Roles</span></a>
+    <a class="sidebar-item" href="master-database.html#tab=contacts"><span class="si-icon">&#128100;</span><span class="si-label">My Contacts</span></a>
+    <a class="sidebar-item" href="master-database.html#tab=outreach"><span class="si-icon">&#128236;</span><span class="si-label">Outreach Log</span></a>
+  </nav>
+
+</aside>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Menu">&#9776;</button>
+<button class="sidebar-expand-btn" id="sidebarExpandBtn" onclick="toggleSidebarCollapse()" aria-label="Expand sidebar" title="Expand sidebar">&#10095;</button>
+<main class="main-content" style="overflow:hidden">
+<div class="dash-wrap">
+
+  <!-- Hero -->
+  <div class="dash-hero">
+    <div class="dash-hero-identity">
+      <div class="dash-hero-sync"><span class="dash-hero-sync-dot"></span>Synced 8 May 2026</div>
+      <h1 class="dash-hero-title">Overview</h1>
+      <div class="dash-hero-sub">Your recruitment intelligence at a glance</div>
+    </div>
+    <div class="dash-hero-stats">
+      <a class="dash-stat" href="all.html" title="View all tracked players">
+        <span class="dash-stat-n">1,790</span>
+        <span class="dash-stat-l">Players tracked</span>
+      </a>
+      <a class="dash-stat" href="master-database.html#tab=search" title="Search staff database">
+        <span class="dash-stat-n">9,739</span>
+        <span class="dash-stat-l">Staff in database</span>
+      </a>
+      <a class="dash-stat" href="master-database.html#tab=contacts" title="Open My Contacts">
+        <span class="dash-stat-n">16,280</span>
+        <span class="dash-stat-l">My contacts</span>
+      </a>
+      <a class="dash-stat" href="league-tables.html" title="View league tables">
+        <span class="dash-stat-n">24</span>
+        <span class="dash-stat-l">Leagues</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="dash-body">
+
+    <!-- Intelligence section -->
+    <div class="dash-section">
+      <div class="dash-section-hdr">Intelligence</div>
+      <div class="dash-intel-grid">
+        <a href="master-database.html" class="dash-card">
+          <div class="dc-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></div>
+          <div class="dc-body"><div class="dc-title">League Directory</div><div class="dc-desc">Club staff across every tracked league</div></div>
+          <svg class="dc-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        <a href="summer-2026.html" class="dash-card">
+          <div class="dc-icon-wrap dc-icon-wrap--green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div class="dc-body"><div class="dc-title">Summer 2026</div><div class="dc-desc">Transfer window targets &amp; club requirements</div></div>
+          <svg class="dc-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        <a href="league-tables.html" class="dash-card">
+          <div class="dc-icon-wrap dc-icon-wrap--amber"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
+          <div class="dc-body"><div class="dc-title">League Tables</div><div class="dc-desc">Live standings &amp; zone analysis</div></div>
+          <svg class="dc-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        <a href="master-database.html#tab=outreach" class="dash-card">
+          <div class="dc-icon-wrap dc-icon-wrap--violet"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          <div class="dc-body"><div class="dc-title">Outreach Log</div><div class="dc-desc">Tracked emails &amp; messages</div></div>
+          <svg class="dc-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Player Databases section -->
+    <div class="dash-section">
+      <div class="dash-section-hdr">Player Databases</div>
+      <div class="dash-pos-grid">
+      <a href="all.html" class="dash-card dash-card--pos">
+        <div class="dc-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
+        <div class="dc-body"><div class="dc-title">All Positions</div><div class="dc-desc">Complete player database</div></div>
+        <svg class="dc-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <a href="goalkeeper.html" class="dash-card dash-card--pos">
+        <div class="dc-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="dc-body"><div class="dc-title">Goalkeepers</div><div class="dc-desc">GK recruitment</div></div>
+        <svg class="dc-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <a href="right-back.html" class="dash-card dash-card--pos">
+        <div class="dc-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 8 16 12 12 16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+        <div class="dc-body"><div class="dc-title">Right Backs</div><div class="dc-desc">RB recruitment</div></div>
+        <svg class="dc-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <a href="centre-forward.html" class="dash-card dash-card--pos">
+        <div class="dc-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+        <div class="dc-body"><div class="dc-title">Centre Forwards</div><div class="dc-desc">CF recruitment</div></div>
+        <svg class="dc-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+</main>
+</div>
+<script>
+/* ── Shared Sidebar JS — included on every page ───────────────── */
+
+function toggleSidebar() {
+  var s = document.getElementById('sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.toggle('open');
+  if (o) o.classList.toggle('open');
+}
+function closeSidebar() {
+  var s = document.getElementById('sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.remove('open');
+  if (o) o.classList.remove('open');
+}
+
+// Expand / collapse a sidebar group (Positions, Summer 2026)
+function toggleSidebarGroup(groupKey, btn) {
+  var group = document.querySelector('.sidebar-group[data-group="' + groupKey + '"]');
+  if (!group) return;
+  var open = group.classList.toggle('open');
+  if (btn) btn.classList.toggle('open', open);
+  try {
+    var state = JSON.parse(localStorage.getItem('lp_sb_groups') || '{}');
+    state[groupKey] = open;
+    localStorage.setItem('lp_sb_groups', JSON.stringify(state));
+  } catch (e) {}
+}
+
+// Collapse / expand the entire desktop sidebar (slides it off-screen)
+function toggleSidebarCollapse() {
+  var collapsed = document.body.classList.toggle('sidebar-collapsed');
+  try { localStorage.setItem('lp_sb_collapsed', collapsed ? '1' : '0'); } catch (e) {}
+}
+
+// ── On load: restore collapse state, auto-open group for active subitem, highlight active item ──
+(function initSidebar() {
+  // Restore collapse state
+  try {
+    if (localStorage.getItem('lp_sb_collapsed') === '1') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  } catch (e) {}
+
+  function applyActive() {
+    var path = location.pathname.split('/').pop() || 'index.html';
+    var hash = (location.hash.match(/#tab=(\w+)/) || [])[1] || '';
+    // Clear all active classes on href-based items
+    document.querySelectorAll('.sidebar-item[href], .sidebar-subitem[href]').forEach(function(el) {
+      el.classList.remove('active');
+    });
+    // Clear group-btn active state — we'll reapply
+    document.querySelectorAll('.sidebar-group').forEach(function(g) { g.classList.remove('active-child'); });
+
+    document.querySelectorAll('.sidebar-item[href], .sidebar-subitem[href]').forEach(function(el) {
+      var href = el.getAttribute('href') || '';
+      var hFile = href.split('#')[0].split('/').pop();
+      var hHash = (href.match(/#tab=(\w+)/) || [])[1] || '';
+      var matches = (hFile === path) && (hHash === hash);
+      // Master-database.html with no hash → League Directory (tab=directory)
+      if (!matches && hFile === path && !hHash) {
+        matches = !hash || hash === 'directory';
+      }
+      if (matches) {
+        el.classList.add('active');
+        // If the active element is inside a group, open the group
+        var group = el.closest('.sidebar-group');
+        if (group) {
+          group.classList.add('open', 'active-child');
+          var btn = group.querySelector('.sidebar-group-btn');
+          if (btn) btn.classList.add('open');
+        }
+      }
+    });
+
+    // Restore any manually-expanded groups from localStorage (unless already opened above)
+    try {
+      var state = JSON.parse(localStorage.getItem('lp_sb_groups') || '{}');
+      Object.keys(state).forEach(function(k) {
+        if (state[k]) {
+          var g = document.querySelector('.sidebar-group[data-group="' + k + '"]');
+          if (g) {
+            g.classList.add('open');
+            var b = g.querySelector('.sidebar-group-btn');
+            if (b) b.classList.add('open');
+          }
+        }
+      });
+    } catch (e) {}
+  }
+
+  applyActive();
+
+  // Re-apply on hash change (tab links from other pages)
+  window.addEventListener('hashchange', function() {
+    applyActive();
+    if (typeof switchTab === 'function') {
+      var h = (location.hash.match(/#tab=(\w+)/) || [])[1];
+      if (h) switchTab(h);
+    }
+  });
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>League Tables | LPCMI Recruitment</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="prefetch" href="index.html">
+<link rel="prefetch" href="summer-2026.html">
+<link rel="prefetch" href="master-database.html">
+<link rel="prefetch" href="league-tables.html">
+<link rel="prefetch" href="all.html">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@100..900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   LPCMI Football Tracker — Design Tokens
+   ───────────────────────────────────────────────────────────────────────
+   Single source of truth for colour, typography, spacing, radius and
+   shadow values. Loaded FIRST on every page by build_spreadsheet.py.
+
+   Token naming convention: --lp-<role>-<variant>
+     • Surface  (background layers)
+     • Ink      (text)
+     • Border   (lines, dividers)
+     • Accent   (interactive primary colour)
+     • Brand    (LPCMI navy — kept for sidebar/branded surfaces)
+     • Status   (semantic context: success / warn / info / danger)
+     • Outreach (status pill colours — Pass 2 will consolidate component)
+     • Font / Radius / Shadow / Layout / Motion
+
+   The bottom of this file contains a COMPATIBILITY SHIM that aliases
+   every legacy variable name (--primary, --accent, --bg, --text, etc.
+   and --lp-bg, --lp-card, --lp-ink, etc.) to its canonical token.
+   This shim is removed in Pass 5 once all references are updated.
+
+   This file MUST not change visual output on its own — it preserves
+   every existing colour value. Visual passes (1-5) evolve the tokens.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surface: background layers ──────────────────────────────────── */
+  --lp-surface-app:     #f6f8fb;   /* outer body background */
+  --lp-surface-canvas:  #f8fafc;   /* page content background */
+  --lp-surface-raised:  #ffffff;   /* cards, modals, dropdowns */
+  --lp-surface-sunken:  #f1f5f9;   /* table headers, hover bg */
+
+  /* ── Ink: text ───────────────────────────────────────────────────── */
+  --lp-ink-strong:      #0f172a;   /* strongest body ink */
+  --lp-ink-primary:     #1e293b;   /* default body text */
+  --lp-ink-muted:       #64748b;   /* secondary / muted text */
+  --lp-ink-disabled:    #94a3b8;   /* disabled, placeholder */
+  --lp-ink-inverse:     #ffffff;   /* text on dark surfaces */
+
+  /* ── Border ──────────────────────────────────────────────────────── */
+  --lp-border-subtle:   #e2e8f0;   /* default 1px hairlines */
+  --lp-border-soft:     #f1f5f9;   /* very subtle dividers */
+  --lp-border-strong:   #cbd5e1;   /* hover-state borders */
+  --lp-border-focus:    #3b82f6;   /* focus ring colour */
+
+  /* ── Accent: interactive primary ─────────────────────────────────── */
+  --lp-accent:          #3b82f6;
+  --lp-accent-hover:    #2563eb;
+  --lp-accent-ink:      #1d4ed8;   /* deeper accent for ink-on-light */
+  --lp-accent-bg:       #eff6ff;   /* tinted bg for accent surfaces */
+  --lp-accent-soft:     rgba(59,130,246,0.10);
+
+  /* ── Brand: LPCMI navy (sidebar header, branded surfaces) ────────── */
+  --lp-brand-primary:   #1c1e25;
+  --lp-brand-primary-2: #282b34;
+  --lp-brand-primary-3: #3a3f4c;
+  --lp-brand-primary-grad: linear-gradient(140deg, #14161c 0%, #1c1e25 55%, #282b34 100%);
+  --lp-brand-soft:      rgba(28,30,37,0.08);
+
+  /* ── Status: semantic context colours ────────────────────────────── */
+  --lp-status-success:     #16a34a;
+  --lp-status-success-bg:  #dcfce7;
+  --lp-status-success-ink: #166534;
+  --lp-status-success-bd:  #86efac;
+
+  --lp-status-warn:        #ca8a04;
+  --lp-status-warn-bg:     #fef9c3;
+  --lp-status-warn-ink:    #854d0e;
+  --lp-status-warn-bd:     #fde68a;
+
+  --lp-status-info:        #2563eb;
+  --lp-status-info-bg:     #dbeafe;
+  --lp-status-info-ink:    #1e40af;
+
+  --lp-status-danger:      #dc2626;
+  --lp-status-danger-bg:   #fef2f2;
+  --lp-status-danger-ink:  #991b1b;
+
+  /* ── Outreach: status pill palette
+        (Pass 2 will introduce a unified .pill component reading
+         from these tokens; for Pass 0 they centralise the values
+         currently hard-coded in outreach-log.css.) ────────────────── */
+  --lp-outreach-queued-bg:     #e2e8f0;
+  --lp-outreach-queued-fg:     #475569;
+  --lp-outreach-contacted-bg:  #f1f5f9;
+  --lp-outreach-contacted-fg:  #475569;
+  --lp-outreach-in-talks-bg:   #dcfce7;
+  --lp-outreach-in-talks-fg:   #16a34a;
+  --lp-outreach-offered-bg:    #bbf7d0;
+  --lp-outreach-offered-fg:    #14532d;
+  --lp-outreach-rejected-bg:   #fee2e2;
+  --lp-outreach-rejected-fg:   #991b1b;
+
+  /* ── Typography ─────────────────────────────────────────────────── */
+  /* Unified system-font stack — renders as SF Pro on Mac, Segoe on Windows.
+     No web font load needed for a local HTML tool. */
+  --lp-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+
+  /* Type scale — bumped one step to match Summer 2026 v2 aesthetic */
+  --lp-text-2xs:  12px;   /* micro labels, badges */
+  --lp-text-xs:   13px;   /* secondary labels, table meta */
+  --lp-text-sm:   14px;   /* primary UI text, table cells */
+  --lp-text-base: 15px;   /* body, controls, inputs */
+  --lp-text-md:   17px;   /* large controls, icon buttons */
+  --lp-text-lg:   21px;   /* card / section headings */
+  --lp-text-xl:   28px;   /* page titles */
+
+  /* Weights — standard values (400/500/700) for clean rendering */
+  --lp-weight-regular:  400;
+  --lp-weight-medium:   500;
+  --lp-weight-semibold: 700;
+
+  /* Line-heights */
+  --lp-leading-tight:   1.2;
+  --lp-leading-base:    1.45;
+  --lp-leading-relaxed: 1.6;
+
+  /* ── Radius (3 levels) ──────────────────────────────────────────── */
+  --lp-radius-ctrl:    8px;    /* controls, inputs, buttons, chips */
+  --lp-radius-surface: 12px;   /* cards, modals, panels */
+  --lp-radius-pill:    999px;  /* pills, tags, avatars */
+
+  /* ── Shadow (Pass 0: existing values — Pass 4 unifies elevation) ── */
+  --lp-shadow-xs:  0 1px 2px rgba(15,23,42,0.04);
+  --lp-shadow-sm:  0 2px 6px rgba(15,23,42,0.05);
+  --lp-shadow:     0 8px 24px rgba(15,23,42,0.06);
+  --lp-shadow-lg:  0 20px 48px rgba(15,23,42,0.10);
+
+  --lp-shadow-flat:       0 1px 2px rgba(0,0,0,0.04),
+                          0 4px 16px rgba(15,30,60,0.07),
+                          inset 0 1px 0 rgba(255,255,255,0.9);
+  --lp-shadow-lift:       0 8px 32px rgba(15,30,60,0.13),
+                          inset 0 1px 0 rgba(255,255,255,0.9);
+  --lp-shadow-btn:        0 1px 2px rgba(15,30,60,0.06),
+                          inset 0 1px 0 rgba(255,255,255,0.8);
+  --lp-shadow-btn-active: 0 1px 4px rgba(15,30,60,0.18),
+                          inset 0 1px 0 rgba(255,255,255,0.3);
+
+  /* ── Spacing scale (4/8 grid) ───────────────────────────────────── */
+  --lp-space-1:  4px;
+  --lp-space-2:  8px;
+  --lp-space-3:  12px;
+  --lp-space-4:  16px;
+  --lp-space-6:  24px;
+  --lp-space-8:  32px;
+  --lp-space-12: 48px;
+  --lp-space-16: 64px;
+
+  /* ── Layout ──────────────────────────────────────────────────────── */
+  --lp-sidebar-w:    250px;
+  --lp-page-pad:     24px;   /* horizontal page padding */
+
+  /* ── Motion (Pass 4 will adopt these for transitions) ────────────── */
+  --lp-ease:     cubic-bezier(0.22, 1, 0.36, 1);
+  --lp-duration: 120ms;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COMPATIBILITY SHIM — legacy aliases
+   ───────────────────────────────────────────────────────────────────────
+   Maps every variable name currently in use across the templates to its
+   canonical token above. This shim exists so Pass 0 can strip duplicate
+   :root blocks from each template without touching any var(--legacy)
+   reference. Removed in Pass 5 once references are migrated.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* shared-sidebar.css (--lp-* legacy names that don't match new scheme) */
+  --lp-font:         var(--lp-font-sans);
+  --lp-ink:          var(--lp-ink-strong);
+  --lp-ink-2:        var(--lp-ink-primary);
+  --lp-muted:        var(--lp-ink-muted);
+  --lp-muted-2:      var(--lp-ink-disabled);
+  --lp-border:       var(--lp-border-subtle);
+  /* --lp-border-soft kept identical — already canonical */
+  --lp-bg:           var(--lp-surface-app);
+  --lp-card:         var(--lp-surface-raised);
+  --lp-primary:      var(--lp-brand-primary);
+  --lp-primary-grad: var(--lp-brand-primary-grad);
+  --lp-radius:       var(--lp-radius-surface);  /* 10px */
+  --lp-radius-sm:    var(--lp-radius-ctrl);     /* 6px */
+  /* --lp-shadow-* keep their canonical values above */
+
+  /* master-db.css / position-page.css / summer2026.css unprefixed */
+  --primary:         var(--lp-brand-primary);
+  --primary-light:   var(--lp-brand-primary-2);
+  --primary-mid:     var(--lp-brand-primary-3);
+  --accent:          var(--lp-accent);
+  --bg:              var(--lp-surface-canvas);
+  --card:            var(--lp-surface-raised);
+  --text:            var(--lp-ink-primary);
+  --text-muted:      var(--lp-ink-muted);
+  --muted:           var(--lp-ink-muted);
+  --border:          var(--lp-border-subtle);
+  --radius:          var(--lp-radius-surface);  /* 10px */
+  --shadow:          var(--lp-shadow);
+  --shadow-sm:       var(--lp-shadow-sm);
+  --shadow-lg:       var(--lp-shadow-lg);
+
+  --green:           var(--lp-status-success);
+  --green-bg:        var(--lp-status-success-bg);
+  --green-dark:      var(--lp-status-success-ink);
+  --green-border:    var(--lp-status-success-bd);
+
+  --yellow:          var(--lp-status-warn);
+  --yellow-bg:       var(--lp-status-warn-bg);
+  --yellow-dark:     var(--lp-status-warn-ink);
+  --yellow-border:   var(--lp-status-warn-bd);
+
+  --blue:            var(--lp-status-info);
+  --blue-bg:         var(--lp-status-info-bg);
+  --blue-dark:       var(--lp-status-info-ink);
+
+  --red:             var(--lp-status-danger);
+  --red-bg:          var(--lp-status-danger-bg);
+
+  /* keeps-polish.css */
+  --shadow-flat:        var(--lp-shadow-flat);
+  --shadow-lift:        var(--lp-shadow-lift);
+  --shadow-btn:         var(--lp-shadow-btn);
+  --shadow-btn-active:  var(--lp-shadow-btn-active);
+  --accent-soft:        var(--lp-accent-soft);
+  --primary-soft:       var(--lp-brand-soft);
+}
+
+/* ── LPCMI Shared Sidebar + Shell ─────────────────────────────────────────
+   Pass 2 overhaul: flat surfaces, no glass, no gradients, unified active
+   signal (accent-blue everywhere), DM Sans font.
+   All --lp-* tokens live in design-tokens.css.
+   ─────────────────────────────────────────────────────────────────────── */
+
+/* ── Global base ──────────────────────────────────────────────────── */
+html { -webkit-text-size-adjust:100%; }
+body {
+  margin:0; padding:0;
+  font-family: var(--lp-font);
+  background: var(--lp-bg);
+  color: var(--lp-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  line-height: var(--lp-leading-base);
+  font-size: var(--lp-text-base);
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Clean flat app shell — no mesh gradient */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--lp-surface-canvas);
+}
+
+/* ── Sidebar — flat raised surface ───────────────────────────────── */
+.sidebar {
+  width: var(--lp-sidebar-w); flex-shrink: 0;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--lp-surface-raised);
+  border-right: 1px solid var(--lp-border-subtle);
+  display: flex; flex-direction: column;
+  z-index: 200;
+  overflow: hidden;
+  transition: transform .25s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* Sidebar header — light surface, brand shown via dot + dark text */
+.sidebar-header {
+  padding: 20px 20px 16px;
+  flex-shrink: 0;
+  background: var(--lp-surface-raised);
+  border-bottom: 1px solid var(--lp-border-subtle);
+  position: relative;
+}
+.sidebar-brand {
+  font-size: var(--lp-text-base);
+  font-weight: var(--lp-weight-semibold);
+  color: var(--lp-ink-strong);
+  letter-spacing: 0.1px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sidebar-brand::before {
+  content: "";
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22,163,74,0.14);
+  flex-shrink: 0;
+}
+.sidebar-tagline {
+  font-size: var(--lp-text-2xs);
+  color: var(--lp-ink-muted);
+  font-weight: var(--lp-weight-regular);
+  margin-top: 3px;
+  letter-spacing: 0.2px;
+}
+
+/* Collapse button inside the sidebar header — desktop only */
+.sidebar-collapse-btn {
+  position: absolute;
+  top: 16px; right: 12px;
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: var(--lp-surface-sunken);
+  color: var(--lp-ink-muted);
+  border: 1px solid var(--lp-border-subtle);
+  font-size: var(--lp-text-2xs);
+  font-weight: var(--lp-weight-semibold);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 3;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.sidebar-collapse-btn:hover {
+  background: var(--lp-accent-bg);
+  color: var(--lp-accent-ink);
+  border-color: var(--lp-accent);
+}
+
+/* Floating expand-button when sidebar is collapsed (desktop only) */
+.sidebar-expand-btn {
+  display: none;
+  position: fixed;
+  top: 18px; left: 10px;
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--lp-surface-raised);
+  color: var(--lp-ink-primary);
+  border: 1px solid var(--lp-border-subtle);
+  box-shadow: var(--lp-shadow-sm);
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-weight-semibold);
+  cursor: pointer;
+  align-items: center; justify-content: center;
+  z-index: 210;
+  transition: transform .15s, border-color .15s;
+}
+.sidebar-expand-btn:hover { transform: translateX(2px); border-color: var(--lp-accent); }
+
+/* Collapsed-sidebar state (desktop only) */
+@media (min-width: 961px) {
+  body.sidebar-collapsed .sidebar { transform: translateX(-100%); }
+  body.sidebar-collapsed .main-content { margin-left: 0; }
+  body.sidebar-collapsed .sidebar-expand-btn { display: flex; }
+}
+
+/* Sidebar nav list */
+.sidebar-nav {
+  flex: 1;
+  padding: 8px 8px 6px;
+  display: flex; flex-direction: column; gap: 1px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: var(--lp-border-subtle); border-radius: 4px; }
+
+.sidebar-section-label {
+  font-size: var(--lp-text-2xs);
+  font-weight: var(--lp-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--lp-ink-disabled);
+  padding: 14px 10px 5px;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Sidebar item */
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 7px;
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-weight-medium);
+  color: var(--lp-ink-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  text-decoration: none;
+  transition: background .12s ease, color .12s ease;
+}
+.sidebar-item:hover {
+  background: var(--lp-surface-sunken);
+  color: var(--lp-ink-primary);
+}
+/* Unified active signal: accent blue — same as tabs and pills */
+.sidebar-item.active {
+  background: var(--lp-accent-bg);
+  color: var(--lp-accent-ink);
+  font-weight: var(--lp-weight-semibold);
+}
+.si-icon {
+  font-size: var(--lp-text-base);
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  line-height: 1;
+  opacity: 0.75;
+}
+.sidebar-item.active .si-icon { opacity: 1; }
+.sidebar-item:hover .si-icon { opacity: 0.9; }
+.si-label { flex: 1; }
+.si-chevron {
+  font-size: var(--lp-text-2xs);
+  color: var(--lp-ink-disabled);
+  flex-shrink: 0;
+  transition: transform .18s ease;
+}
+.sidebar-group-btn.open .si-chevron,
+.sidebar-group.open .sidebar-group-btn .si-chevron {
+  transform: rotate(180deg);
+  color: var(--lp-ink-muted);
+}
+.sidebar-group-btn.open,
+.sidebar-group.open .sidebar-group-btn {
+  color: var(--lp-ink-primary);
+  background: var(--lp-surface-sunken);
+}
+
+/* Sub-menu — collapsible */
+.sidebar-group { display: block; }
+.sidebar-submenu {
+  display: none;
+  flex-direction: column;
+  gap: 1px;
+  margin: 1px 0 3px 6px;
+  padding-left: 14px;
+  border-left: 1.5px solid var(--lp-border-subtle);
+}
+.sidebar-group.open .sidebar-submenu { display: flex; }
+.sidebar-subitem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: var(--lp-text-xs);
+  font-weight: var(--lp-weight-medium);
+  color: var(--lp-ink-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  text-decoration: none;
+  transition: background .12s, color .12s;
+}
+.sidebar-subitem:hover {
+  background: var(--lp-surface-sunken);
+  color: var(--lp-ink-primary);
+}
+.sidebar-subitem.active {
+  background: var(--lp-accent-bg);
+  color: var(--lp-accent-ink);
+  font-weight: var(--lp-weight-semibold);
+}
+.sidebar-subitem .si-icon { font-size: var(--lp-text-sm); width: 16px; }
+
+/* Sidebar footer */
+.sidebar-footer {
+  padding: 12px 16px 14px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--lp-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sidebar-stat {
+  font-size: var(--lp-text-2xs);
+  color: var(--lp-ink-disabled);
+  line-height: var(--lp-leading-relaxed);
+  font-weight: var(--lp-weight-regular);
+}
+.sidebar-stat strong { color: var(--lp-ink-muted); font-weight: var(--lp-weight-semibold); }
+
+/* ── Main content ────────────────────────────────────────────────── */
+.main-content {
+  margin-left: var(--lp-sidebar-w);
+  flex: 1;
+  min-width: 0;
+  background: var(--lp-surface-canvas);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  transition: margin-left .25s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* ── Page header — flat, no glass ────────────────────────────────── */
+.page-hdr {
+  padding: 18px var(--lp-page-pad) 14px;
+  background: var(--lp-surface-raised);
+  border-bottom: 1px solid var(--lp-border-subtle);
+  flex-shrink: 0;
+}
+/* Back / breadcrumb link */
+.page-hdr-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--lp-text-xs);
+  font-weight: var(--lp-weight-medium);
+  color: var(--lp-ink-muted);
+  text-decoration: none;
+  margin-bottom: 8px;
+  padding: 3px 0;
+  transition: color var(--lp-duration) ease-out;
+}
+.page-hdr-back:hover { color: var(--lp-ink-primary); }
+.page-hdr-back::before { content: "←"; font-size: var(--lp-text-sm); }
+.page-hdr-title {
+  font-size: var(--lp-text-xl);
+  font-weight: var(--lp-weight-semibold);
+  color: var(--lp-ink-primary);
+  letter-spacing: -0.4px;
+  line-height: var(--lp-leading-tight);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-hdr-sub {
+  font-size: var(--lp-text-sm);
+  color: var(--lp-ink-muted);
+  margin-top: 3px;
+  font-weight: var(--lp-weight-regular);
+}
+
+/* ── Mobile: hamburger + overlay ─────────────────────────────────── */
+.sidebar-toggle {
+  display: none;
+  position: fixed; top: 12px; left: 12px; z-index: 300;
+  background: var(--lp-brand-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: var(--lp-text-base);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.2);
+  line-height: 1;
+  transition: opacity .15s;
+}
+.sidebar-toggle:active { opacity: 0.85; }
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.35);
+  z-index: 199;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.sidebar-overlay.open { display: block; opacity: 1; }
+
+@media (max-width: 960px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 260px;
+    box-shadow: 4px 0 24px rgba(15,23,42,0.12);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: flex; align-items: center; justify-content: center; }
+  .sidebar-collapse-btn { display: none; }
+  .sidebar-expand-btn { display: none !important; }
+  .main-content { margin-left: 0; }
+  .page-hdr { padding: 56px 20px 14px; }
+  .page-hdr-title { font-size: var(--lp-text-lg); }
+}
+@media (max-width: 600px) {
+  body { font-size: var(--lp-text-base); }
+  .page-hdr { padding: 54px 14px 12px; }
+  .page-hdr-title { font-size: var(--lp-text-md); }
+  .page-hdr-sub { font-size: var(--lp-text-xs); }
+}
+
+/* league-tables: --primary deliberately overridden to a deeper blue
+   (was #1e40af). Pass 2 will reconcile against the token system. */
+:root { --primary:#1e40af; }
+body { font-family:var(--lp-font-sans); background:var(--bg); color:var(--text); margin:0; padding:0; height:100vh; overflow:hidden; }
+.page-hdr { padding:26px 36px 12px; border-bottom:1px solid var(--border); background:var(--card); }
+.page-hdr-title { font-size:var(--lp-text-xl); font-weight:var(--lp-weight-semibold); letter-spacing:-.3px; margin:0; line-height:var(--lp-leading-tight); }
+.page-hdr-sub { font-size:var(--lp-text-sm); color:var(--text-muted); margin:4px 0 0; }
+.lt-toolbar { padding:14px 36px; border-bottom:1px solid var(--border); background:var(--card); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.lt-toolbar select { padding:10px 14px; border:1px solid var(--border); border-radius:10px; font-size:var(--lp-text-base); min-width:280px; font-family:inherit; background:#fff; color:var(--text); }
+.lt-scroll { flex:1; overflow-y:auto; padding:20px 36px 40px; }
+.lt-title { font-weight:var(--lp-weight-semibold); font-size:var(--lp-text-md); margin:0 0 14px; display:inline-flex; align-items:center; gap:8px; color:var(--primary); }
+.lt-title a { color:var(--primary); text-decoration:none; }
+.lt-title .ext { font-size:var(--lp-text-2xs); color:var(--accent); font-weight:var(--lp-weight-semibold); }
+.lt-table-wrap { overflow-x:auto; background:var(--card); border:1px solid var(--border); border-radius:12px; }
+table.lt { width:100%; border-collapse:collapse; font-size:var(--lp-text-sm); min-width:680px; font-variant-numeric:tabular-nums; }
+table.lt th, table.lt td { padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+table.lt th { background:#f1f5f9; font-weight:var(--lp-weight-semibold); color:var(--text-muted); text-transform:uppercase; letter-spacing:.4px; font-size:var(--lp-text-2xs); position:sticky; top:0; }
+table.lt td.pts { font-weight:var(--lp-weight-semibold); color:var(--primary); }
+table.lt td.w { color:var(--green); font-weight:var(--lp-weight-medium); }
+table.lt td.l { color:var(--red); }
+table.lt td.num { color:var(--text-muted); font-weight:var(--lp-weight-medium); width:30px; }
+table.lt td.club { font-weight:var(--lp-weight-medium); display:flex; align-items:center; gap:8px; min-width:160px; }
+/* Zone-badge: shown in legend only (not on rows — only confirmed teams get badges) */
+.zone-badge { display:inline-block; font-size:var(--lp-text-2xs); font-weight:var(--lp-weight-semibold); letter-spacing:.3px; padding:2px 6px; border-radius:4px; white-space:nowrap; font-family:var(--lp-font-sans); }
+.badge-champ  { background:#fbbf24; color:#78350f; }
+.badge-promo  { background:#4ade80; color:#14532d; }
+.badge-cl     { background:#3b82f6; color:#fff; }
+.badge-el     { background:#f97316; color:#fff; }
+.badge-ecl    { background:#8b5cf6; color:#fff; }
+.badge-pl     { background:#93c5fd; color:#1e3a8a; }
+.badge-rpl    { background:#fdba74; color:#7c2d12; }
+.badge-r      { background:#f87171; color:#7f1d1d; }
+/* Row colours — distinct per zone so you can read the table at a glance */
+.zone-champ      { background:#fefce8; }   /* gold tint  — champions */
+.zone-promo      { background:#dcfce7; }   /* green      — auto promotion */
+.zone-cl         { background:#dbeafe; }   /* blue       — Champions League */
+.zone-el         { background:#ffedd5; }   /* orange     — Europa League */
+.zone-ecl        { background:#ede9fe; }   /* purple     — Conference League */
+.zone-playoff    { background:#eff6ff; }   /* light blue — promotion playoff */
+.zone-rel-playoff { background:#fff7ed; }  /* amber      — relegation playoff */
+.zone-rel        { background:#fef2f2; }   /* red        — relegated */
+.lt-legend { display:flex; flex-wrap:wrap; gap:10px 20px; margin-top:14px; font-size:var(--lp-text-2xs); color:var(--text-muted); }
+.lt-legend-item { display:flex; align-items:center; gap:5px; }
+.lt-legend-swatch { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+.lt-empty { text-align:center; padding:60px 20px; color:var(--text-muted); }
+.lt-empty .big { font-size:2rem; opacity:.4; margin-bottom:8px; }
+.lt-divider { height:2px; background:var(--border); margin:0; opacity:.6; }
+/* Confirmation badges */
+.conf-badge {
+  display:inline-block; margin-left:6px; padding:1px 7px;
+  border-radius:999px; font-size:10px; font-weight:700;
+  letter-spacing:.3px; vertical-align:middle; white-space:nowrap;
+  line-height:1.6;
+}
+.conf-up  { background:#dcfce7; color:#15803d; }
+.conf-rel { background:#fee2e2; color:#b91c1c; }
+@media (max-width:960px) { .page-hdr { padding:58px 16px 10px; } .lt-toolbar, .lt-scroll { padding-left:14px; padding-right:14px; } .lt-toolbar select { min-width:100%; } }
+</style>
+</head>
+<body>
+<div class="app-layout">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">LPCMI</div>
+    <div class="sidebar-tagline">Recruitment Intelligence</div>
+    <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebarCollapse()" aria-label="Collapse sidebar" title="Collapse sidebar">&#10094;</button>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="sidebar-item" href="index.html"><span class="si-icon">&#127968;</span><span class="si-label">Dashboard</span></a>
+
+    <div class="sidebar-group" data-group="positions">
+      <button class="sidebar-item sidebar-group-btn" type="button" onclick="toggleSidebarGroup('positions', this)">
+        <span class="si-icon">&#9917;&#65039;</span><span class="si-label">Positions</span><span class="si-chevron">&#9662;</span>
+      </button>
+      <div class="sidebar-submenu" id="sidebar-sub-positions">
+        <a class="sidebar-subitem" href="goalkeeper.html"><span class="si-icon">&#129496;</span><span class="si-label">Goalkeepers</span></a>
+        <a class="sidebar-subitem" href="right-back.html"><span class="si-icon">&#129461;</span><span class="si-label">Right Backs</span></a>
+        <a class="sidebar-subitem" href="centre-forward.html"><span class="si-icon">&#9917;&#65039;</span><span class="si-label">Centre Forwards</span></a>
+        <a class="sidebar-subitem" href="all.html"><span class="si-icon">&#128202;</span><span class="si-label">All Positions</span></a>
+      </div>
+    </div>
+
+    <a class="sidebar-item" href="league-tables.html"><span class="si-icon">&#127942;</span><span class="si-label">League Tables</span></a>
+
+    <div class="sidebar-group" data-group="summer2026">
+      <button class="sidebar-item sidebar-group-btn" type="button" onclick="toggleSidebarGroup('summer2026', this)">
+        <span class="si-icon">&#9728;&#65039;</span><span class="si-label">Summer 2026</span><span class="si-chevron">&#9662;</span>
+      </button>
+      <div class="sidebar-submenu" id="sidebar-sub-summer2026">
+        <a class="sidebar-subitem" href="summer-2026.html"><span class="si-icon">&#128203;</span><span class="si-label">Club Requirements</span></a>
+        <a class="sidebar-subitem" href="club-editor.html"><span class="si-icon">&#9999;&#65039;</span><span class="si-label">Edit Requirements</span></a>
+      <a class="sidebar-subitem" href="master-database.html#tab=summer"><span class="si-icon">&#9993;&#65039;</span><span class="si-label">Summer Outreach</span></a>
+      </div>
+    </div>
+
+    <span class="sidebar-section-label">Database</span>
+    <a class="sidebar-item" href="master-database.html"><span class="si-icon">&#127967;</span><span class="si-label">League Directory</span></a>
+    <a class="sidebar-item" href="master-database.html#tab=search"><span class="si-icon">&#128269;</span><span class="si-label">Staff Search</span></a>
+    <a class="sidebar-item" href="master-database.html#tab=roles"><span class="si-icon">&#127919;</span><span class="si-label">Key Roles</span></a>
+    <a class="sidebar-item" href="master-database.html#tab=contacts"><span class="si-icon">&#128100;</span><span class="si-label">My Contacts</span></a>
+    <a class="sidebar-item" href="master-database.html#tab=outreach"><span class="si-icon">&#128236;</span><span class="si-label">Outreach Log</span></a>
+  </nav>
+
+</aside>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Menu">&#9776;</button>
+<button class="sidebar-expand-btn" id="sidebarExpandBtn" onclick="toggleSidebarCollapse()" aria-label="Expand sidebar" title="Expand sidebar">&#10095;</button>
+<main class="main-content" style="display:flex; flex-direction:column; overflow:hidden;">
+  <div class="page-hdr">
+    <h2 class="page-hdr-title">League Tables</h2>
+    <p class="page-hdr-sub">Live standings across all tracked leagues</p>
+  </div>
+  <div class="lt-toolbar">
+    <select id="ltLeague" onchange="renderLT()"></select>
+  </div>
+  <div class="lt-scroll" id="ltBody"></div>
+</main>
+</div>
+<script id="data-tables" type="application/json">{"Premier League": [{"club": "Arsenal", "played": "35", "won": "23", "drawn": "7", "lost": "5", "gf": "67", "ga": "26", "gd": "41", "points": "76", "matches_remaining": 3}, {"club": "Man City", "played": "33", "won": "21", "drawn": "7", "lost": "5", "gf": "66", "ga": "29", "gd": "37", "points": "70", "matches_remaining": 5}, {"club": "Man Utd", "played": "35", "won": "18", "drawn": "10", "lost": "7", "gf": "63", "ga": "48", "gd": "15", "points": "64", "matches_remaining": 3}, {"club": "Liverpool", "played": "35", "won": "17", "drawn": "7", "lost": "11", "gf": "59", "ga": "47", "gd": "12", "points": "58", "matches_remaining": 3}, {"club": "Aston Villa", "played": "35", "won": "17", "drawn": "7", "lost": "11", "gf": "48", "ga": "44", "gd": "4", "points": "58", "matches_remaining": 3}, {"club": "Bournemouth", "played": "35", "won": "12", "drawn": "16", "lost": "7", "gf": "55", "ga": "52", "gd": "3", "points": "52", "matches_remaining": 3}, {"club": "Brentford", "played": "35", "won": "14", "drawn": "9", "lost": "12", "gf": "52", "ga": "46", "gd": "6", "points": "51", "matches_remaining": 3}, {"club": "Brighton", "played": "35", "won": "13", "drawn": "11", "lost": "11", "gf": "49", "ga": "42", "gd": "7", "points": "50", "matches_remaining": 3}, {"club": "Chelsea", "played": "34", "won": "13", "drawn": "9", "lost": "12", "gf": "53", "ga": "45", "gd": "8", "points": "48", "matches_remaining": 4}, {"club": "Fulham", "played": "35", "won": "14", "drawn": "6", "lost": "15", "gf": "44", "ga": "49", "gd": "-5", "points": "48", "matches_remaining": 3}, {"club": "Everton", "played": "34", "won": "13", "drawn": "8", "lost": "13", "gf": "41", "ga": "41", "gd": "0", "points": "47", "matches_remaining": 4}, {"club": "Sunderland", "played": "35", "won": "12", "drawn": "11", "lost": "12", "gf": "37", "ga": "46", "gd": "-9", "points": "47", "matches_remaining": 3}, {"club": "Newcastle", "played": "35", "won": "13", "drawn": "6", "lost": "16", "gf": "49", "ga": "51", "gd": "-2", "points": "45", "matches_remaining": 3}, {"club": "Leeds", "played": "35", "won": "10", "drawn": "13", "lost": "12", "gf": "47", "ga": "52", "gd": "-5", "points": "43", "matches_remaining": 3}, {"club": "Crystal Palace", "played": "34", "won": "11", "drawn": "10", "lost": "13", "gf": "36", "ga": "42", "gd": "-6", "points": "43", "matches_remaining": 4}, {"club": "Nott'm Forest", "played": "34", "won": "10", "drawn": "9", "lost": "15", "gf": "41", "ga": "45", "gd": "-4", "points": "39", "matches_remaining": 4}, {"club": "Tottenham", "played": "35", "won": "9", "drawn": "10", "lost": "16", "gf": "45", "ga": "54", "gd": "-9", "points": "37", "matches_remaining": 3}, {"club": "West Ham", "played": "35", "won": "9", "drawn": "9", "lost": "17", "gf": "42", "ga": "61", "gd": "-19", "points": "36", "matches_remaining": 3}, {"club": "Burnley", "played": "35", "won": "4", "drawn": "8", "lost": "23", "gf": "35", "ga": "71", "gd": "-36", "points": "20", "matches_remaining": 3}, {"club": "Wolves", "played": "35", "won": "3", "drawn": "9", "lost": "23", "gf": "25", "ga": "63", "gd": "-38", "points": "18", "matches_remaining": 3}], "Championship": [{"club": "Coventry", "played": "46", "won": "28", "drawn": "11", "lost": "7", "gf": "97", "ga": "45", "gd": "52", "points": "95", "matches_remaining": 0}, {"club": "Ipswich", "played": "46", "won": "23", "drawn": "15", "lost": "8", "gf": "80", "ga": "47", "gd": "33", "points": "84", "matches_remaining": 0}, {"club": "Millwall", "played": "46", "won": "24", "drawn": "11", "lost": "11", "gf": "64", "ga": "49", "gd": "15", "points": "83", "matches_remaining": 0}, {"club": "Southampton", "played": "46", "won": "22", "drawn": "14", "lost": "10", "gf": "82", "ga": "56", "gd": "26", "points": "80", "matches_remaining": 0}, {"club": "Middlesbrough", "played": "46", "won": "22", "drawn": "14", "lost": "10", "gf": "72", "ga": "47", "gd": "25", "points": "80", "matches_remaining": 0}, {"club": "Hull City", "played": "46", "won": "21", "drawn": "10", "lost": "15", "gf": "70", "ga": "66", "gd": "4", "points": "73", "matches_remaining": 0}, {"club": "Wrexham", "played": "46", "won": "19", "drawn": "14", "lost": "13", "gf": "69", "ga": "65", "gd": "4", "points": "71", "matches_remaining": 0}, {"club": "Derby", "played": "46", "won": "20", "drawn": "9", "lost": "17", "gf": "67", "ga": "59", "gd": "8", "points": "69", "matches_remaining": 0}, {"club": "Norwich", "played": "46", "won": "19", "drawn": "8", "lost": "19", "gf": "63", "ga": "56", "gd": "7", "points": "65", "matches_remaining": 0}, {"club": "Birmingham", "played": "46", "won": "17", "drawn": "13", "lost": "16", "gf": "57", "ga": "56", "gd": "1", "points": "64", "matches_remaining": 0}, {"club": "Swansea", "played": "46", "won": "18", "drawn": "10", "lost": "18", "gf": "57", "ga": "59", "gd": "-2", "points": "64", "matches_remaining": 0}, {"club": "Bristol City", "played": "46", "won": "17", "drawn": "11", "lost": "18", "gf": "59", "ga": "59", "gd": "0", "points": "62", "matches_remaining": 0}, {"club": "Sheff Utd", "played": "46", "won": "18", "drawn": "6", "lost": "22", "gf": "66", "ga": "66", "gd": "0", "points": "60", "matches_remaining": 0}, {"club": "Preston", "played": "46", "won": "15", "drawn": "15", "lost": "16", "gf": "55", "ga": "62", "gd": "-7", "points": "60", "matches_remaining": 0}, {"club": "QPR", "played": "46", "won": "16", "drawn": "10", "lost": "20", "gf": "61", "ga": "73", "gd": "-12", "points": "58", "matches_remaining": 0}, {"club": "Watford", "played": "46", "won": "14", "drawn": "15", "lost": "17", "gf": "53", "ga": "65", "gd": "-12", "points": "57", "matches_remaining": 0}, {"club": "Stoke City", "played": "46", "won": "15", "drawn": "10", "lost": "21", "gf": "51", "ga": "56", "gd": "-5", "points": "55", "matches_remaining": 0}, {"club": "Portsmouth", "played": "46", "won": "14", "drawn": "13", "lost": "19", "gf": "49", "ga": "64", "gd": "-15", "points": "55", "matches_remaining": 0}, {"club": "Charlton", "played": "46", "won": "13", "drawn": "14", "lost": "19", "gf": "44", "ga": "58", "gd": "-14", "points": "53", "matches_remaining": 0}, {"club": "Blackburn", "played": "46", "won": "13", "drawn": "13", "lost": "20", "gf": "42", "ga": "56", "gd": "-14", "points": "52", "matches_remaining": 0}, {"club": "West Brom", "played": "46", "won": "13", "drawn": "14", "lost": "19", "gf": "48", "ga": "58", "gd": "-10", "points": "51", "matches_remaining": 0}, {"club": "Oxford United", "played": "46", "won": "11", "drawn": "14", "lost": "21", "gf": "45", "ga": "59", "gd": "-14", "points": "47", "matches_remaining": 0}, {"club": "Leicester", "played": "46", "won": "12", "drawn": "16", "lost": "18", "gf": "58", "ga": "68", "gd": "-10", "points": "46", "matches_remaining": 0}, {"club": "Sheff Wed", "played": "46", "won": "2", "drawn": "12", "lost": "32", "gf": "29", "ga": "89", "gd": "-60", "points": "0", "matches_remaining": 0}], "League One": [{"club": "Lincoln City", "played": "46", "won": "31", "drawn": "10", "lost": "5", "gf": "89", "ga": "41", "gd": "48", "points": "103", "matches_remaining": 0}, {"club": "Cardiff", "played": "46", "won": "27", "drawn": "10", "lost": "9", "gf": "90", "ga": "50", "gd": "40", "points": "91", "matches_remaining": 0}, {"club": "Stockport", "played": "46", "won": "22", "drawn": "11", "lost": "13", "gf": "71", "ga": "58", "gd": "13", "points": "77", "matches_remaining": 0}, {"club": "Bradford", "played": "46", "won": "22", "drawn": "11", "lost": "13", "gf": "58", "ga": "51", "gd": "7", "points": "77", "matches_remaining": 0}, {"club": "Bolton", "played": "46", "won": "19", "drawn": "18", "lost": "9", "gf": "70", "ga": "52", "gd": "18", "points": "75", "matches_remaining": 0}, {"club": "Stevenage", "played": "46", "won": "21", "drawn": "12", "lost": "13", "gf": "49", "ga": "46", "gd": "3", "points": "75", "matches_remaining": 0}, {"club": "Luton", "played": "46", "won": "21", "drawn": "11", "lost": "14", "gf": "68", "ga": "56", "gd": "12", "points": "74", "matches_remaining": 0}, {"club": "Plymouth", "played": "46", "won": "22", "drawn": "7", "lost": "17", "gf": "75", "ga": "63", "gd": "12", "points": "73", "matches_remaining": 0}, {"club": "Huddersfield", "played": "46", "won": "18", "drawn": "13", "lost": "15", "gf": "74", "ga": "64", "gd": "10", "points": "67", "matches_remaining": 0}, {"club": "Mansfield Town", "played": "46", "won": "16", "drawn": "17", "lost": "13", "gf": "62", "ga": "50", "gd": "12", "points": "65", "matches_remaining": 0}, {"club": "Wycombe", "played": "46", "won": "17", "drawn": "12", "lost": "17", "gf": "69", "ga": "58", "gd": "11", "points": "63", "matches_remaining": 0}, {"club": "Reading", "played": "46", "won": "16", "drawn": "15", "lost": "15", "gf": "64", "ga": "60", "gd": "4", "points": "63", "matches_remaining": 0}, {"club": "Blackpool", "played": "46", "won": "17", "drawn": "9", "lost": "20", "gf": "54", "ga": "65", "gd": "-11", "points": "60", "matches_remaining": 0}, {"club": "Doncaster", "played": "46", "won": "17", "drawn": "9", "lost": "20", "gf": "50", "ga": "69", "gd": "-19", "points": "60", "matches_remaining": 0}, {"club": "Barnsley", "played": "46", "won": "15", "drawn": "14", "lost": "17", "gf": "68", "ga": "73", "gd": "-5", "points": "59", "matches_remaining": 0}, {"club": "Wigan", "played": "46", "won": "14", "drawn": "14", "lost": "18", "gf": "49", "ga": "58", "gd": "-9", "points": "56", "matches_remaining": 0}, {"club": "Burton Albion", "played": "46", "won": "13", "drawn": "15", "lost": "18", "gf": "50", "ga": "60", "gd": "-10", "points": "54", "matches_remaining": 0}, {"club": "Peterborough", "played": "46", "won": "15", "drawn": "8", "lost": "23", "gf": "64", "ga": "68", "gd": "-4", "points": "53", "matches_remaining": 0}, {"club": "AFC Wimbledon", "played": "46", "won": "15", "drawn": "8", "lost": "23", "gf": "51", "ga": "72", "gd": "-21", "points": "53", "matches_remaining": 0}, {"club": "Leyton Orient", "played": "46", "won": "14", "drawn": "10", "lost": "22", "gf": "59", "ga": "71", "gd": "-12", "points": "52", "matches_remaining": 0}, {"club": "Exeter City", "played": "46", "won": "12", "drawn": "13", "lost": "21", "gf": "52", "ga": "61", "gd": "-9", "points": "49", "matches_remaining": 0}, {"club": "Port Vale", "played": "46", "won": "10", "drawn": "12", "lost": "24", "gf": "36", "ga": "61", "gd": "-25", "points": "42", "matches_remaining": 0}, {"club": "Rotherham", "played": "46", "won": "10", "drawn": "11", "lost": "25", "gf": "41", "ga": "71", "gd": "-30", "points": "41", "matches_remaining": 0}, {"club": "Northampton", "played": "46", "won": "9", "drawn": "8", "lost": "29", "gf": "39", "ga": "74", "gd": "-35", "points": "35", "matches_remaining": 0}], "League Two": [{"club": "Bromley", "played": "46", "won": "24", "drawn": "15", "lost": "7", "gf": "71", "ga": "46", "gd": "25", "points": "87", "matches_remaining": 0}, {"club": "MK Dons", "played": "46", "won": "24", "drawn": "14", "lost": "8", "gf": "86", "ga": "45", "gd": "41", "points": "86", "matches_remaining": 0}, {"club": "Cambridge Utd.", "played": "46", "won": "22", "drawn": "16", "lost": "8", "gf": "66", "ga": "33", "gd": "33", "points": "82", "matches_remaining": 0}, {"club": "Salford", "played": "46", "won": "25", "drawn": "6", "lost": "15", "gf": "61", "ga": "51", "gd": "10", "points": "81", "matches_remaining": 0}, {"club": "Notts County", "played": "46", "won": "24", "drawn": "8", "lost": "14", "gf": "74", "ga": "52", "gd": "22", "points": "80", "matches_remaining": 0}, {"club": "Chesterfield", "played": "46", "won": "21", "drawn": "16", "lost": "9", "gf": "71", "ga": "56", "gd": "15", "points": "79", "matches_remaining": 0}, {"club": "Grimsby Town", "played": "46", "won": "22", "drawn": "12", "lost": "12", "gf": "74", "ga": "50", "gd": "24", "points": "78", "matches_remaining": 0}, {"club": "Barnet", "played": "46", "won": "21", "drawn": "13", "lost": "12", "gf": "70", "ga": "53", "gd": "17", "points": "76", "matches_remaining": 0}, {"club": "Swindon Town", "played": "46", "won": "22", "drawn": "9", "lost": "15", "gf": "70", "ga": "59", "gd": "11", "points": "75", "matches_remaining": 0}, {"club": "Oldham Athletic", "played": "46", "won": "18", "drawn": "14", "lost": "14", "gf": "60", "ga": "44", "gd": "16", "points": "68", "matches_remaining": 0}, {"club": "Crewe Alexandra", "played": "46", "won": "19", "drawn": "10", "lost": "17", "gf": "64", "ga": "58", "gd": "6", "points": "67", "matches_remaining": 0}, {"club": "Colchester Utd.", "played": "46", "won": "18", "drawn": "12", "lost": "16", "gf": "62", "ga": "49", "gd": "13", "points": "66", "matches_remaining": 0}, {"club": "Walsall", "played": "46", "won": "18", "drawn": "11", "lost": "17", "gf": "56", "ga": "56", "gd": "0", "points": "65", "matches_remaining": 0}, {"club": "Bristol Rovers", "played": "46", "won": "19", "drawn": "5", "lost": "22", "gf": "56", "ga": "65", "gd": "-9", "points": "62", "matches_remaining": 0}, {"club": "Fleetwood", "played": "46", "won": "15", "drawn": "16", "lost": "15", "gf": "57", "ga": "58", "gd": "-1", "points": "61", "matches_remaining": 0}, {"club": "Accrington", "played": "46", "won": "14", "drawn": "11", "lost": "21", "gf": "47", "ga": "58", "gd": "-11", "points": "53", "matches_remaining": 0}, {"club": "Gillingham", "played": "46", "won": "13", "drawn": "14", "lost": "19", "gf": "53", "ga": "72", "gd": "-19", "points": "53", "matches_remaining": 0}, {"club": "Cheltenham", "played": "46", "won": "14", "drawn": "10", "lost": "22", "gf": "53", "ga": "79", "gd": "-26", "points": "52", "matches_remaining": 0}, {"club": "Shrewsbury", "played": "46", "won": "13", "drawn": "10", "lost": "23", "gf": "42", "ga": "69", "gd": "-27", "points": "49", "matches_remaining": 0}, {"club": "Newport County", "played": "46", "won": "12", "drawn": "7", "lost": "27", "gf": "48", "ga": "77", "gd": "-29", "points": "43", "matches_remaining": 0}, {"club": "Tranmere", "played": "46", "won": "10", "drawn": "11", "lost": "25", "gf": "54", "ga": "79", "gd": "-25", "points": "41", "matches_remaining": 0}, {"club": "Crawley Town", "played": "46", "won": "8", "drawn": "16", "lost": "22", "gf": "44", "ga": "68", "gd": "-24", "points": "40", "matches_remaining": 0}, {"club": "Harrogate Town", "played": "46", "won": "10", "drawn": "9", "lost": "27", "gf": "39", "ga": "68", "gd": "-29", "points": "39", "matches_remaining": 0}, {"club": "Barrow", "played": "46", "won": "9", "drawn": "9", "lost": "28", "gf": "45", "ga": "78", "gd": "-33", "points": "36", "matches_remaining": 0}], "National League": [{"club": "York City", "played": "46", "won": "33", "drawn": "9", "lost": "4", "gf": "114", "ga": "41", "gd": "73", "points": "108", "matches_remaining": 0}, {"club": "Rochdale", "played": "46", "won": "33", "drawn": "7", "lost": "6", "gf": "88", "ga": "41", "gd": "47", "points": "106", "matches_remaining": 0}, {"club": "Carlisle United", "played": "46", "won": "29", "drawn": "8", "lost": "9", "gf": "87", "ga": "51", "gd": "36", "points": "95", "matches_remaining": 0}, {"club": "Boreham Wood", "played": "46", "won": "27", "drawn": "9", "lost": "10", "gf": "95", "ga": "58", "gd": "37", "points": "90", "matches_remaining": 0}, {"club": "Scunthorpe Utd.", "played": "46", "won": "23", "drawn": "13", "lost": "10", "gf": "79", "ga": "63", "gd": "16", "points": "82", "matches_remaining": 0}, {"club": "Southend United", "played": "46", "won": "23", "drawn": "12", "lost": "11", "gf": "83", "ga": "47", "gd": "36", "points": "81", "matches_remaining": 0}, {"club": "Forest Green", "played": "46", "won": "23", "drawn": "12", "lost": "11", "gf": "82", "ga": "52", "gd": "30", "points": "81", "matches_remaining": 0}, {"club": "Halifax Town", "played": "46", "won": "20", "drawn": "10", "lost": "16", "gf": "69", "ga": "66", "gd": "3", "points": "70", "matches_remaining": 0}, {"club": "Hartlepool", "played": "46", "won": "18", "drawn": "14", "lost": "14", "gf": "54", "ga": "59", "gd": "-5", "points": "68", "matches_remaining": 0}, {"club": "Woking", "played": "46", "won": "16", "drawn": "15", "lost": "15", "gf": "69", "ga": "54", "gd": "15", "points": "63", "matches_remaining": 0}, {"club": "Tamworth", "played": "46", "won": "17", "drawn": "11", "lost": "18", "gf": "63", "ga": "71", "gd": "-8", "points": "62", "matches_remaining": 0}, {"club": "Boston Utd", "played": "46", "won": "15", "drawn": "14", "lost": "17", "gf": "63", "ga": "67", "gd": "-4", "points": "59", "matches_remaining": 0}, {"club": "Altrincham", "played": "46", "won": "17", "drawn": "6", "lost": "23", "gf": "55", "ga": "65", "gd": "-10", "points": "57", "matches_remaining": 0}, {"club": "Solihull Moors", "played": "46", "won": "14", "drawn": "14", "lost": "18", "gf": "71", "ga": "72", "gd": "-1", "points": "56", "matches_remaining": 0}, {"club": "Wealdstone", "played": "46", "won": "15", "drawn": "11", "lost": "20", "gf": "68", "ga": "76", "gd": "-8", "points": "56", "matches_remaining": 0}, {"club": "Yeovil Town", "played": "46", "won": "15", "drawn": "6", "lost": "25", "gf": "48", "ga": "68", "gd": "-20", "points": "51", "matches_remaining": 0}, {"club": "Eastleigh", "played": "46", "won": "13", "drawn": "11", "lost": "22", "gf": "57", "ga": "80", "gd": "-23", "points": "50", "matches_remaining": 0}, {"club": "Gateshead", "played": "46", "won": "14", "drawn": "8", "lost": "24", "gf": "54", "ga": "90", "gd": "-36", "points": "50", "matches_remaining": 0}, {"club": "Sutton Utd", "played": "46", "won": "11", "drawn": "14", "lost": "21", "gf": "59", "ga": "79", "gd": "-20", "points": "47", "matches_remaining": 0}, {"club": "Aldershot", "played": "46", "won": "13", "drawn": "7", "lost": "26", "gf": "69", "ga": "87", "gd": "-18", "points": "46", "matches_remaining": 0}, {"club": "Brackley", "played": "46", "won": "10", "drawn": "12", "lost": "24", "gf": "40", "ga": "75", "gd": "-35", "points": "42", "matches_remaining": 0}, {"club": "Morecambe FC", "played": "46", "won": "9", "drawn": "11", "lost": "26", "gf": "66", "ga": "103", "gd": "-37", "points": "38", "matches_remaining": 0}, {"club": "Braintree", "played": "46", "won": "8", "drawn": "12", "lost": "26", "gf": "38", "ga": "76", "gd": "-38", "points": "36", "matches_remaining": 0}, {"club": "Truro City", "played": "46", "won": "8", "drawn": "10", "lost": "28", "gf": "42", "ga": "72", "gd": "-30", "points": "34", "matches_remaining": 0}], "National League North": [{"club": "Fylde", "played": "46", "won": "32", "drawn": "4", "lost": "10", "gf": "112", "ga": "51", "gd": "61", "points": "100", "matches_remaining": 0}, {"club": "South Shields", "played": "46", "won": "28", "drawn": "11", "lost": "7", "gf": "99", "ga": "43", "gd": "56", "points": "95", "matches_remaining": 0}, {"club": "Kidderminster", "played": "46", "won": "25", "drawn": "12", "lost": "9", "gf": "74", "ga": "51", "gd": "23", "points": "87", "matches_remaining": 0}, {"club": "Macclesfield", "played": "46", "won": "24", "drawn": "7", "lost": "15", "gf": "81", "ga": "68", "gd": "13", "points": "79", "matches_remaining": 0}, {"club": "Buxton", "played": "46", "won": "22", "drawn": "7", "lost": "17", "gf": "83", "ga": "61", "gd": "22", "points": "73", "matches_remaining": 0}, {"club": "Scarborough", "played": "46", "won": "19", "drawn": "16", "lost": "11", "gf": "61", "ga": "52", "gd": "9", "points": "73", "matches_remaining": 0}, {"club": "Chester", "played": "46", "won": "20", "drawn": "13", "lost": "13", "gf": "66", "ga": "64", "gd": "2", "points": "73", "matches_remaining": 0}, {"club": "Merthyr Town", "played": "46", "won": "22", "drawn": "4", "lost": "20", "gf": "95", "ga": "86", "gd": "9", "points": "70", "matches_remaining": 0}, {"club": "Darlington", "played": "46", "won": "20", "drawn": "9", "lost": "17", "gf": "78", "ga": "68", "gd": "10", "points": "69", "matches_remaining": 0}, {"club": "Spennymoor Town", "played": "46", "won": "19", "drawn": "11", "lost": "16", "gf": "62", "ga": "69", "gd": "-7", "points": "68", "matches_remaining": 0}, {"club": "Telford Utd", "played": "46", "won": "17", "drawn": "14", "lost": "15", "gf": "85", "ga": "65", "gd": "20", "points": "65", "matches_remaining": 0}, {"club": "Marine FC", "played": "46", "won": "18", "drawn": "8", "lost": "20", "gf": "62", "ga": "72", "gd": "-10", "points": "62", "matches_remaining": 0}, {"club": "Radcliffe", "played": "46", "won": "18", "drawn": "6", "lost": "22", "gf": "76", "ga": "83", "gd": "-7", "points": "60", "matches_remaining": 0}, {"club": "Southport", "played": "46", "won": "16", "drawn": "12", "lost": "18", "gf": "64", "ga": "71", "gd": "-7", "points": "60", "matches_remaining": 0}, {"club": "Chorley", "played": "46", "won": "15", "drawn": "12", "lost": "19", "gf": "66", "ga": "65", "gd": "1", "points": "57", "matches_remaining": 0}, {"club": "Worksop", "played": "46", "won": "16", "drawn": "9", "lost": "21", "gf": "66", "ga": "74", "gd": "-8", "points": "57", "matches_remaining": 0}, {"club": "Oxford City", "played": "46", "won": "15", "drawn": "11", "lost": "20", "gf": "62", "ga": "67", "gd": "-5", "points": "56", "matches_remaining": 0}, {"club": "Bedford Town", "played": "46", "won": "13", "drawn": "14", "lost": "19", "gf": "66", "ga": "77", "gd": "-11", "points": "53", "matches_remaining": 0}, {"club": "King's Lynn", "played": "46", "won": "12", "drawn": "16", "lost": "18", "gf": "56", "ga": "64", "gd": "-8", "points": "52", "matches_remaining": 0}, {"club": "Hereford", "played": "46", "won": "14", "drawn": "10", "lost": "22", "gf": "64", "ga": "79", "gd": "-15", "points": "52", "matches_remaining": 0}, {"club": "Curzon Ashton", "played": "46", "won": "13", "drawn": "13", "lost": "20", "gf": "67", "ga": "88", "gd": "-21", "points": "52", "matches_remaining": 0}, {"club": "Alfreton", "played": "46", "won": "12", "drawn": "14", "lost": "20", "gf": "49", "ga": "82", "gd": "-33", "points": "50", "matches_remaining": 0}, {"club": "Peterb Sports", "played": "46", "won": "10", "drawn": "9", "lost": "27", "gf": "51", "ga": "96", "gd": "-45", "points": "39", "matches_remaining": 0}, {"club": "Leamington", "played": "46", "won": "7", "drawn": "8", "lost": "31", "gf": "41", "ga": "90", "gd": "-49", "points": "29", "matches_remaining": 0}], "National League South": [{"club": "Worthing", "played": "46", "won": "25", "drawn": "9", "lost": "12", "gf": "99", "ga": "52", "gd": "47", "points": "84", "matches_remaining": 0}, {"club": "Hornchurch", "played": "46", "won": "23", "drawn": "12", "lost": "11", "gf": "81", "ga": "64", "gd": "17", "points": "81", "matches_remaining": 0}, {"club": "Torquay", "played": "46", "won": "24", "drawn": "8", "lost": "14", "gf": "87", "ga": "62", "gd": "25", "points": "80", "matches_remaining": 0}, {"club": "Dorking", "played": "46", "won": "23", "drawn": "10", "lost": "13", "gf": "78", "ga": "61", "gd": "17", "points": "79", "matches_remaining": 0}, {"club": "Hemel", "played": "46", "won": "23", "drawn": "10", "lost": "13", "gf": "55", "ga": "48", "gd": "7", "points": "79", "matches_remaining": 0}, {"club": "Weston-super-M.", "played": "46", "won": "23", "drawn": "9", "lost": "14", "gf": "61", "ga": "48", "gd": "13", "points": "78", "matches_remaining": 0}, {"club": "Maidenhead Utd.", "played": "46", "won": "22", "drawn": "11", "lost": "13", "gf": "66", "ga": "41", "gd": "25", "points": "77", "matches_remaining": 0}, {"club": "Maidstone", "played": "46", "won": "22", "drawn": "11", "lost": "13", "gf": "72", "ga": "50", "gd": "22", "points": "77", "matches_remaining": 0}, {"club": "Ebbsfleet", "played": "46", "won": "22", "drawn": "11", "lost": "13", "gf": "73", "ga": "54", "gd": "19", "points": "77", "matches_remaining": 0}, {"club": "Chelmsford", "played": "46", "won": "21", "drawn": "10", "lost": "15", "gf": "73", "ga": "62", "gd": "11", "points": "73", "matches_remaining": 0}, {"club": "Chesham", "played": "46", "won": "21", "drawn": "9", "lost": "16", "gf": "68", "ga": "55", "gd": "13", "points": "72", "matches_remaining": 0}, {"club": "Totton", "played": "46", "won": "20", "drawn": "6", "lost": "20", "gf": "60", "ga": "79", "gd": "-19", "points": "66", "matches_remaining": 0}, {"club": "Dag & Red FC", "played": "46", "won": "17", "drawn": "13", "lost": "16", "gf": "61", "ga": "62", "gd": "-1", "points": "64", "matches_remaining": 0}, {"club": "Tonbridge", "played": "46", "won": "16", "drawn": "12", "lost": "18", "gf": "66", "ga": "65", "gd": "1", "points": "60", "matches_remaining": 0}, {"club": "Horsham", "played": "46", "won": "15", "drawn": "14", "lost": "17", "gf": "53", "ga": "54", "gd": "-1", "points": "59", "matches_remaining": 0}, {"club": "Slough", "played": "46", "won": "15", "drawn": "9", "lost": "22", "gf": "69", "ga": "87", "gd": "-18", "points": "54", "matches_remaining": 0}, {"club": "Salisbury", "played": "46", "won": "14", "drawn": "11", "lost": "21", "gf": "50", "ga": "65", "gd": "-15", "points": "53", "matches_remaining": 0}, {"club": "Hampton & Rich.", "played": "46", "won": "14", "drawn": "11", "lost": "21", "gf": "56", "ga": "72", "gd": "-16", "points": "53", "matches_remaining": 0}, {"club": "Farnborough", "played": "46", "won": "14", "drawn": "11", "lost": "21", "gf": "72", "ga": "92", "gd": "-20", "points": "53", "matches_remaining": 0}, {"club": "Dover Athletic", "played": "46", "won": "13", "drawn": "11", "lost": "22", "gf": "60", "ga": "75", "gd": "-15", "points": "50", "matches_remaining": 0}, {"club": "Bath City", "played": "46", "won": "10", "drawn": "13", "lost": "23", "gf": "50", "ga": "77", "gd": "-27", "points": "43", "matches_remaining": 0}, {"club": "Chippenham", "played": "46", "won": "11", "drawn": "9", "lost": "26", "gf": "53", "ga": "80", "gd": "-27", "points": "42", "matches_remaining": 0}, {"club": "Enfield Town", "played": "46", "won": "9", "drawn": "13", "lost": "24", "gf": "55", "ga": "82", "gd": "-27", "points": "40", "matches_remaining": 0}, {"club": "Eastbourne", "played": "46", "won": "9", "drawn": "9", "lost": "28", "gf": "59", "ga": "90", "gd": "-31", "points": "36", "matches_remaining": 0}], "Scottish Premiership": [{"club": "Heart of Midl.", "played": "33", "won": "21", "drawn": "7", "lost": "5", "gf": "58", "ga": "28", "gd": "30", "points": "70", "matches_remaining": 0}, {"club": "Rangers", "played": "33", "won": "19", "drawn": "12", "lost": "2", "gf": "66", "ga": "31", "gd": "35", "points": "69", "matches_remaining": 0}, {"club": "Celtic", "played": "33", "won": "21", "drawn": "4", "lost": "8", "gf": "59", "ga": "35", "gd": "24", "points": "67", "matches_remaining": 0}, {"club": "Motherwell FC", "played": "33", "won": "14", "drawn": "12", "lost": "7", "gf": "52", "ga": "29", "gd": "23", "points": "54", "matches_remaining": 0}, {"club": "Hibernian FC", "played": "33", "won": "13", "drawn": "12", "lost": "8", "gf": "51", "ga": "37", "gd": "14", "points": "51", "matches_remaining": 0}, {"club": "Falkirk", "played": "33", "won": "13", "drawn": "7", "lost": "13", "gf": "45", "ga": "48", "gd": "-3", "points": "46", "matches_remaining": 0}, {"club": "Dundee United", "played": "33", "won": "9", "drawn": "13", "lost": "11", "gf": "45", "ga": "54", "gd": "-9", "points": "40", "matches_remaining": 0}, {"club": "Aberdeen FC", "played": "33", "won": "9", "drawn": "6", "lost": "18", "gf": "33", "ga": "48", "gd": "-15", "points": "33", "matches_remaining": 0}, {"club": "Dundee FC", "played": "33", "won": "8", "drawn": "9", "lost": "16", "gf": "34", "ga": "53", "gd": "-19", "points": "33", "matches_remaining": 0}, {"club": "St. Mirren", "played": "33", "won": "7", "drawn": "9", "lost": "17", "gf": "27", "ga": "48", "gd": "-21", "points": "30", "matches_remaining": 0}, {"club": "Kilmarnock FC", "played": "33", "won": "6", "drawn": "10", "lost": "17", "gf": "37", "ga": "65", "gd": "-28", "points": "28", "matches_remaining": 0}, {"club": "Livingston FC", "played": "33", "won": "1", "drawn": "13", "lost": "19", "gf": "35", "ga": "66", "gd": "-31", "points": "16", "matches_remaining": 0}], "Scottish Championship": [{"club": "St. Johnstone", "played": "36", "won": "22", "drawn": "11", "lost": "3", "gf": "67", "ga": "25", "gd": "42", "points": "77", "matches_remaining": 0}, {"club": "Partick Thistle", "played": "36", "won": "17", "drawn": "15", "lost": "4", "gf": "53", "ga": "36", "gd": "17", "points": "66", "matches_remaining": 0}, {"club": "Arbroath", "played": "36", "won": "13", "drawn": "13", "lost": "10", "gf": "43", "ga": "41", "gd": "2", "points": "52", "matches_remaining": 0}, {"club": "Dunfermline A.", "played": "36", "won": "14", "drawn": "9", "lost": "13", "gf": "52", "ga": "41", "gd": "11", "points": "51", "matches_remaining": 0}, {"club": "Raith Rovers", "played": "36", "won": "12", "drawn": "9", "lost": "15", "gf": "43", "ga": "42", "gd": "1", "points": "45", "matches_remaining": 0}, {"club": "Queen's Park", "played": "36", "won": "9", "drawn": "14", "lost": "13", "gf": "35", "ga": "48", "gd": "-13", "points": "41", "matches_remaining": 0}, {"club": "Ayr United", "played": "36", "won": "8", "drawn": "15", "lost": "13", "gf": "38", "ga": "47", "gd": "-9", "points": "39", "matches_remaining": 0}, {"club": "Morton", "played": "36", "won": "8", "drawn": "14", "lost": "14", "gf": "36", "ga": "52", "gd": "-16", "points": "38", "matches_remaining": 0}, {"club": "Airdrieonians", "played": "36", "won": "8", "drawn": "12", "lost": "16", "gf": "35", "ga": "49", "gd": "-14", "points": "36", "matches_remaining": 0}, {"club": "Ross County", "played": "36", "won": "8", "drawn": "10", "lost": "18", "gf": "36", "ga": "57", "gd": "-21", "points": "34", "matches_remaining": 0}], "League of Ireland": [{"club": "Shamrock Rovers", "played": "14", "won": "8", "drawn": "4", "lost": "2", "gf": "20", "ga": "11", "gd": "9", "points": "28", "matches_remaining": 4}, {"club": "St. Pat's", "played": "14", "won": "8", "drawn": "3", "lost": "3", "gf": "26", "ga": "13", "gd": "13", "points": "27", "matches_remaining": 4}, {"club": "Bohemians", "played": "14", "won": "5", "drawn": "6", "lost": "3", "gf": "16", "ga": "12", "gd": "4", "points": "21", "matches_remaining": 4}, {"club": "Dundalk FC", "played": "14", "won": "5", "drawn": "6", "lost": "3", "gf": "23", "ga": "20", "gd": "3", "points": "21", "matches_remaining": 4}, {"club": "Derry City", "played": "14", "won": "4", "drawn": "6", "lost": "4", "gf": "18", "ga": "17", "gd": "1", "points": "18", "matches_remaining": 4}, {"club": "Shelbourne", "played": "13", "won": "4", "drawn": "4", "lost": "5", "gf": "21", "ga": "22", "gd": "-1", "points": "16", "matches_remaining": 5}, {"club": "Galway United", "played": "13", "won": "4", "drawn": "4", "lost": "5", "gf": "17", "ga": "19", "gd": "-2", "points": "16", "matches_remaining": 5}, {"club": "Drogheda United", "played": "13", "won": "4", "drawn": "4", "lost": "5", "gf": "17", "ga": "20", "gd": "-3", "points": "16", "matches_remaining": 5}, {"club": "Sligo Rovers", "played": "14", "won": "4", "drawn": "2", "lost": "8", "gf": "10", "ga": "18", "gd": "-8", "points": "14", "matches_remaining": 4}, {"club": "Waterford FC", "played": "13", "won": "0", "drawn": "5", "lost": "8", "gf": "9", "ga": "25", "gd": "-16", "points": "5", "matches_remaining": 5}], "Eredivisie": [{"club": "PSV", "played": "32", "won": "25", "drawn": "3", "lost": "4", "gf": "92", "ga": "43", "gd": "49", "points": "78", "matches_remaining": 2}, {"club": "Feyenoord", "played": "32", "won": "18", "drawn": "7", "lost": "7", "gf": "67", "ga": "43", "gd": "24", "points": "61", "matches_remaining": 2}, {"club": "NEC Nijmegen", "played": "32", "won": "15", "drawn": "11", "lost": "6", "gf": "74", "ga": "50", "gd": "24", "points": "56", "matches_remaining": 2}, {"club": "Ajax", "played": "32", "won": "14", "drawn": "13", "lost": "5", "gf": "61", "ga": "39", "gd": "22", "points": "55", "matches_remaining": 2}, {"club": "FC Twente", "played": "32", "won": "14", "drawn": "13", "lost": "5", "gf": "54", "ga": "35", "gd": "19", "points": "55", "matches_remaining": 2}, {"club": "AZ Alkmaar", "played": "32", "won": "14", "drawn": "8", "lost": "10", "gf": "54", "ga": "47", "gd": "7", "points": "50", "matches_remaining": 2}, {"club": "Heerenveen", "played": "32", "won": "14", "drawn": "8", "lost": "10", "gf": "57", "ga": "51", "gd": "6", "points": "50", "matches_remaining": 2}, {"club": "Utrecht", "played": "32", "won": "13", "drawn": "8", "lost": "11", "gf": "51", "ga": "41", "gd": "10", "points": "47", "matches_remaining": 2}, {"club": "Sparta R.", "played": "32", "won": "12", "drawn": "7", "lost": "13", "gf": "38", "ga": "55", "gd": "-17", "points": "43", "matches_remaining": 2}, {"club": "FC Groningen", "played": "32", "won": "12", "drawn": "6", "lost": "14", "gf": "45", "ga": "43", "gd": "2", "points": "42", "matches_remaining": 2}, {"club": "Go Ahead Eagles", "played": "32", "won": "8", "drawn": "14", "lost": "10", "gf": "52", "ga": "47", "gd": "5", "points": "38", "matches_remaining": 2}, {"club": "PEC Zwolle", "played": "32", "won": "9", "drawn": "10", "lost": "13", "gf": "42", "ga": "66", "gd": "-24", "points": "37", "matches_remaining": 2}, {"club": "Fortuna Sittard", "played": "32", "won": "10", "drawn": "6", "lost": "16", "gf": "46", "ga": "59", "gd": "-13", "points": "36", "matches_remaining": 2}, {"club": "Excelsior", "played": "32", "won": "9", "drawn": "7", "lost": "16", "gf": "39", "ga": "53", "gd": "-14", "points": "34", "matches_remaining": 2}, {"club": "Telstar", "played": "32", "won": "7", "drawn": "10", "lost": "15", "gf": "44", "ga": "54", "gd": "-10", "points": "31", "matches_remaining": 2}, {"club": "FC Volendam", "played": "32", "won": "8", "drawn": "7", "lost": "17", "gf": "33", "ga": "52", "gd": "-19", "points": "31", "matches_remaining": 2}, {"club": "NAC Breda", "played": "32", "won": "5", "drawn": "10", "lost": "17", "gf": "30", "ga": "55", "gd": "-25", "points": "25", "matches_remaining": 2}, {"club": "Heracles Almelo", "played": "32", "won": "5", "drawn": "4", "lost": "23", "gf": "34", "ga": "80", "gd": "-46", "points": "19", "matches_remaining": 2}], "Eerste Divisie": [{"club": "ADO Den Haag", "played": "38", "won": "29", "drawn": "2", "lost": "7", "gf": "90", "ga": "37", "gd": "53", "points": "89", "matches_remaining": 0}, {"club": "SC Cambuur", "played": "38", "won": "23", "drawn": "9", "lost": "6", "gf": "75", "ga": "48", "gd": "27", "points": "78", "matches_remaining": 0}, {"club": "Willem II", "played": "38", "won": "20", "drawn": "8", "lost": "10", "gf": "59", "ga": "42", "gd": "17", "points": "68", "matches_remaining": 0}, {"club": "De Graafschap", "played": "38", "won": "18", "drawn": "9", "lost": "11", "gf": "74", "ga": "58", "gd": "16", "points": "63", "matches_remaining": 0}, {"club": "Almere City", "played": "38", "won": "18", "drawn": "4", "lost": "16", "gf": "78", "ga": "63", "gd": "15", "points": "58", "matches_remaining": 0}, {"club": "RKC Waalwijk", "played": "38", "won": "16", "drawn": "10", "lost": "12", "gf": "71", "ga": "59", "gd": "12", "points": "58", "matches_remaining": 0}, {"club": "PSV U21", "played": "38", "won": "17", "drawn": "5", "lost": "16", "gf": "66", "ga": "64", "gd": "2", "points": "56", "matches_remaining": 0}, {"club": "Roda JC", "played": "38", "won": "14", "drawn": "13", "lost": "11", "gf": "59", "ga": "54", "gd": "5", "points": "55", "matches_remaining": 0}, {"club": "FC Den Bosch", "played": "38", "won": "14", "drawn": "9", "lost": "15", "gf": "65", "ga": "69", "gd": "-4", "points": "51", "matches_remaining": 0}, {"club": "FC Dordrecht", "played": "38", "won": "12", "drawn": "11", "lost": "15", "gf": "48", "ga": "56", "gd": "-8", "points": "47", "matches_remaining": 0}, {"club": "FC Eindhoven", "played": "38", "won": "14", "drawn": "5", "lost": "19", "gf": "51", "ga": "69", "gd": "-18", "points": "47", "matches_remaining": 0}, {"club": "Utrecht U21", "played": "38", "won": "12", "drawn": "10", "lost": "16", "gf": "58", "ga": "62", "gd": "-4", "points": "46", "matches_remaining": 0}, {"club": "VVV-Venlo", "played": "38", "won": "13", "drawn": "6", "lost": "19", "gf": "50", "ga": "58", "gd": "-8", "points": "45", "matches_remaining": 0}, {"club": "FC Emmen", "played": "38", "won": "12", "drawn": "9", "lost": "17", "gf": "58", "ga": "72", "gd": "-14", "points": "45", "matches_remaining": 0}, {"club": "Vitesse", "played": "38", "won": "15", "drawn": "11", "lost": "12", "gf": "64", "ga": "55", "gd": "9", "points": "44", "matches_remaining": 0}, {"club": "TOP Oss", "played": "38", "won": "11", "drawn": "11", "lost": "16", "gf": "54", "ga": "64", "gd": "-10", "points": "44", "matches_remaining": 0}, {"club": "AZ Alkmaar U21", "played": "38", "won": "12", "drawn": "4", "lost": "22", "gf": "61", "ga": "76", "gd": "-15", "points": "40", "matches_remaining": 0}, {"club": "Helmond Sport", "played": "38", "won": "10", "drawn": "9", "lost": "19", "gf": "42", "ga": "62", "gd": "-20", "points": "39", "matches_remaining": 0}, {"club": "MVV Maastricht", "played": "38", "won": "9", "drawn": "11", "lost": "18", "gf": "41", "ga": "73", "gd": "-32", "points": "38", "matches_remaining": 0}, {"club": "Ajax U21", "played": "38", "won": "9", "drawn": "8", "lost": "21", "gf": "50", "ga": "73", "gd": "-23", "points": "35", "matches_remaining": 0}], "Belgian Pro League": [{"club": "Union SG", "played": "30", "won": "19", "drawn": "9", "lost": "2", "gf": "50", "ga": "17", "gd": "33", "points": "66", "matches_remaining": 0}, {"club": "Club Brugge", "played": "30", "won": "20", "drawn": "3", "lost": "7", "gf": "59", "ga": "36", "gd": "23", "points": "63", "matches_remaining": 0}, {"club": "Sint-Truiden", "played": "30", "won": "18", "drawn": "3", "lost": "9", "gf": "47", "ga": "35", "gd": "12", "points": "57", "matches_remaining": 0}, {"club": "KAA Gent", "played": "30", "won": "13", "drawn": "6", "lost": "11", "gf": "49", "ga": "43", "gd": "6", "points": "45", "matches_remaining": 0}, {"club": "KV Mechelen", "played": "30", "won": "12", "drawn": "9", "lost": "9", "gf": "39", "ga": "37", "gd": "2", "points": "45", "matches_remaining": 0}, {"club": "RSC Anderlecht", "played": "30", "won": "12", "drawn": "8", "lost": "10", "gf": "43", "ga": "39", "gd": "4", "points": "44", "matches_remaining": 0}, {"club": "Genk", "played": "30", "won": "11", "drawn": "9", "lost": "10", "gf": "46", "ga": "47", "gd": "-1", "points": "42", "matches_remaining": 0}, {"club": "Standard Li\u00e8ge", "played": "30", "won": "11", "drawn": "7", "lost": "12", "gf": "27", "ga": "35", "gd": "-8", "points": "40", "matches_remaining": 0}, {"club": "KVC Westerlo", "played": "30", "won": "10", "drawn": "9", "lost": "11", "gf": "36", "ga": "40", "gd": "-4", "points": "39", "matches_remaining": 0}, {"club": "Royal Antwerp", "played": "30", "won": "9", "drawn": "8", "lost": "13", "gf": "31", "ga": "32", "gd": "-1", "points": "35", "matches_remaining": 0}, {"club": "R Charleroi SC", "played": "30", "won": "9", "drawn": "7", "lost": "14", "gf": "38", "ga": "42", "gd": "-4", "points": "34", "matches_remaining": 0}, {"club": "OH Leuven", "played": "30", "won": "9", "drawn": "7", "lost": "14", "gf": "32", "ga": "43", "gd": "-11", "points": "34", "matches_remaining": 0}, {"club": "Zulte Waregem", "played": "30", "won": "8", "drawn": "8", "lost": "14", "gf": "38", "ga": "47", "gd": "-9", "points": "32", "matches_remaining": 0}, {"club": "Cercle Brugge", "played": "30", "won": "7", "drawn": "10", "lost": "13", "gf": "39", "ga": "47", "gd": "-8", "points": "31", "matches_remaining": 0}, {"club": "La Louvi\u00e8re", "played": "30", "won": "6", "drawn": "13", "lost": "11", "gf": "30", "ga": "37", "gd": "-7", "points": "31", "matches_remaining": 0}, {"club": "FCV Dender EH", "played": "30", "won": "3", "drawn": "10", "lost": "17", "gf": "24", "ga": "51", "gd": "-27", "points": "19", "matches_remaining": 0}], "LaLiga": [{"club": "Barcelona", "played": "34", "won": "29", "drawn": "1", "lost": "4", "gf": "89", "ga": "31", "gd": "58", "points": "88", "matches_remaining": 4}, {"club": "Real Madrid", "played": "34", "won": "24", "drawn": "5", "lost": "5", "gf": "70", "ga": "31", "gd": "39", "points": "77", "matches_remaining": 4}, {"club": "Villarreal", "played": "34", "won": "21", "drawn": "5", "lost": "8", "gf": "64", "ga": "39", "gd": "25", "points": "68", "matches_remaining": 4}, {"club": "Atl\u00e9tico", "played": "34", "won": "19", "drawn": "6", "lost": "9", "gf": "58", "ga": "37", "gd": "21", "points": "63", "matches_remaining": 4}, {"club": "Real Betis", "played": "34", "won": "13", "drawn": "14", "lost": "7", "gf": "52", "ga": "41", "gd": "11", "points": "53", "matches_remaining": 4}, {"club": "Celta de Vigo", "played": "34", "won": "12", "drawn": "11", "lost": "11", "gf": "48", "ga": "44", "gd": "4", "points": "47", "matches_remaining": 4}, {"club": "Getafe", "played": "34", "won": "13", "drawn": "5", "lost": "16", "gf": "28", "ga": "36", "gd": "-8", "points": "44", "matches_remaining": 4}, {"club": "Athletic Club", "played": "34", "won": "13", "drawn": "5", "lost": "16", "gf": "40", "ga": "50", "gd": "-10", "points": "44", "matches_remaining": 4}, {"club": "Real Sociedad", "played": "33", "won": "11", "drawn": "10", "lost": "12", "gf": "52", "ga": "52", "gd": "0", "points": "43", "matches_remaining": 5}, {"club": "CA Osasuna", "played": "34", "won": "11", "drawn": "9", "lost": "14", "gf": "40", "ga": "42", "gd": "-2", "points": "42", "matches_remaining": 4}, {"club": "Rayo Vallecano", "played": "34", "won": "10", "drawn": "12", "lost": "12", "gf": "35", "ga": "41", "gd": "-6", "points": "42", "matches_remaining": 4}, {"club": "Valencia", "played": "34", "won": "10", "drawn": "9", "lost": "15", "gf": "37", "ga": "50", "gd": "-13", "points": "39", "matches_remaining": 4}, {"club": "Espanyol", "played": "34", "won": "10", "drawn": "9", "lost": "15", "gf": "37", "ga": "51", "gd": "-14", "points": "39", "matches_remaining": 4}, {"club": "Elche CF", "played": "34", "won": "9", "drawn": "11", "lost": "14", "gf": "45", "ga": "53", "gd": "-8", "points": "38", "matches_remaining": 4}, {"club": "RCD Mallorca", "played": "34", "won": "10", "drawn": "8", "lost": "16", "gf": "42", "ga": "51", "gd": "-9", "points": "38", "matches_remaining": 4}, {"club": "Girona", "played": "34", "won": "9", "drawn": "11", "lost": "14", "gf": "36", "ga": "51", "gd": "-15", "points": "38", "matches_remaining": 4}, {"club": "Alav\u00e9s", "played": "34", "won": "9", "drawn": "9", "lost": "16", "gf": "40", "ga": "53", "gd": "-13", "points": "36", "matches_remaining": 4}, {"club": "Sevilla FC", "played": "33", "won": "9", "drawn": "7", "lost": "17", "gf": "40", "ga": "55", "gd": "-15", "points": "34", "matches_remaining": 5}, {"club": "Levante", "played": "34", "won": "8", "drawn": "9", "lost": "17", "gf": "38", "ga": "55", "gd": "-17", "points": "33", "matches_remaining": 4}, {"club": "Real Oviedo", "played": "34", "won": "6", "drawn": "10", "lost": "18", "gf": "26", "ga": "54", "gd": "-28", "points": "28", "matches_remaining": 4}], "LaLiga II": [{"club": "Racing", "played": "38", "won": "22", "drawn": "6", "lost": "10", "gf": "79", "ga": "57", "gd": "22", "points": "72", "matches_remaining": 4}, {"club": "Dep. La Coru\u00f1a", "played": "38", "won": "19", "drawn": "11", "lost": "8", "gf": "59", "ga": "41", "gd": "18", "points": "68", "matches_remaining": 4}, {"club": "UD Almer\u00eda", "played": "37", "won": "20", "drawn": "7", "lost": "10", "gf": "74", "ga": "56", "gd": "18", "points": "67", "matches_remaining": 5}, {"club": "UD Las Palmas", "played": "38", "won": "18", "drawn": "12", "lost": "8", "gf": "51", "ga": "32", "gd": "19", "points": "66", "matches_remaining": 4}, {"club": "Castell\u00f3n", "played": "38", "won": "18", "drawn": "10", "lost": "10", "gf": "65", "ga": "48", "gd": "17", "points": "64", "matches_remaining": 4}, {"club": "M\u00e1laga CF", "played": "38", "won": "18", "drawn": "9", "lost": "11", "gf": "66", "ga": "49", "gd": "17", "points": "63", "matches_remaining": 4}, {"club": "Burgos CF", "played": "38", "won": "17", "drawn": "11", "lost": "10", "gf": "44", "ga": "33", "gd": "11", "points": "62", "matches_remaining": 4}, {"club": "SD Eibar", "played": "38", "won": "17", "drawn": "10", "lost": "11", "gf": "47", "ga": "36", "gd": "11", "points": "61", "matches_remaining": 4}, {"club": "C\u00f3rdoba CF", "played": "38", "won": "16", "drawn": "9", "lost": "13", "gf": "54", "ga": "56", "gd": "-2", "points": "57", "matches_remaining": 4}, {"club": "FC Andorra", "played": "38", "won": "15", "drawn": "10", "lost": "13", "gf": "56", "ga": "48", "gd": "8", "points": "55", "matches_remaining": 4}, {"club": "AD Ceuta", "played": "38", "won": "15", "drawn": "9", "lost": "14", "gf": "46", "ga": "58", "gd": "-12", "points": "54", "matches_remaining": 4}, {"club": "Sporting Gij\u00f3n", "played": "38", "won": "15", "drawn": "7", "lost": "16", "gf": "51", "ga": "49", "gd": "2", "points": "52", "matches_remaining": 4}, {"club": "Albacete", "played": "38", "won": "13", "drawn": "11", "lost": "14", "gf": "49", "ga": "51", "gd": "-2", "points": "50", "matches_remaining": 4}, {"club": "Granada CF", "played": "38", "won": "12", "drawn": "12", "lost": "14", "gf": "48", "ga": "49", "gd": "-1", "points": "48", "matches_remaining": 4}, {"club": "Real Valladolid", "played": "38", "won": "11", "drawn": "10", "lost": "17", "gf": "41", "ga": "50", "gd": "-9", "points": "43", "matches_remaining": 4}, {"club": "CD Legan\u00e9s", "played": "38", "won": "10", "drawn": "12", "lost": "16", "gf": "41", "ga": "46", "gd": "-5", "points": "42", "matches_remaining": 4}, {"club": "Real Sociedad B", "played": "38", "won": "11", "drawn": "9", "lost": "18", "gf": "46", "ga": "54", "gd": "-8", "points": "42", "matches_remaining": 4}, {"club": "C\u00e1diz CF", "played": "38", "won": "10", "drawn": "9", "lost": "19", "gf": "36", "ga": "55", "gd": "-19", "points": "39", "matches_remaining": 4}, {"club": "CD Mirand\u00e9s", "played": "37", "won": "9", "drawn": "9", "lost": "19", "gf": "40", "ga": "60", "gd": "-20", "points": "36", "matches_remaining": 5}, {"club": "SD Huesca", "played": "38", "won": "9", "drawn": "9", "lost": "20", "gf": "39", "ga": "59", "gd": "-20", "points": "36", "matches_remaining": 4}, {"club": "Real Zaragoza", "played": "38", "won": "8", "drawn": "11", "lost": "19", "gf": "33", "ga": "51", "gd": "-18", "points": "35", "matches_remaining": 4}, {"club": "CyD Leonesa", "played": "38", "won": "8", "drawn": "9", "lost": "21", "gf": "35", "ga": "62", "gd": "-27", "points": "33", "matches_remaining": 4}], "Bundesliga": [{"club": "Bayern Munich", "played": "32", "won": "26", "drawn": "5", "lost": "1", "gf": "116", "ga": "35", "gd": "81", "points": "83", "matches_remaining": 2}, {"club": "Dortmund", "played": "32", "won": "20", "drawn": "7", "lost": "5", "gf": "65", "ga": "32", "gd": "33", "points": "67", "matches_remaining": 2}, {"club": "Leipzig", "played": "32", "won": "19", "drawn": "5", "lost": "8", "gf": "63", "ga": "42", "gd": "21", "points": "62", "matches_remaining": 2}, {"club": "Leverkusen", "played": "32", "won": "17", "drawn": "7", "lost": "8", "gf": "66", "ga": "43", "gd": "23", "points": "58", "matches_remaining": 2}, {"club": "Stuttgart", "played": "32", "won": "17", "drawn": "7", "lost": "8", "gf": "66", "ga": "46", "gd": "20", "points": "58", "matches_remaining": 2}, {"club": "Hoffenheim", "played": "32", "won": "17", "drawn": "7", "lost": "8", "gf": "64", "ga": "48", "gd": "16", "points": "58", "matches_remaining": 2}, {"club": "Freiburg", "played": "32", "won": "12", "drawn": "8", "lost": "12", "gf": "45", "ga": "53", "gd": "-8", "points": "44", "matches_remaining": 2}, {"club": "Frankfurt", "played": "32", "won": "11", "drawn": "10", "lost": "11", "gf": "57", "ga": "60", "gd": "-3", "points": "43", "matches_remaining": 2}, {"club": "Augsburg", "played": "32", "won": "11", "drawn": "7", "lost": "14", "gf": "42", "ga": "56", "gd": "-14", "points": "40", "matches_remaining": 2}, {"club": "Mainz", "played": "32", "won": "9", "drawn": "10", "lost": "13", "gf": "41", "ga": "50", "gd": "-9", "points": "37", "matches_remaining": 2}, {"club": "M\u00f6nchengladbach", "played": "32", "won": "8", "drawn": "11", "lost": "13", "gf": "37", "ga": "50", "gd": "-13", "points": "35", "matches_remaining": 2}, {"club": "Hamburg", "played": "32", "won": "8", "drawn": "10", "lost": "14", "gf": "36", "ga": "51", "gd": "-15", "points": "34", "matches_remaining": 2}, {"club": "Union Berlin", "played": "32", "won": "8", "drawn": "9", "lost": "15", "gf": "37", "ga": "57", "gd": "-20", "points": "33", "matches_remaining": 2}, {"club": "1.FC K\u00f6ln", "played": "32", "won": "7", "drawn": "11", "lost": "14", "gf": "47", "ga": "55", "gd": "-8", "points": "32", "matches_remaining": 2}, {"club": "Werder Bremen", "played": "32", "won": "8", "drawn": "8", "lost": "16", "gf": "37", "ga": "57", "gd": "-20", "points": "32", "matches_remaining": 2}, {"club": "Wolfsburg", "played": "32", "won": "6", "drawn": "8", "lost": "18", "gf": "42", "ga": "67", "gd": "-25", "points": "26", "matches_remaining": 2}, {"club": "St. Pauli", "played": "32", "won": "6", "drawn": "8", "lost": "18", "gf": "27", "ga": "55", "gd": "-28", "points": "26", "matches_remaining": 2}, {"club": "Heidenheim", "played": "32", "won": "5", "drawn": "8", "lost": "19", "gf": "38", "ga": "69", "gd": "-31", "points": "23", "matches_remaining": 2}], "2. Bundesliga": [{"club": "FC Schalke 04", "played": "32", "won": "20", "drawn": "7", "lost": "5", "gf": "49", "ga": "28", "gd": "21", "points": "67", "matches_remaining": 2}, {"club": "SV Elversberg", "played": "32", "won": "17", "drawn": "8", "lost": "7", "gf": "60", "ga": "36", "gd": "24", "points": "59", "matches_remaining": 2}, {"club": "Hannover 96", "played": "32", "won": "16", "drawn": "10", "lost": "6", "gf": "56", "ga": "40", "gd": "16", "points": "58", "matches_remaining": 2}, {"club": "SC Paderborn", "played": "32", "won": "17", "drawn": "7", "lost": "8", "gf": "55", "ga": "43", "gd": "12", "points": "58", "matches_remaining": 2}, {"club": "Darmstadt 98", "played": "32", "won": "13", "drawn": "12", "lost": "7", "gf": "56", "ga": "42", "gd": "14", "points": "51", "matches_remaining": 2}, {"club": "Hertha BSC", "played": "32", "won": "13", "drawn": "9", "lost": "10", "gf": "44", "ga": "37", "gd": "7", "points": "48", "matches_remaining": 2}, {"club": "1.FC K'lautern", "played": "32", "won": "14", "drawn": "4", "lost": "14", "gf": "49", "ga": "47", "gd": "2", "points": "46", "matches_remaining": 2}, {"club": "Karlsruher SC", "played": "32", "won": "12", "drawn": "7", "lost": "13", "gf": "50", "ga": "60", "gd": "-10", "points": "43", "matches_remaining": 2}, {"club": "1.FC Nuremberg", "played": "32", "won": "11", "drawn": "9", "lost": "12", "gf": "41", "ga": "42", "gd": "-1", "points": "42", "matches_remaining": 2}, {"club": "Holstein Kiel", "played": "32", "won": "11", "drawn": "8", "lost": "13", "gf": "42", "ga": "43", "gd": "-1", "points": "41", "matches_remaining": 2}, {"club": "VfL Bochum", "played": "32", "won": "10", "drawn": "10", "lost": "12", "gf": "46", "ga": "45", "gd": "1", "points": "40", "matches_remaining": 2}, {"club": "Dynamo Dresden", "played": "32", "won": "10", "drawn": "8", "lost": "14", "gf": "51", "ga": "50", "gd": "1", "points": "38", "matches_remaining": 2}, {"club": "Arm. Bielefeld", "played": "32", "won": "9", "drawn": "9", "lost": "14", "gf": "47", "ga": "48", "gd": "-1", "points": "36", "matches_remaining": 2}, {"club": "1.FC Magdeburg", "played": "32", "won": "11", "drawn": "3", "lost": "18", "gf": "49", "ga": "56", "gd": "-7", "points": "36", "matches_remaining": 2}, {"club": "E. Braunschweig", "played": "32", "won": "9", "drawn": "7", "lost": "16", "gf": "34", "ga": "52", "gd": "-18", "points": "34", "matches_remaining": 2}, {"club": "F. D\u00fcsseldorf", "played": "32", "won": "10", "drawn": "4", "lost": "18", "gf": "30", "ga": "49", "gd": "-19", "points": "34", "matches_remaining": 2}, {"club": "Greuther F\u00fcrth", "played": "32", "won": "9", "drawn": "7", "lost": "16", "gf": "45", "ga": "66", "gd": "-21", "points": "34", "matches_remaining": 2}, {"club": "Pr. M\u00fcnster", "played": "32", "won": "6", "drawn": "11", "lost": "15", "gf": "37", "ga": "57", "gd": "-20", "points": "29", "matches_remaining": 2}], "3. Liga": [{"club": "VfL Osnabr\u00fcck", "played": "36", "won": "23", "drawn": "7", "lost": "6", "gf": "61", "ga": "30", "gd": "31", "points": "76", "matches_remaining": 2}, {"club": "Energie Cottbus", "played": "36", "won": "19", "drawn": "9", "lost": "8", "gf": "69", "ga": "50", "gd": "19", "points": "66", "matches_remaining": 2}, {"club": "MSV Duisburg", "played": "36", "won": "19", "drawn": "9", "lost": "8", "gf": "65", "ga": "48", "gd": "17", "points": "66", "matches_remaining": 2}, {"club": "RW Essen", "played": "36", "won": "18", "drawn": "10", "lost": "8", "gf": "74", "ga": "64", "gd": "10", "points": "64", "matches_remaining": 2}, {"club": "SC Verl", "played": "36", "won": "17", "drawn": "10", "lost": "9", "gf": "79", "ga": "47", "gd": "32", "points": "61", "matches_remaining": 2}, {"club": "Hansa Rostock", "played": "36", "won": "16", "drawn": "13", "lost": "7", "gf": "65", "ga": "43", "gd": "22", "points": "61", "matches_remaining": 2}, {"club": "Alem. Aachen", "played": "36", "won": "17", "drawn": "7", "lost": "12", "gf": "67", "ga": "56", "gd": "11", "points": "58", "matches_remaining": 2}, {"club": "1860 Munich", "played": "36", "won": "15", "drawn": "11", "lost": "10", "gf": "53", "ga": "48", "gd": "5", "points": "56", "matches_remaining": 2}, {"club": "Wehen Wiesbaden", "played": "36", "won": "14", "drawn": "8", "lost": "14", "gf": "51", "ga": "50", "gd": "1", "points": "50", "matches_remaining": 2}, {"club": "Viktoria K\u00f6ln", "played": "36", "won": "15", "drawn": "5", "lost": "16", "gf": "50", "ga": "49", "gd": "1", "points": "50", "matches_remaining": 2}, {"club": "J. Regensburg", "played": "36", "won": "14", "drawn": "7", "lost": "15", "gf": "54", "ga": "56", "gd": "-2", "points": "49", "matches_remaining": 2}, {"club": "W. Mannheim", "played": "36", "won": "14", "drawn": "7", "lost": "15", "gf": "57", "ga": "67", "gd": "-10", "points": "49", "matches_remaining": 2}, {"club": "Stuttgart II", "played": "36", "won": "13", "drawn": "7", "lost": "16", "gf": "51", "ga": "60", "gd": "-9", "points": "46", "matches_remaining": 2}, {"club": "Saarbr\u00fccken", "played": "36", "won": "10", "drawn": "14", "lost": "12", "gf": "46", "ga": "50", "gd": "-4", "points": "44", "matches_remaining": 2}, {"club": "FC Ingolstadt", "played": "36", "won": "11", "drawn": "10", "lost": "15", "gf": "58", "ga": "54", "gd": "4", "points": "43", "matches_remaining": 2}, {"club": "Hoffenheim II", "played": "36", "won": "11", "drawn": "7", "lost": "18", "gf": "62", "ga": "67", "gd": "-5", "points": "40", "matches_remaining": 2}, {"club": "TSV Havelse", "played": "36", "won": "8", "drawn": "8", "lost": "20", "gf": "53", "ga": "81", "gd": "-28", "points": "32", "matches_remaining": 2}, {"club": "SSV Ulm 1846", "played": "36", "won": "9", "drawn": "5", "lost": "22", "gf": "46", "ga": "74", "gd": "-28", "points": "32", "matches_remaining": 2}, {"club": "Erzgebirge Aue", "played": "36", "won": "6", "drawn": "12", "lost": "18", "gf": "47", "ga": "68", "gd": "-21", "points": "30", "matches_remaining": 2}, {"club": "Schweinfurt 05", "played": "36", "won": "5", "drawn": "6", "lost": "25", "gf": "34", "ga": "80", "gd": "-46", "points": "21", "matches_remaining": 2}], "Serie A": [{"club": "Inter", "played": "35", "won": "26", "drawn": "4", "lost": "5", "gf": "82", "ga": "31", "gd": "51", "points": "82", "matches_remaining": 3}, {"club": "Napoli", "played": "35", "won": "21", "drawn": "7", "lost": "7", "gf": "52", "ga": "33", "gd": "19", "points": "70", "matches_remaining": 3}, {"club": "AC Milan", "played": "35", "won": "19", "drawn": "10", "lost": "6", "gf": "48", "ga": "29", "gd": "19", "points": "67", "matches_remaining": 3}, {"club": "Juventus", "played": "35", "won": "18", "drawn": "11", "lost": "6", "gf": "58", "ga": "30", "gd": "28", "points": "65", "matches_remaining": 3}, {"club": "Como", "played": "35", "won": "17", "drawn": "11", "lost": "7", "gf": "59", "ga": "28", "gd": "31", "points": "62", "matches_remaining": 3}, {"club": "Roma", "played": "34", "won": "19", "drawn": "4", "lost": "11", "gf": "48", "ga": "29", "gd": "19", "points": "61", "matches_remaining": 4}, {"club": "Atalanta", "played": "35", "won": "14", "drawn": "13", "lost": "8", "gf": "47", "ga": "32", "gd": "15", "points": "55", "matches_remaining": 3}, {"club": "Bologna", "played": "35", "won": "14", "drawn": "7", "lost": "14", "gf": "42", "ga": "41", "gd": "1", "points": "49", "matches_remaining": 3}, {"club": "Sassuolo", "played": "35", "won": "14", "drawn": "7", "lost": "14", "gf": "43", "ga": "44", "gd": "-1", "points": "49", "matches_remaining": 3}, {"club": "Lazio", "played": "34", "won": "12", "drawn": "12", "lost": "10", "gf": "37", "ga": "33", "gd": "4", "points": "48", "matches_remaining": 4}, {"club": "Udinese", "played": "35", "won": "13", "drawn": "8", "lost": "14", "gf": "43", "ga": "46", "gd": "-3", "points": "47", "matches_remaining": 3}, {"club": "Parma", "played": "35", "won": "10", "drawn": "12", "lost": "13", "gf": "25", "ga": "42", "gd": "-17", "points": "42", "matches_remaining": 3}, {"club": "Torino", "played": "35", "won": "11", "drawn": "8", "lost": "16", "gf": "39", "ga": "58", "gd": "-19", "points": "41", "matches_remaining": 3}, {"club": "Genoa", "played": "35", "won": "10", "drawn": "10", "lost": "15", "gf": "40", "ga": "48", "gd": "-8", "points": "40", "matches_remaining": 3}, {"club": "Fiorentina", "played": "34", "won": "8", "drawn": "13", "lost": "13", "gf": "38", "ga": "45", "gd": "-7", "points": "37", "matches_remaining": 4}, {"club": "Cagliari", "played": "35", "won": "9", "drawn": "10", "lost": "16", "gf": "36", "ga": "49", "gd": "-13", "points": "37", "matches_remaining": 3}, {"club": "Lecce", "played": "35", "won": "8", "drawn": "8", "lost": "19", "gf": "24", "ga": "47", "gd": "-23", "points": "32", "matches_remaining": 3}, {"club": "Cremonese", "played": "34", "won": "6", "drawn": "10", "lost": "18", "gf": "26", "ga": "51", "gd": "-25", "points": "28", "matches_remaining": 4}, {"club": "Hellas Verona", "played": "35", "won": "3", "drawn": "11", "lost": "21", "gf": "24", "ga": "57", "gd": "-33", "points": "20", "matches_remaining": 3}, {"club": "Pisa", "played": "35", "won": "2", "drawn": "12", "lost": "21", "gf": "25", "ga": "63", "gd": "-38", "points": "18", "matches_remaining": 3}], "Serie B": [{"club": "Venezia", "played": "37", "won": "23", "drawn": "10", "lost": "4", "gf": "75", "ga": "31", "gd": "44", "points": "79", "matches_remaining": 1}, {"club": "Frosinone", "played": "37", "won": "22", "drawn": "12", "lost": "3", "gf": "71", "ga": "34", "gd": "37", "points": "78", "matches_remaining": 1}, {"club": "Monza", "played": "37", "won": "22", "drawn": "9", "lost": "6", "gf": "59", "ga": "30", "gd": "29", "points": "75", "matches_remaining": 1}, {"club": "Palermo", "played": "37", "won": "20", "drawn": "12", "lost": "5", "gf": "61", "ga": "31", "gd": "30", "points": "72", "matches_remaining": 1}, {"club": "Catanzaro", "played": "37", "won": "15", "drawn": "14", "lost": "8", "gf": "60", "ga": "48", "gd": "12", "points": "59", "matches_remaining": 1}, {"club": "Modena", "played": "37", "won": "15", "drawn": "10", "lost": "12", "gf": "49", "ga": "35", "gd": "14", "points": "55", "matches_remaining": 1}, {"club": "Juve Stabia", "played": "37", "won": "11", "drawn": "17", "lost": "9", "gf": "43", "ga": "44", "gd": "-1", "points": "50", "matches_remaining": 1}, {"club": "Mantova", "played": "37", "won": "13", "drawn": "7", "lost": "17", "gf": "45", "ga": "52", "gd": "-7", "points": "46", "matches_remaining": 1}, {"club": "Cesena", "played": "37", "won": "12", "drawn": "10", "lost": "15", "gf": "42", "ga": "52", "gd": "-10", "points": "46", "matches_remaining": 1}, {"club": "Avellino", "played": "37", "won": "12", "drawn": "10", "lost": "15", "gf": "42", "ga": "55", "gd": "-13", "points": "46", "matches_remaining": 1}, {"club": "Carrarese", "played": "37", "won": "10", "drawn": "14", "lost": "13", "gf": "46", "ga": "50", "gd": "-4", "points": "44", "matches_remaining": 1}, {"club": "Sampdoria", "played": "37", "won": "11", "drawn": "11", "lost": "15", "gf": "35", "ga": "47", "gd": "-12", "points": "44", "matches_remaining": 1}, {"club": "Padova", "played": "37", "won": "11", "drawn": "10", "lost": "16", "gf": "35", "ga": "46", "gd": "-11", "points": "43", "matches_remaining": 1}, {"club": "FC Empoli", "played": "37", "won": "9", "drawn": "13", "lost": "15", "gf": "45", "ga": "52", "gd": "-7", "points": "40", "matches_remaining": 1}, {"club": "S\u00fcdtirol", "played": "37", "won": "8", "drawn": "16", "lost": "13", "gf": "37", "ga": "47", "gd": "-10", "points": "40", "matches_remaining": 1}, {"club": "Virtus Entella", "played": "37", "won": "9", "drawn": "12", "lost": "16", "gf": "34", "ga": "50", "gd": "-16", "points": "39", "matches_remaining": 1}, {"club": "Bari", "played": "37", "won": "9", "drawn": "10", "lost": "18", "gf": "35", "ga": "58", "gd": "-23", "points": "37", "matches_remaining": 1}, {"club": "Pescara", "played": "37", "won": "7", "drawn": "13", "lost": "17", "gf": "50", "ga": "65", "gd": "-15", "points": "34", "matches_remaining": 1}, {"club": "Spezia Calcio", "played": "37", "won": "8", "drawn": "10", "lost": "19", "gf": "42", "ga": "58", "gd": "-16", "points": "34", "matches_remaining": 1}, {"club": "Reggiana", "played": "37", "won": "8", "drawn": "10", "lost": "19", "gf": "35", "ga": "56", "gd": "-21", "points": "34", "matches_remaining": 1}], "Ligue 1": [{"club": "PSG", "played": "31", "won": "22", "drawn": "4", "lost": "5", "gf": "70", "ga": "27", "gd": "43", "points": "70", "matches_remaining": 3}, {"club": "Lens", "played": "31", "won": "20", "drawn": "4", "lost": "7", "gf": "61", "ga": "33", "gd": "28", "points": "64", "matches_remaining": 3}, {"club": "Lyon", "played": "32", "won": "18", "drawn": "6", "lost": "8", "gf": "52", "ga": "34", "gd": "18", "points": "60", "matches_remaining": 2}, {"club": "Lille", "played": "32", "won": "17", "drawn": "7", "lost": "8", "gf": "51", "ga": "35", "gd": "16", "points": "58", "matches_remaining": 2}, {"club": "Stade Rennais", "played": "32", "won": "16", "drawn": "8", "lost": "8", "gf": "56", "ga": "46", "gd": "10", "points": "56", "matches_remaining": 2}, {"club": "Monaco", "played": "32", "won": "16", "drawn": "6", "lost": "10", "gf": "56", "ga": "48", "gd": "8", "points": "54", "matches_remaining": 2}, {"club": "Marseille", "played": "32", "won": "16", "drawn": "5", "lost": "11", "gf": "59", "ga": "44", "gd": "15", "points": "53", "matches_remaining": 2}, {"club": "R. Strasbourg", "played": "31", "won": "13", "drawn": "7", "lost": "11", "gf": "50", "ga": "41", "gd": "9", "points": "46", "matches_remaining": 3}, {"club": "FC Lorient", "played": "32", "won": "10", "drawn": "12", "lost": "10", "gf": "44", "ga": "49", "gd": "-5", "points": "42", "matches_remaining": 2}, {"club": "Toulouse", "played": "32", "won": "11", "drawn": "8", "lost": "13", "gf": "45", "ga": "45", "gd": "0", "points": "41", "matches_remaining": 2}, {"club": "Paris FC", "played": "32", "won": "10", "drawn": "11", "lost": "11", "gf": "44", "ga": "47", "gd": "-3", "points": "41", "matches_remaining": 2}, {"club": "Stade Brestois", "played": "31", "won": "10", "drawn": "8", "lost": "13", "gf": "41", "ga": "51", "gd": "-10", "points": "38", "matches_remaining": 3}, {"club": "Angers SCO", "played": "32", "won": "9", "drawn": "7", "lost": "16", "gf": "27", "ga": "46", "gd": "-19", "points": "34", "matches_remaining": 2}, {"club": "Le Havre AC", "played": "32", "won": "6", "drawn": "14", "lost": "12", "gf": "30", "ga": "43", "gd": "-13", "points": "32", "matches_remaining": 2}, {"club": "Nice", "played": "32", "won": "7", "drawn": "10", "lost": "15", "gf": "36", "ga": "58", "gd": "-22", "points": "31", "matches_remaining": 2}, {"club": "AJ Auxerre", "played": "32", "won": "6", "drawn": "10", "lost": "16", "gf": "30", "ga": "43", "gd": "-13", "points": "28", "matches_remaining": 2}, {"club": "FC Nantes", "played": "32", "won": "5", "drawn": "8", "lost": "19", "gf": "29", "ga": "51", "gd": "-22", "points": "23", "matches_remaining": 2}, {"club": "FC Metz", "played": "32", "won": "3", "drawn": "7", "lost": "22", "gf": "32", "ga": "72", "gd": "-40", "points": "16", "matches_remaining": 2}], "Ligue 2": [{"club": "Troyes", "played": "33", "won": "20", "drawn": "7", "lost": "6", "gf": "60", "ga": "32", "gd": "28", "points": "67", "matches_remaining": 1}, {"club": "Le Mans FC", "played": "33", "won": "15", "drawn": "14", "lost": "4", "gf": "48", "ga": "31", "gd": "17", "points": "59", "matches_remaining": 1}, {"club": "Saint-\u00c9tienne", "played": "33", "won": "17", "drawn": "6", "lost": "10", "gf": "54", "ga": "38", "gd": "16", "points": "57", "matches_remaining": 1}, {"club": "Red Star FC", "played": "33", "won": "16", "drawn": "9", "lost": "8", "gf": "47", "ga": "36", "gd": "11", "points": "57", "matches_remaining": 1}, {"club": "Rodez AF", "played": "33", "won": "14", "drawn": "13", "lost": "6", "gf": "43", "ga": "38", "gd": "5", "points": "55", "matches_remaining": 1}, {"club": "Stade Reims", "played": "33", "won": "13", "drawn": "14", "lost": "6", "gf": "48", "ga": "32", "gd": "16", "points": "53", "matches_remaining": 1}, {"club": "FC Annecy", "played": "33", "won": "15", "drawn": "7", "lost": "11", "gf": "48", "ga": "37", "gd": "11", "points": "52", "matches_remaining": 1}, {"club": "Montpellier", "played": "33", "won": "14", "drawn": "8", "lost": "11", "gf": "40", "ga": "30", "gd": "10", "points": "50", "matches_remaining": 1}, {"club": "Pau FC", "played": "33", "won": "12", "drawn": "9", "lost": "12", "gf": "45", "ga": "57", "gd": "-12", "points": "45", "matches_remaining": 1}, {"club": "USL Dunkerque", "played": "33", "won": "11", "drawn": "10", "lost": "12", "gf": "51", "ga": "42", "gd": "9", "points": "43", "matches_remaining": 1}, {"club": "Guingamp", "played": "33", "won": "10", "drawn": "10", "lost": "13", "gf": "42", "ga": "48", "gd": "-6", "points": "40", "matches_remaining": 1}, {"club": "Grenoble", "played": "33", "won": "7", "drawn": "15", "lost": "11", "gf": "32", "ga": "39", "gd": "-7", "points": "36", "matches_remaining": 1}, {"club": "US Boulogne", "played": "33", "won": "9", "drawn": "9", "lost": "15", "gf": "33", "ga": "47", "gd": "-14", "points": "36", "matches_remaining": 1}, {"club": "Clermont Foot", "played": "33", "won": "8", "drawn": "10", "lost": "15", "gf": "37", "ga": "44", "gd": "-7", "points": "34", "matches_remaining": 1}, {"club": "AS Nancy", "played": "33", "won": "8", "drawn": "10", "lost": "15", "gf": "32", "ga": "50", "gd": "-18", "points": "34", "matches_remaining": 1}, {"club": "Stade Lavallois", "played": "33", "won": "5", "drawn": "14", "lost": "14", "gf": "28", "ga": "47", "gd": "-19", "points": "29", "matches_remaining": 1}, {"club": "SC Bastia", "played": "33", "won": "5", "drawn": "13", "lost": "15", "gf": "23", "ga": "40", "gd": "-17", "points": "28", "matches_remaining": 1}, {"club": "Amiens SC", "played": "33", "won": "6", "drawn": "6", "lost": "21", "gf": "37", "ga": "60", "gd": "-23", "points": "24", "matches_remaining": 1}], "Danish Superliga": [{"club": "Aarhus GF", "played": "22", "won": "15", "drawn": "5", "lost": "2", "gf": "46", "ga": "23", "gd": "23", "points": "50", "matches_remaining": 0}, {"club": "Midtjylland", "played": "22", "won": "13", "drawn": "7", "lost": "2", "gf": "58", "ga": "23", "gd": "35", "points": "46", "matches_remaining": 0}, {"club": "S\u00f6nderjyske", "played": "22", "won": "10", "drawn": "6", "lost": "6", "gf": "34", "ga": "28", "gd": "6", "points": "36", "matches_remaining": 0}, {"club": "Br\u00f6ndby IF", "played": "22", "won": "10", "drawn": "4", "lost": "8", "gf": "31", "ga": "22", "gd": "9", "points": "34", "matches_remaining": 0}, {"club": "Viborg FF", "played": "22", "won": "10", "drawn": "3", "lost": "9", "gf": "37", "ga": "35", "gd": "2", "points": "33", "matches_remaining": 0}, {"club": "Nordsjaelland", "played": "22", "won": "10", "drawn": "1", "lost": "11", "gf": "37", "ga": "39", "gd": "-2", "points": "31", "matches_remaining": 0}, {"club": "Copenhagen", "played": "22", "won": "8", "drawn": "5", "lost": "9", "gf": "35", "ga": "34", "gd": "1", "points": "29", "matches_remaining": 0}, {"club": "Odense BK", "played": "22", "won": "7", "drawn": "6", "lost": "9", "gf": "36", "ga": "46", "gd": "-10", "points": "27", "matches_remaining": 0}, {"club": "Randers FC", "played": "22", "won": "7", "drawn": "5", "lost": "10", "gf": "22", "ga": "27", "gd": "-5", "points": "26", "matches_remaining": 0}, {"club": "FC Fredericia", "played": "22", "won": "7", "drawn": "3", "lost": "12", "gf": "30", "ga": "49", "gd": "-19", "points": "24", "matches_remaining": 0}, {"club": "Silkeborg IF", "played": "22", "won": "5", "drawn": "4", "lost": "13", "gf": "24", "ga": "45", "gd": "-21", "points": "19", "matches_remaining": 0}, {"club": "Vejle BK", "played": "22", "won": "3", "drawn": "5", "lost": "14", "gf": "26", "ga": "45", "gd": "-19", "points": "14", "matches_remaining": 0}], "Allsvenskan": [{"club": "Sirius", "played": "6", "won": "5", "drawn": "1", "lost": "0", "gf": "17", "ga": "7", "gd": "10", "points": "16", "matches_remaining": 24}, {"club": "Hammarby", "played": "6", "won": "3", "drawn": "2", "lost": "1", "gf": "16", "ga": "5", "gd": "11", "points": "11", "matches_remaining": 24}, {"club": "Elfsborg", "played": "6", "won": "3", "drawn": "2", "lost": "1", "gf": "9", "ga": "6", "gd": "3", "points": "11", "matches_remaining": 24}, {"club": "H\u00e4cken", "played": "6", "won": "2", "drawn": "4", "lost": "0", "gf": "12", "ga": "9", "gd": "3", "points": "10", "matches_remaining": 24}, {"club": "Malm\u00f6", "played": "6", "won": "3", "drawn": "1", "lost": "2", "gf": "10", "ga": "8", "gd": "2", "points": "10", "matches_remaining": 24}, {"club": "Mj\u00e4llby AIF", "played": "6", "won": "3", "drawn": "1", "lost": "2", "gf": "8", "ga": "7", "gd": "1", "points": "10", "matches_remaining": 24}, {"club": "AIK", "played": "6", "won": "2", "drawn": "2", "lost": "2", "gf": "7", "ga": "7", "gd": "0", "points": "8", "matches_remaining": 24}, {"club": "Degerfors", "played": "6", "won": "2", "drawn": "2", "lost": "2", "gf": "7", "ga": "7", "gd": "0", "points": "8", "matches_remaining": 24}, {"club": "V\u00e4ster\u00e5s SK", "played": "6", "won": "2", "drawn": "2", "lost": "2", "gf": "9", "ga": "13", "gd": "-4", "points": "8", "matches_remaining": 24}, {"club": "Djurg\u00e5rden", "played": "5", "won": "2", "drawn": "1", "lost": "2", "gf": "6", "ga": "6", "gd": "0", "points": "7", "matches_remaining": 25}, {"club": "GAIS", "played": "6", "won": "1", "drawn": "2", "lost": "3", "gf": "8", "ga": "8", "gd": "0", "points": "5", "matches_remaining": 24}, {"club": "Brommapojkarna", "played": "5", "won": "1", "drawn": "2", "lost": "2", "gf": "7", "ga": "10", "gd": "-3", "points": "5", "matches_remaining": 25}, {"club": "\u00d6rgryte", "played": "6", "won": "1", "drawn": "2", "lost": "3", "gf": "6", "ga": "16", "gd": "-10", "points": "5", "matches_remaining": 24}, {"club": "Kalmar FF", "played": "6", "won": "1", "drawn": "1", "lost": "4", "gf": "7", "ga": "10", "gd": "-3", "points": "4", "matches_remaining": 24}, {"club": "IFK G\u00f6teborg", "played": "5", "won": "0", "drawn": "3", "lost": "2", "gf": "4", "ga": "8", "gd": "-4", "points": "3", "matches_remaining": 25}, {"club": "Halmstads BK", "played": "5", "won": "0", "drawn": "2", "lost": "3", "gf": "3", "ga": "9", "gd": "-6", "points": "2", "matches_remaining": 25}], "Eliteserien": [{"club": "Troms\u00f8 IL", "played": "9", "won": "6", "drawn": "2", "lost": "1", "gf": "15", "ga": "8", "gd": "7", "points": "20", "matches_remaining": 21}, {"club": "Viking FK", "played": "7", "won": "6", "drawn": "0", "lost": "1", "gf": "19", "ga": "6", "gd": "13", "points": "18", "matches_remaining": 23}, {"club": "Lillestr\u00f8m SK", "played": "7", "won": "5", "drawn": "1", "lost": "1", "gf": "13", "ga": "4", "gd": "9", "points": "16", "matches_remaining": 23}, {"club": "Bod\u00f8/Glimt", "played": "6", "won": "4", "drawn": "1", "lost": "1", "gf": "14", "ga": "6", "gd": "8", "points": "13", "matches_remaining": 24}, {"club": "SK Brann", "played": "8", "won": "3", "drawn": "1", "lost": "4", "gf": "19", "ga": "12", "gd": "7", "points": "10", "matches_remaining": 22}, {"club": "Molde FK", "played": "6", "won": "3", "drawn": "1", "lost": "2", "gf": "13", "ga": "8", "gd": "5", "points": "10", "matches_remaining": 24}, {"club": "HamKam", "played": "6", "won": "3", "drawn": "1", "lost": "2", "gf": "11", "ga": "12", "gd": "-1", "points": "10", "matches_remaining": 24}, {"club": "Sandefjord", "played": "7", "won": "3", "drawn": "1", "lost": "3", "gf": "5", "ga": "7", "gd": "-2", "points": "10", "matches_remaining": 23}, {"club": "Kristiansund BK", "played": "6", "won": "2", "drawn": "2", "lost": "2", "gf": "7", "ga": "9", "gd": "-2", "points": "8", "matches_remaining": 24}, {"club": "KFUM Oslo", "played": "7", "won": "2", "drawn": "2", "lost": "3", "gf": "9", "ga": "13", "gd": "-4", "points": "8", "matches_remaining": 23}, {"club": "V\u00e5lerenga", "played": "7", "won": "2", "drawn": "2", "lost": "3", "gf": "7", "ga": "11", "gd": "-4", "points": "8", "matches_remaining": 23}, {"club": "Fredrikstad FK", "played": "7", "won": "2", "drawn": "1", "lost": "4", "gf": "9", "ga": "15", "gd": "-6", "points": "7", "matches_remaining": 23}, {"club": "Sarpsborg 08", "played": "7", "won": "1", "drawn": "2", "lost": "4", "gf": "5", "ga": "10", "gd": "-5", "points": "5", "matches_remaining": 23}, {"club": "Rosenborg BK", "played": "7", "won": "1", "drawn": "2", "lost": "4", "gf": "3", "ga": "11", "gd": "-8", "points": "5", "matches_remaining": 23}, {"club": "IK Start", "played": "8", "won": "0", "drawn": "4", "lost": "4", "gf": "6", "ga": "16", "gd": "-10", "points": "4", "matches_remaining": 22}, {"club": "Aalesunds FK", "played": "7", "won": "0", "drawn": "3", "lost": "4", "gf": "7", "ga": "14", "gd": "-7", "points": "3", "matches_remaining": 23}], "Liga Portugal": [{"club": "Porto", "played": "32", "won": "27", "drawn": "4", "lost": "1", "gf": "64", "ga": "15", "gd": "49", "points": "85", "matches_remaining": 2}, {"club": "Benfica", "played": "32", "won": "22", "drawn": "10", "lost": "0", "gf": "69", "ga": "22", "gd": "47", "points": "76", "matches_remaining": 2}, {"club": "Sporting", "played": "31", "won": "22", "drawn": "7", "lost": "2", "gf": "77", "ga": "22", "gd": "55", "points": "73", "matches_remaining": 3}, {"club": "Braga", "played": "32", "won": "16", "drawn": "9", "lost": "7", "gf": "60", "ga": "32", "gd": "28", "points": "57", "matches_remaining": 2}, {"club": "Famalic\u00e3o", "played": "32", "won": "14", "drawn": "10", "lost": "8", "gf": "41", "ga": "29", "gd": "12", "points": "52", "matches_remaining": 2}, {"club": "Gil Vicente", "played": "32", "won": "13", "drawn": "11", "lost": "8", "gf": "46", "ga": "32", "gd": "14", "points": "50", "matches_remaining": 2}, {"club": "Vit. Guimar\u00e3es", "played": "31", "won": "12", "drawn": "6", "lost": "13", "gf": "38", "ga": "43", "gd": "-5", "points": "42", "matches_remaining": 3}, {"club": "Moreirense", "played": "32", "won": "12", "drawn": "6", "lost": "14", "gf": "37", "ga": "47", "gd": "-10", "points": "42", "matches_remaining": 2}, {"club": "Estoril", "played": "32", "won": "10", "drawn": "8", "lost": "14", "gf": "52", "ga": "53", "gd": "-1", "points": "38", "matches_remaining": 2}, {"club": "Alverca", "played": "32", "won": "10", "drawn": "8", "lost": "14", "gf": "34", "ga": "50", "gd": "-16", "points": "38", "matches_remaining": 2}, {"club": "Arouca", "played": "32", "won": "10", "drawn": "6", "lost": "16", "gf": "41", "ga": "62", "gd": "-21", "points": "36", "matches_remaining": 2}, {"club": "Rio Ave", "played": "32", "won": "8", "drawn": "11", "lost": "13", "gf": "33", "ga": "52", "gd": "-19", "points": "35", "matches_remaining": 2}, {"club": "Santa Clara", "played": "32", "won": "8", "drawn": "9", "lost": "15", "gf": "30", "ga": "40", "gd": "-10", "points": "33", "matches_remaining": 2}, {"club": "Nacional", "played": "32", "won": "8", "drawn": "7", "lost": "17", "gf": "35", "ga": "43", "gd": "-8", "points": "31", "matches_remaining": 2}, {"club": "Estrela Amadora", "played": "32", "won": "6", "drawn": "10", "lost": "16", "gf": "36", "ga": "54", "gd": "-18", "points": "28", "matches_remaining": 2}, {"club": "Casa Pia", "played": "32", "won": "5", "drawn": "11", "lost": "16", "gf": "29", "ga": "56", "gd": "-27", "points": "26", "matches_remaining": 2}, {"club": "Tondela", "played": "32", "won": "5", "drawn": "10", "lost": "17", "gf": "24", "ga": "52", "gd": "-28", "points": "25", "matches_remaining": 2}, {"club": "Avs FS", "played": "32", "won": "2", "drawn": "11", "lost": "19", "gf": "24", "ga": "66", "gd": "-42", "points": "17", "matches_remaining": 2}], "Liga Portugal 2": [{"club": "Mar\u00edtimo", "played": "32", "won": "20", "drawn": "6", "lost": "6", "gf": "49", "ga": "25", "gd": "24", "points": "66", "matches_remaining": 2}, {"club": "Acad\u00e9mico Viseu", "played": "32", "won": "16", "drawn": "7", "lost": "9", "gf": "56", "ga": "33", "gd": "23", "points": "55", "matches_remaining": 2}, {"club": "Torreense", "played": "31", "won": "15", "drawn": "5", "lost": "11", "gf": "37", "ga": "30", "gd": "7", "points": "50", "matches_remaining": 3}, {"club": "Leiria", "played": "32", "won": "13", "drawn": "10", "lost": "9", "gf": "50", "ga": "43", "gd": "7", "points": "49", "matches_remaining": 2}, {"club": "Vizela", "played": "32", "won": "13", "drawn": "9", "lost": "10", "gf": "38", "ga": "36", "gd": "2", "points": "48", "matches_remaining": 2}, {"club": "Feirense", "played": "32", "won": "12", "drawn": "9", "lost": "11", "gf": "34", "ga": "36", "gd": "-2", "points": "45", "matches_remaining": 2}, {"club": "Benfica B", "played": "32", "won": "11", "drawn": "11", "lost": "10", "gf": "43", "ga": "40", "gd": "3", "points": "44", "matches_remaining": 2}, {"club": "Leix\u00f5es", "played": "32", "won": "13", "drawn": "5", "lost": "14", "gf": "42", "ga": "53", "gd": "-11", "points": "44", "matches_remaining": 2}, {"club": "Lus. Lourosa", "played": "32", "won": "11", "drawn": "10", "lost": "11", "gf": "42", "ga": "48", "gd": "-6", "points": "43", "matches_remaining": 2}, {"club": "Chaves", "played": "32", "won": "12", "drawn": "6", "lost": "14", "gf": "38", "ga": "37", "gd": "1", "points": "42", "matches_remaining": 2}, {"club": "FC Porto B", "played": "31", "won": "12", "drawn": "6", "lost": "13", "gf": "37", "ga": "42", "gd": "-5", "points": "42", "matches_remaining": 3}, {"club": "Sporting B", "played": "32", "won": "13", "drawn": "2", "lost": "17", "gf": "41", "ga": "33", "gd": "8", "points": "41", "matches_remaining": 2}, {"club": "Felgueiras", "played": "31", "won": "10", "drawn": "10", "lost": "11", "gf": "28", "ga": "35", "gd": "-7", "points": "40", "matches_remaining": 3}, {"club": "Farense", "played": "32", "won": "10", "drawn": "9", "lost": "13", "gf": "30", "ga": "35", "gd": "-5", "points": "39", "matches_remaining": 2}, {"club": "Penafiel", "played": "31", "won": "10", "drawn": "8", "lost": "13", "gf": "33", "ga": "34", "gd": "-1", "points": "38", "matches_remaining": 3}, {"club": "Portimonense", "played": "32", "won": "10", "drawn": "6", "lost": "16", "gf": "37", "ga": "48", "gd": "-11", "points": "36", "matches_remaining": 2}, {"club": "Pa\u00e7os Ferreira", "played": "32", "won": "8", "drawn": "11", "lost": "13", "gf": "31", "ga": "46", "gd": "-15", "points": "35", "matches_remaining": 2}, {"club": "Oliveirense", "played": "32", "won": "7", "drawn": "10", "lost": "15", "gf": "31", "ga": "43", "gd": "-12", "points": "31", "matches_remaining": 2}], "Swiss Super League": [{"club": "FC Thun", "played": "35", "won": "24", "drawn": "2", "lost": "9", "gf": "76", "ga": "41", "gd": "35", "points": "74", "matches_remaining": 0}, {"club": "FC St. Gallen", "played": "35", "won": "18", "drawn": "9", "lost": "8", "gf": "66", "ga": "44", "gd": "22", "points": "63", "matches_remaining": 0}, {"club": "FC Lugano", "played": "35", "won": "18", "drawn": "9", "lost": "8", "gf": "52", "ga": "38", "gd": "14", "points": "63", "matches_remaining": 0}, {"club": "FC Sion", "played": "35", "won": "15", "drawn": "13", "lost": "7", "gf": "56", "ga": "35", "gd": "21", "points": "58", "matches_remaining": 0}, {"club": "Basel", "played": "35", "won": "16", "drawn": "8", "lost": "11", "gf": "54", "ga": "48", "gd": "6", "points": "56", "matches_remaining": 0}, {"club": "Young Boys", "played": "35", "won": "13", "drawn": "9", "lost": "13", "gf": "66", "ga": "63", "gd": "3", "points": "48", "matches_remaining": 0}, {"club": "FC Luzern", "played": "35", "won": "12", "drawn": "10", "lost": "13", "gf": "69", "ga": "63", "gd": "6", "points": "46", "matches_remaining": 0}, {"club": "Servette FC", "played": "35", "won": "11", "drawn": "13", "lost": "11", "gf": "64", "ga": "60", "gd": "4", "points": "46", "matches_remaining": 0}, {"club": "Lausanne-Sport", "played": "35", "won": "11", "drawn": "9", "lost": "15", "gf": "51", "ga": "60", "gd": "-9", "points": "42", "matches_remaining": 0}, {"club": "FC Z\u00fcrich", "played": "35", "won": "10", "drawn": "5", "lost": "20", "gf": "47", "ga": "68", "gd": "-21", "points": "35", "matches_remaining": 0}, {"club": "Grasshoppers", "played": "35", "won": "6", "drawn": "9", "lost": "20", "gf": "41", "ga": "69", "gd": "-28", "points": "27", "matches_remaining": 0}, {"club": "FC Winterthur", "played": "35", "won": "4", "drawn": "8", "lost": "23", "gf": "40", "ga": "93", "gd": "-53", "points": "20", "matches_remaining": 0}], "Austrian Bundesliga": [{"club": "Sturm Graz", "played": "30", "won": "14", "drawn": "8", "lost": "8", "gf": "45", "ga": "33", "gd": "12", "points": "31", "matches_remaining": 0}, {"club": "LASK", "played": "29", "won": "14", "drawn": "7", "lost": "8", "gf": "48", "ga": "40", "gd": "8", "points": "30", "matches_remaining": 0}, {"club": "Salzburg", "played": "30", "won": "13", "drawn": "9", "lost": "8", "gf": "54", "ga": "36", "gd": "18", "points": "29", "matches_remaining": 0}, {"club": "Rapid Vienna", "played": "29", "won": "12", "drawn": "8", "lost": "9", "gf": "35", "ga": "34", "gd": "1", "points": "27", "matches_remaining": 0}, {"club": "Austria Vienna", "played": "30", "won": "13", "drawn": "5", "lost": "12", "gf": "43", "ga": "47", "gd": "-4", "points": "26", "matches_remaining": 0}, {"club": "TSV Hartberg", "played": "30", "won": "9", "drawn": "12", "lost": "9", "gf": "35", "ga": "35", "gd": "0", "points": "22", "matches_remaining": 0}, {"club": "SV Ried", "played": "30", "won": "12", "drawn": "6", "lost": "12", "gf": "38", "ga": "39", "gd": "-1", "points": "28", "matches_remaining": 0}, {"club": "SCR Altach", "played": "29", "won": "9", "drawn": "11", "lost": "9", "gf": "31", "ga": "33", "gd": "-2", "points": "23", "matches_remaining": 0}, {"club": "WSG Tirol", "played": "30", "won": "10", "drawn": "9", "lost": "11", "gf": "39", "ga": "49", "gd": "-10", "points": "23", "matches_remaining": 0}, {"club": "Grazer AK 1902", "played": "30", "won": "8", "drawn": "9", "lost": "13", "gf": "37", "ga": "43", "gd": "-6", "points": "23", "matches_remaining": 0}, {"club": "Blau Weiss Linz", "played": "30", "won": "8", "drawn": "4", "lost": "18", "gf": "36", "ga": "45", "gd": "-9", "points": "20", "matches_remaining": 0}, {"club": "Wolfsberger AC", "played": "29", "won": "8", "drawn": "8", "lost": "13", "gf": "34", "ga": "41", "gd": "-7", "points": "19", "matches_remaining": 0}], "Saudi Pro League": [{"club": "Al-Nassr", "played": "31", "won": "26", "drawn": "1", "lost": "4", "gf": "82", "ga": "24", "gd": "58", "points": "79", "matches_remaining": 3}, {"club": "Al-Hilal", "played": "30", "won": "22", "drawn": "8", "lost": "0", "gf": "79", "ga": "25", "gd": "54", "points": "74", "matches_remaining": 4}, {"club": "Al-Ahli", "played": "30", "won": "21", "drawn": "6", "lost": "3", "gf": "59", "ga": "22", "gd": "37", "points": "69", "matches_remaining": 4}, {"club": "Al-Qadsiah", "played": "31", "won": "20", "drawn": "8", "lost": "3", "gf": "74", "ga": "32", "gd": "42", "points": "68", "matches_remaining": 3}, {"club": "Al-Taawoun", "played": "31", "won": "15", "drawn": "7", "lost": "9", "gf": "57", "ga": "41", "gd": "16", "points": "52", "matches_remaining": 3}, {"club": "Al-Ittihad", "played": "29", "won": "14", "drawn": "6", "lost": "9", "gf": "47", "ga": "38", "gd": "9", "points": "48", "matches_remaining": 5}, {"club": "Al-Ettifaq", "played": "30", "won": "13", "drawn": "6", "lost": "11", "gf": "44", "ga": "51", "gd": "-7", "points": "45", "matches_remaining": 4}, {"club": "NEOM SC", "played": "31", "won": "11", "drawn": "8", "lost": "12", "gf": "40", "ga": "44", "gd": "-4", "points": "41", "matches_remaining": 3}, {"club": "Al-Hazem", "played": "31", "won": "10", "drawn": "8", "lost": "13", "gf": "34", "ga": "53", "gd": "-19", "points": "38", "matches_remaining": 3}, {"club": "Al-Khaleej", "played": "30", "won": "10", "drawn": "7", "lost": "13", "gf": "51", "ga": "48", "gd": "3", "points": "37", "matches_remaining": 4}, {"club": "Al-Fayha", "played": "30", "won": "9", "drawn": "8", "lost": "13", "gf": "36", "ga": "46", "gd": "-10", "points": "35", "matches_remaining": 4}, {"club": "Al-Fateh", "played": "30", "won": "8", "drawn": "9", "lost": "13", "gf": "38", "ga": "51", "gd": "-13", "points": "33", "matches_remaining": 4}, {"club": "Al-Shabab", "played": "30", "won": "7", "drawn": "11", "lost": "12", "gf": "38", "ga": "48", "gd": "-10", "points": "32", "matches_remaining": 4}, {"club": "Al-Kholood", "played": "30", "won": "9", "drawn": "3", "lost": "18", "gf": "39", "ga": "58", "gd": "-19", "points": "30", "matches_remaining": 4}, {"club": "Damac FC", "played": "31", "won": "5", "drawn": "11", "lost": "15", "gf": "27", "ga": "49", "gd": "-22", "points": "26", "matches_remaining": 3}, {"club": "Al-Riyadh", "played": "30", "won": "5", "drawn": "8", "lost": "17", "gf": "30", "ga": "58", "gd": "-28", "points": "23", "matches_remaining": 4}, {"club": "Al-Okhdood", "played": "31", "won": "4", "drawn": "4", "lost": "23", "gf": "24", "ga": "68", "gd": "-44", "points": "16", "matches_remaining": 3}, {"club": "Al-Najma", "played": "30", "won": "2", "drawn": "5", "lost": "23", "gf": "29", "ga": "72", "gd": "-43", "points": "11", "matches_remaining": 4}], "UAE Pro League": [{"club": "Al-Ain", "played": "23", "won": "18", "drawn": "5", "lost": "0", "gf": "48", "ga": "18", "gd": "30", "points": "59", "matches_remaining": 3}, {"club": "Shabab Al-Ahli", "played": "23", "won": "16", "drawn": "5", "lost": "2", "gf": "55", "ga": "14", "gd": "41", "points": "53", "matches_remaining": 3}, {"club": "Al-Jazira", "played": "23", "won": "12", "drawn": "4", "lost": "7", "gf": "40", "ga": "26", "gd": "14", "points": "40", "matches_remaining": 3}, {"club": "Al-Wahda", "played": "23", "won": "10", "drawn": "9", "lost": "4", "gf": "35", "ga": "21", "gd": "14", "points": "39", "matches_remaining": 3}, {"club": "Al-Wasl", "played": "23", "won": "11", "drawn": "6", "lost": "6", "gf": "32", "ga": "25", "gd": "7", "points": "39", "matches_remaining": 3}, {"club": "Al-Nasr", "played": "23", "won": "8", "drawn": "10", "lost": "5", "gf": "31", "ga": "29", "gd": "2", "points": "34", "matches_remaining": 3}, {"club": "Ajman Club", "played": "23", "won": "8", "drawn": "3", "lost": "12", "gf": "22", "ga": "31", "gd": "-9", "points": "27", "matches_remaining": 3}, {"club": "Khor Fakkan", "played": "23", "won": "6", "drawn": "7", "lost": "10", "gf": "33", "ga": "41", "gd": "-8", "points": "25", "matches_remaining": 3}, {"club": "Sharjah FC", "played": "23", "won": "7", "drawn": "4", "lost": "12", "gf": "32", "ga": "41", "gd": "-9", "points": "25", "matches_remaining": 3}, {"club": "FC Baniyas", "played": "23", "won": "7", "drawn": "4", "lost": "12", "gf": "24", "ga": "35", "gd": "-11", "points": "25", "matches_remaining": 3}, {"club": "Kalba FC", "played": "23", "won": "5", "drawn": "8", "lost": "10", "gf": "27", "ga": "41", "gd": "-14", "points": "23", "matches_remaining": 3}, {"club": "Al-Bataeh CSC", "played": "23", "won": "4", "drawn": "7", "lost": "12", "gf": "22", "ga": "34", "gd": "-12", "points": "19", "matches_remaining": 3}, {"club": "Al-Dhafra FC", "played": "23", "won": "5", "drawn": "3", "lost": "15", "gf": "25", "ga": "45", "gd": "-20", "points": "18", "matches_remaining": 3}, {"club": "Dibba SCC", "played": "23", "won": "4", "drawn": "5", "lost": "14", "gf": "23", "ga": "48", "gd": "-25", "points": "17", "matches_remaining": 3}]}</script>
+<script id="data-table-urls" type="application/json">{"Premier League": "https://www.transfermarkt.co.uk/premier-league/tabelle/wettbewerb/GB1", "Championship": "https://www.transfermarkt.co.uk/championship/tabelle/wettbewerb/GB2", "League One": "https://www.transfermarkt.co.uk/league-one/tabelle/wettbewerb/GB3", "League Two": "https://www.transfermarkt.co.uk/league-two/tabelle/wettbewerb/GB4", "National League": "https://www.transfermarkt.co.uk/national-league/tabelle/wettbewerb/CNAT", "National League North": "https://www.transfermarkt.co.uk/national-league-north/tabelle/wettbewerb/NLN6", "National League South": "https://www.transfermarkt.co.uk/national-league-south/tabelle/wettbewerb/NLS6", "Scottish Premiership": "https://www.transfermarkt.co.uk/scottish-premiership/tabelle/wettbewerb/SC1", "Scottish Championship": "https://www.transfermarkt.co.uk/scottish-championship/tabelle/wettbewerb/SC2", "League of Ireland": "https://www.transfermarkt.co.uk/league-of-ireland-premier-division/tabelle/wettbewerb/IR1", "Eredivisie": "https://www.transfermarkt.co.uk/eredivisie/tabelle/wettbewerb/NL1", "Eerste Divisie": "https://www.transfermarkt.co.uk/eerste-divisie/tabelle/wettbewerb/NL2", "Belgian Pro League": "https://www.transfermarkt.co.uk/jupiler-pro-league/tabelle/wettbewerb/BE1", "LaLiga": "https://www.transfermarkt.co.uk/laliga/tabelle/wettbewerb/ES1", "LaLiga II": "https://www.transfermarkt.co.uk/laliga2/tabelle/wettbewerb/ES2", "Bundesliga": "https://www.transfermarkt.co.uk/bundesliga/tabelle/wettbewerb/L1", "2. Bundesliga": "https://www.transfermarkt.co.uk/2-bundesliga/tabelle/wettbewerb/L2", "3. Liga": "https://www.transfermarkt.co.uk/3-liga/tabelle/wettbewerb/L3", "Serie A": "https://www.transfermarkt.co.uk/serie-a/tabelle/wettbewerb/IT1", "Serie B": "https://www.transfermarkt.co.uk/serie-b/tabelle/wettbewerb/IT2", "Ligue 1": "https://www.transfermarkt.co.uk/ligue-1/tabelle/wettbewerb/FR1", "Ligue 2": "https://www.transfermarkt.co.uk/ligue-2/tabelle/wettbewerb/FR2", "Danish Superliga": "https://www.transfermarkt.co.uk/superliga/tabelle/wettbewerb/DK1", "Allsvenskan": "https://www.transfermarkt.co.uk/allsvenskan/tabelle/wettbewerb/SE1", "Eliteserien": "https://www.transfermarkt.co.uk/eliteserien/tabelle/wettbewerb/NO1", "Liga Portugal": "https://www.transfermarkt.co.uk/liga-nos/tabelle/wettbewerb/PO1", "Liga Portugal 2": "https://www.transfermarkt.co.uk/liga-portugal-sabseg/tabelle/wettbewerb/PO2", "Swiss Super League": "https://www.transfermarkt.co.uk/super-league/tabelle/wettbewerb/C1", "Austrian Bundesliga": "https://www.transfermarkt.co.uk/bundesliga/tabelle/wettbewerb/A1", "Saudi Pro League": "https://www.transfermarkt.co.uk/saudi-professional-league/tabelle/wettbewerb/SA1", "UAE Pro League": "https://www.transfermarkt.co.uk/uae-pro-league/tabelle/wettbewerb/UAE1"}</script>
+<script id="data-country-leagues" type="application/json">{"England": ["Premier League", "Championship", "League One", "League Two", "National League", "National League North", "National League South"], "Scotland": ["Scottish Premiership", "Scottish Championship"], "Ireland": ["League of Ireland"], "Spain": ["LaLiga", "LaLiga II"], "Germany": ["Bundesliga", "2. Bundesliga"], "Italy": ["Serie A", "Serie B"], "France": ["Ligue 1", "Ligue 2"], "Netherlands": ["Eredivisie", "Eerste Divisie"], "Belgium": ["Belgian Pro League"], "Switzerland": ["Swiss Super League"], "Denmark": ["Danish Superliga"], "Austria": ["Austrian Bundesliga"], "Portugal": ["Liga Portugal", "Liga Portugal 2"], "Sweden": ["Allsvenskan"], "Norway": ["Eliteserien"], "USA": ["MLS"], "UAE": ["UAE Pro League"], "Saudi Arabia": ["Saudi Pro League", "Saudi First Division"], "Qatar": ["Qatar Stars League", "Qatari Second Division"], "Cyprus": ["Cypriot First Division"]}</script>
+<script>
+/* ── Shared Sidebar JS — included on every page ───────────────── */
+
+function toggleSidebar() {
+  var s = document.getElementById('sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.toggle('open');
+  if (o) o.classList.toggle('open');
+}
+function closeSidebar() {
+  var s = document.getElementById('sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.remove('open');
+  if (o) o.classList.remove('open');
+}
+
+// Expand / collapse a sidebar group (Positions, Summer 2026)
+function toggleSidebarGroup(groupKey, btn) {
+  var group = document.querySelector('.sidebar-group[data-group="' + groupKey + '"]');
+  if (!group) return;
+  var open = group.classList.toggle('open');
+  if (btn) btn.classList.toggle('open', open);
+  try {
+    var state = JSON.parse(localStorage.getItem('lp_sb_groups') || '{}');
+    state[groupKey] = open;
+    localStorage.setItem('lp_sb_groups', JSON.stringify(state));
+  } catch (e) {}
+}
+
+// Collapse / expand the entire desktop sidebar (slides it off-screen)
+function toggleSidebarCollapse() {
+  var collapsed = document.body.classList.toggle('sidebar-collapsed');
+  try { localStorage.setItem('lp_sb_collapsed', collapsed ? '1' : '0'); } catch (e) {}
+}
+
+// ── On load: restore collapse state, auto-open group for active subitem, highlight active item ──
+(function initSidebar() {
+  // Restore collapse state
+  try {
+    if (localStorage.getItem('lp_sb_collapsed') === '1') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  } catch (e) {}
+
+  function applyActive() {
+    var path = location.pathname.split('/').pop() || 'index.html';
+    var hash = (location.hash.match(/#tab=(\w+)/) || [])[1] || '';
+    // Clear all active classes on href-based items
+    document.querySelectorAll('.sidebar-item[href], .sidebar-subitem[href]').forEach(function(el) {
+      el.classList.remove('active');
+    });
+    // Clear group-btn active state — we'll reapply
+    document.querySelectorAll('.sidebar-group').forEach(function(g) { g.classList.remove('active-child'); });
+
+    document.querySelectorAll('.sidebar-item[href], .sidebar-subitem[href]').forEach(function(el) {
+      var href = el.getAttribute('href') || '';
+      var hFile = href.split('#')[0].split('/').pop();
+      var hHash = (href.match(/#tab=(\w+)/) || [])[1] || '';
+      var matches = (hFile === path) && (hHash === hash);
+      // Master-database.html with no hash → League Directory (tab=directory)
+      if (!matches && hFile === path && !hHash) {
+        matches = !hash || hash === 'directory';
+      }
+      if (matches) {
+        el.classList.add('active');
+        // If the active element is inside a group, open the group
+        var group = el.closest('.sidebar-group');
+        if (group) {
+          group.classList.add('open', 'active-child');
+          var btn = group.querySelector('.sidebar-group-btn');
+          if (btn) btn.classList.add('open');
+        }
+      }
+    });
+
+    // Restore any manually-expanded groups from localStorage (unless already opened above)
+    try {
+      var state = JSON.parse(localStorage.getItem('lp_sb_groups') || '{}');
+      Object.keys(state).forEach(function(k) {
+        if (state[k]) {
+          var g = document.querySelector('.sidebar-group[data-group="' + k + '"]');
+          if (g) {
+            g.classList.add('open');
+            var b = g.querySelector('.sidebar-group-btn');
+            if (b) b.classList.add('open');
+          }
+        }
+      });
+    } catch (e) {}
+  }
+
+  applyActive();
+
+  // Re-apply on hash change (tab links from other pages)
+  window.addEventListener('hashchange', function() {
+    applyActive();
+    if (typeof switchTab === 'function') {
+      var h = (location.hash.match(/#tab=(\w+)/) || [])[1];
+      if (h) switchTab(h);
+    }
+  });
+})();
+
+</script>
+<script>
+(function() {
+  var LT  = JSON.parse(document.getElementById('data-tables').textContent);
+  var URL = JSON.parse(document.getElementById('data-table-urls').textContent);
+  var CL  = JSON.parse(document.getElementById('data-country-leagues').textContent);
+  var sel = document.getElementById('ltLeague');
+  var body = document.getElementById('ltBody');
+  function esc(s) { return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+  var avail = Object.keys(LT).filter(function(l) { return LT[l] && LT[l].length; });
+  Object.keys(CL).forEach(function(country) {
+    var leagues = CL[country].filter(function(l) { return avail.indexOf(l) !== -1; });
+    if (!leagues.length) return;
+    var og = document.createElement('optgroup');
+    og.label = country;
+    leagues.forEach(function(lg) {
+      var o = document.createElement('option');
+      o.value = lg; o.textContent = lg;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+
+  // Per-league zone rules: positions are 1-indexed.
+  // Each entry: { champ:N, promo:[from,to], euro:[from,to], playoff:[from,to], relPlayoff:[pos], rel:[from,to] }
+  // Absent keys = not applicable. rel is always measured from bottom (negative = from end).
+  // Zone rules — positions 1-indexed.
+  // cl/el/ecl are separate so each gets its own row colour.
+  // rel[0] < 0 means count from bottom (e.g. -3 = last 3 rows).
+  var ZONES = {
+    // English pyramid
+    'Premier League':         { champ:1, cl:[1,5], el:[6,6], ecl:[7,7], rel:[-3,0] },
+    'Championship':           { champ:1, promo:[1,2],  playoff:[3,6],   rel:[-3,0] },
+    'League One':             { champ:1, promo:[1,2],  playoff:[3,6],   rel:[-4,0] },
+    'League Two':             { champ:1, promo:[1,3],  playoff:[4,7],   rel:[-2,0] },
+    'National League':        { champ:1, promo:[1,1],  playoff:[2,7],   rel:[-3,0] },
+    'National League North':  { champ:1, promo:[1,1],  playoff:[2,7],   rel:[-1,0] },
+    'National League South':  { champ:1, promo:[1,1],  playoff:[2,7],   rel:[-1,0] },
+    // Scotland
+    'Scottish Premiership':   { champ:1, cl:[1,1], el:[2,2], ecl:[3,3], relPlayoff:-2, rel:[-1,0] },
+    'Scottish Championship':  { champ:1, promo:[1,1],  playoff:[2,4],   rel:[-1,0] },
+    // Ireland
+    'League of Ireland':      { champ:1, cl:[1,1], el:[2,2], rel:[-2,0] },
+    // Spain
+    'LaLiga':                 { champ:1, cl:[1,4], el:[5,5], ecl:[6,7], rel:[-3,0] },
+    'LaLiga II':              { champ:1, promo:[1,2],  playoff:[3,6],   rel:[-4,0] },
+    // Germany
+    'Bundesliga':             { champ:1, cl:[1,4], el:[5,5], ecl:[6,6], relPlayoff:-3, rel:[-2,0] },
+    '2. Bundesliga':          { champ:1, promo:[1,2],  playoff:[3,3],   rel:[-2,0] },
+    // Italy
+    'Serie A':                { champ:1, cl:[1,4], el:[5,6], ecl:[7,7], rel:[-3,0] },
+    'Serie B':                { champ:1, promo:[1,2],  playoff:[3,8],   rel:[-3,0] },
+    // France
+    'Ligue 1':                { champ:1, cl:[1,2], el:[3,4], ecl:[5,6], relPlayoff:-3, rel:[-2,0] },
+    'Ligue 2':                { champ:1, promo:[1,2],  playoff:[3,5],   rel:[-3,0] },
+    // Netherlands
+    'Eredivisie':             { champ:1, cl:[1,1], el:[2,3], ecl:[4,5], playoff:[6,8], relPlayoff:-2, rel:[-1,0] },
+    'Eerste Divisie':         { champ:1, promo:[1,1],  playoff:[2,8] },
+    // Belgium
+    'Belgian Pro League':     { champ:1, cl:[1,1], el:[2,2], ecl:[3,4], rel:[-2,0] },
+    // Portugal
+    'Liga Portugal':          { champ:1, cl:[1,2], el:[3,3], ecl:[4,4], rel:[-3,0] },
+    'Liga Portugal 2':        { champ:1, promo:[1,2],  playoff:[3,6],   rel:[-3,0] },
+    // Others
+    'Danish Superliga':       { champ:1, cl:[1,1], el:[2,2], rel:[-2,0] },
+    'Allsvenskan':            { champ:1, rel:[-2,0] },
+    'Eliteserien':            { champ:1, rel:[-2,0] },
+    'Austrian Bundesliga':    { champ:1, cl:[1,1], el:[2,2], rel:[-3,0] },
+    'Swiss Super League':     { champ:1, cl:[1,1], el:[2,2], rel:[-2,0] },
+    'Saudi Pro League':       { champ:1, rel:[-3,0] },
+    'UAE Pro League':         { champ:1, rel:[-3,0] },
+  };
+
+  function getZone(league, pos1, total) {
+    var z = ZONES[league];
+    if (!z) {
+      if (pos1 === 1)       return { type:'champ', badge:'Champ', badgeCls:'badge-champ', label:'Champions',         cls:'zone-champ' };
+      if (pos1 <= 4)        return { type:'cl',    badge:'CL',    badgeCls:'badge-cl',    label:'Champions League',  cls:'zone-cl'    };
+      if (pos1 > total - 3) return { type:'rel',   badge:'R',     badgeCls:'badge-r',     label:'Relegated',         cls:'zone-rel'   };
+      return null;
+    }
+    if (z.champ && pos1 === z.champ)
+      return { type:'champ', badge:'Champ', badgeCls:'badge-champ', label:'Champions', cls:'zone-champ' };
+    if (z.cl && pos1 >= z.cl[0] && pos1 <= z.cl[1])
+      return { type:'cl',      badge:'CL',    badgeCls:'badge-cl',    label:'Champions League',    cls:'zone-cl'      };
+    if (z.el && pos1 >= z.el[0] && pos1 <= z.el[1])
+      return { type:'el',      badge:'EL',    badgeCls:'badge-el',    label:'Europa League',       cls:'zone-el'      };
+    if (z.ecl && pos1 >= z.ecl[0] && pos1 <= z.ecl[1])
+      return { type:'ecl',     badge:'ECL',   badgeCls:'badge-ecl',   label:'Conference League',   cls:'zone-ecl'     };
+    if (z.promo && pos1 >= z.promo[0] && pos1 <= z.promo[1])
+      return { type:'promo',   badge:'Pr',    badgeCls:'badge-promo', label:'Promoted',            cls:'zone-promo'   };
+    if (z.playoff && pos1 >= z.playoff[0] && pos1 <= z.playoff[1])
+      return { type:'playoff', badge:'Pl',    badgeCls:'badge-pl',    label:'Promotion playoff',   cls:'zone-playoff' };
+    var rpPos = z.relPlayoff ? (z.relPlayoff < 0 ? total + z.relPlayoff + 1 : z.relPlayoff) : null;
+    if (rpPos && pos1 === rpPos)
+      return { type:'rel-playoff', badge:'R/Pl', badgeCls:'badge-rpl', label:'Relegation playoff', cls:'zone-rel-playoff' };
+    if (z.rel && z.rel[0] !== 0) {
+      var relFrom = z.rel[0] < 0 ? total + z.rel[0] + 1 : z.rel[0];
+      var relTo   = z.rel[1] <= 0 ? total + z.rel[1]     : z.rel[1];
+      if (pos1 >= relFrom && pos1 <= relTo)
+        return { type:'rel', badge:'R', badgeCls:'badge-r', label:'Relegated', cls:'zone-rel' };
+    }
+    return null;
+  }
+
+  // ── Mathematical confirmation ──────────────────────────────────────
+  function computeConfirmation(rows, leagueName) {
+    var n = rows.length;
+    if (n < 2) return;
+    var totalGames = (n - 1) * 2;
+    rows.forEach(function(r) {
+      r._pts = parseInt(r.points) || 0;
+      var played = parseInt(r.played) || 0;
+      r._mr  = Math.max(0, totalGames - played);
+    });
+    var z = ZONES[leagueName];
+    if (!z) return;
+
+    // Champion confirmed: leader's pts − 2nd's pts > 2nd's max remaining points
+    if (rows.length >= 2 && rows[0]._pts - rows[1]._pts > rows[1]._mr * 3) {
+      rows[0].confirmed = 'champ';
+    }
+
+    // Promotion zone confirmed (automatic promotion slots)
+    if (z.promo) {
+      var pe = z.promo[1]; // last promo position (1-based)
+      if (rows.length > pe) {
+        var boundary = rows[pe - 1]._pts - rows[pe]._pts; // gap at boundary
+        if (boundary > rows[pe]._mr * 3) {
+          for (var i = 0; i < pe; i++) { if (!rows[i].confirmed) rows[i].confirmed = 'promo'; }
+        }
+      }
+    }
+
+    // Playoff zone confirmed
+    if (z.playoff) {
+      var plEnd = z.playoff[1];
+      if (rows.length > plEnd) {
+        var plBoundary = rows[plEnd - 1]._pts - rows[plEnd]._pts;
+        if (plBoundary > rows[plEnd]._mr * 3) {
+          for (var i = z.playoff[0] - 1; i < plEnd; i++) { if (!rows[i].confirmed) rows[i].confirmed = 'playoff'; }
+        }
+      }
+    }
+
+    // Relegation confirmed
+    if (z.rel && z.rel[0] !== 0) {
+      var relFrom1 = z.rel[0] < 0 ? n + z.rel[0] + 1 : z.rel[0]; // 1-based first relegated pos
+      var relTo1   = z.rel[1] <= 0 ? n + z.rel[1]     : z.rel[1];
+      var safeIdx  = relFrom1 - 2; // 0-based index of last safe team
+      if (safeIdx >= 0 && rows.length >= relTo1) {
+        // The first relegated team cannot reach the last safe team's points
+        var relFirstPts    = rows[relFrom1 - 1]._pts;
+        var relFirstMaxPts = relFirstPts + rows[relFrom1 - 1]._mr * 3;
+        if (relFirstMaxPts < rows[safeIdx]._pts) {
+          for (var i = relFrom1 - 1; i < relTo1; i++) { rows[i].confirmed = 'rel'; }
+        }
+      }
+    }
+  }
+
+  window.renderLT = function() {
+    var selected = sel.value;
+    var rows = LT[selected];
+    if (!avail.length) {
+      body.innerHTML = '<div class="lt-empty"><div class="big">&#128202;</div><div>No league table data yet.</div></div>';
+      return;
+    }
+    if (!rows || !rows.length) {
+      body.innerHTML = '<div class="lt-empty">No table data for ' + esc(selected) + '.</div>';
+      return;
+    }
+    // Deep-copy rows so confirmed flags don't persist across re-renders
+    rows = rows.map(function(r) { return Object.assign({}, r); });
+    computeConfirmation(rows, selected);
+    var tm = URL[selected] || '';
+    var title = tm
+      ? '<a href="' + esc(tm) + '" target="_blank">' + esc(selected) + ' <span class="ext">&#8599; TM</span></a>'
+      : esc(selected);
+    var html = '<h3 class="lt-title">' + title + '</h3>';
+    html += '<div class="lt-table-wrap"><table class="lt"><thead><tr>'
+         + '<th>#</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead><tbody>';
+    var legendZones = {};
+    rows.forEach(function(r, i) {
+      var pos1  = i + 1;
+      var zInfo = getZone(selected, pos1, rows.length);
+      var zCls  = zInfo ? zInfo.cls : '';
+      var zTip  = zInfo ? ' title="' + esc(zInfo.label) + '"' : '';
+      if (zInfo && !legendZones[zInfo.type]) legendZones[zInfo.type] = zInfo;
+      // Confirmation badge
+      var confBadge = '';
+      var CONF_LABELS = { champ:'✓ Champions', promo:'✓ Promoted', playoff:'✓ Playoff', rel:'↓ Relegated' };
+      if (r.confirmed && CONF_LABELS[r.confirmed]) {
+        var confCls = r.confirmed === 'rel' ? 'conf-badge conf-rel' : 'conf-badge conf-up';
+        confBadge = ' <span class="' + confCls + '">' + CONF_LABELS[r.confirmed] + '</span>';
+      }
+      html += '<tr class="' + zCls + '"' + zTip + '>'
+           +  '<td class="num">' + pos1 + '</td>'
+           +  '<td class="club">' + esc(r.club) + confBadge + '</td>'
+           +  '<td>' + esc(r.played) + '</td>'
+           +  '<td class="w">' + esc(r.won) + '</td>'
+           +  '<td>' + esc(r.drawn) + '</td>'
+           +  '<td class="l">' + esc(r.lost) + '</td>'
+           +  '<td>' + esc(r.gf) + '</td>'
+           +  '<td>' + esc(r.ga) + '</td>'
+           +  '<td>' + esc(r.gd) + '</td>'
+           +  '<td class="pts">' + esc(r.points) + '</td>'
+           +  '</tr>';
+    });
+    html += '</tbody></table></div>';
+    // Legend — badges shown here, not on rows
+    var legendOrder = ['champ','promo','cl','el','ecl','playoff','rel-playoff','rel'];
+    var legendHtml = '<div class="lt-legend">';
+    legendOrder.forEach(function(t) {
+      if (legendZones[t]) {
+        var z = legendZones[t];
+        legendHtml += '<div class="lt-legend-item">'
+                   +  '<span class="zone-badge ' + z.badgeCls + '">' + esc(z.badge) + '</span>'
+                   +  '<span>' + esc(z.label) + '</span></div>';
+      }
+    });
+    legendHtml += '</div>';
+    body.innerHTML = html + legendHtml;
+  };
+  if (sel.options.length) { sel.selectedIndex = 0; }
+  renderLT();
+})();
+</script>
+</body>
+</html>
