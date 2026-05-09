@@ -5082,7 +5082,7 @@ function initSummerOutreach() {
         headers.forEach(function(h) {
           if (h.getBoundingClientRect().top <= containerTop + 10) current = h;
         });
-        if (current) sessionStorage.setItem('summer-league', current.dataset.league);
+        if (current) localStorage.setItem('summer-league', current.dataset.league);
       }, 150);
     }, { passive: true });
   }
@@ -5226,7 +5226,7 @@ function renderSummerOutreach() {
   // Restore league position on first render after a page refresh
   if (!_summerScrollRestored) {
     _summerScrollRestored = true;
-    const savedLeague = sessionStorage.getItem('summer-league');
+    const savedLeague = localStorage.getItem('summer-league');
     if (savedLeague) {
       setTimeout(function() {
         const scrollEl = document.querySelector('.summer-wrap');
