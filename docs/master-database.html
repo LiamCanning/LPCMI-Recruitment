@@ -653,6 +653,42 @@ a.tm-link:hover { text-decoration:underline; }
 }
 .summer-tm-link { font-size:var(--lp-text-xs); opacity:.45; text-decoration:none; vertical-align:middle; margin-left:2px; }
 .summer-tm-link:hover { opacity:1; }
+/* League multi-select picker */
+.slp-wrap { position:relative; }
+.slp-btn {
+  height:34px; padding:0 10px; border-radius:var(--lp-radius-ctrl);
+  border:1px solid var(--border); background:var(--card); color:var(--text);
+  font-size:var(--lp-text-sm); font-family:inherit; cursor:pointer;
+  white-space:nowrap; display:flex; align-items:center; gap:6px;
+}
+.slp-btn::after { content:'▾'; font-size:10px; color:var(--text-muted); }
+.slp-btn:hover { border-color:var(--primary); }
+.slp-panel {
+  display:none; position:absolute; top:calc(100% + 4px); left:0; z-index:500;
+  background:var(--card); border:1px solid var(--border); border-radius:var(--lp-radius-ctrl);
+  box-shadow:0 4px 16px rgba(0,0,0,.12); min-width:220px; max-height:360px;
+  flex-direction:column; overflow:hidden;
+}
+.slp-panel.slp-open { display:flex; }
+.slp-actions {
+  display:flex; gap:6px; padding:8px 10px; border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.slp-actions button {
+  padding:3px 10px; border-radius:var(--lp-radius-ctrl); font-size:var(--lp-text-2xs);
+  font-weight:var(--lp-weight-semibold); font-family:inherit; cursor:pointer;
+  border:1px solid var(--border); background:var(--bg); color:var(--text);
+}
+.slp-actions button:hover { background:var(--hover); }
+.slp-list { overflow-y:auto; padding:4px 0; }
+.slp-item {
+  display:flex; align-items:center; gap:8px;
+  padding:5px 12px; font-size:var(--lp-text-xs); cursor:pointer;
+  color:var(--text); white-space:nowrap;
+}
+.slp-item:hover { background:var(--hover); }
+.slp-item input[type=checkbox] { flex-shrink:0; cursor:pointer; }
+
 .summer-card-contacts { padding:4px 0; }
 .sc-row { display:flex; align-items:center; gap:8px; padding:7px 14px; border-top:1px solid var(--border); }
 .sc-row:first-child { border-top:none; }
@@ -2482,7 +2518,16 @@ tr:hover td { background: #f9fafb; }
   </div>
   <div class="controls">
     <select id="summerCountry" onchange="onSummerCountry()"><option value="">All Countries</option></select>
-    <select id="summerLeague" onchange="renderSummerOutreach()"><option value="">All Leagues</option></select>
+    <div class="slp-wrap" id="summerLeaguePicker">
+      <button type="button" class="slp-btn" id="summerLeagueBtn" onclick="toggleLeaguePicker(event)">All Leagues</button>
+      <div class="slp-panel" id="summerLeaguePanel">
+        <div class="slp-actions">
+          <button type="button" onclick="setSummerLeagueAll(true)">All</button>
+          <button type="button" onclick="setSummerLeagueAll(false)">None</button>
+        </div>
+        <div class="slp-list" id="summerLeagueList"></div>
+      </div>
+    </div>
     <select id="summerChannel" onchange="renderSummerOutreach()">
       <option value="">All Contacts</option>
       <option value="email">Has Email</option>
@@ -5059,23 +5104,96 @@ function buildSummerData() {
 
 let _summerScrollRestored = false;
 
+// ── League multi-select picker ────────────────────────────────────────────────
+function _slpSavedLeagues() {
+  try { return new Set(JSON.parse(localStorage.getItem('summer-leagues') || '[]')); } catch(e) { return new Set(); }
+}
+function _slpUpdateBtn() {
+  const btn = document.getElementById('summerLeagueBtn');
+  if (!btn) return;
+  const all     = document.querySelectorAll('#summerLeagueList input[type=checkbox]');
+  const checked = document.querySelectorAll('#summerLeagueList input[type=checkbox]:checked');
+  btn.textContent = (!checked.length || checked.length === all.length)
+    ? 'All Leagues'
+    : checked.length === 1 ? checked[0].value : checked.length + ' leagues';
+}
+function _slpBuildList(leagues) {
+  const list = document.getElementById('summerLeagueList');
+  if (!list) return;
+  const saved = _slpSavedLeagues();
+  list.innerHTML = '';
+  leagues.forEach(function(l) {
+    const label = document.createElement('label');
+    label.className = 'slp-item';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = l;
+    cb.checked = !saved.size || saved.has(l);
+    cb.onchange = function() {
+      const all = [...document.querySelectorAll('#summerLeagueList input[type=checkbox]')];
+      const sel = all.filter(c => c.checked).map(c => c.value);
+      localStorage.setItem('summer-leagues', JSON.stringify(sel.length === all.length ? [] : sel));
+      _slpUpdateBtn();
+      _summerScrollRestored = false;
+      renderSummerOutreach();
+    };
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(l));
+    list.appendChild(label);
+  });
+  _slpUpdateBtn();
+}
+function toggleLeaguePicker(e) {
+  const panel = document.getElementById('summerLeaguePanel');
+  if (!panel) return;
+  const open = panel.classList.toggle('slp-open');
+  if (open) {
+    setTimeout(function() {
+      document.addEventListener('click', function close(ev) {
+        const picker = document.getElementById('summerLeaguePicker');
+        if (picker && !picker.contains(ev.target)) {
+          panel.classList.remove('slp-open');
+          document.removeEventListener('click', close);
+        }
+      });
+    }, 0);
+  }
+}
+function setSummerLeagueAll(checked) {
+  document.querySelectorAll('#summerLeagueList input[type=checkbox]').forEach(function(cb) { cb.checked = checked; });
+  localStorage.setItem('summer-leagues', '[]');
+  _slpUpdateBtn();
+  _summerScrollRestored = false;
+  renderSummerOutreach();
+}
+function getSummerLeagues() {
+  const all     = [...document.querySelectorAll('#summerLeagueList input[type=checkbox]')];
+  const checked = all.filter(c => c.checked).map(c => c.value);
+  return (!checked.length || checked.length === all.length) ? null : new Set(checked);
+}
+
 function initSummerOutreach() {
   const countries = Object.keys(COUNTRY_LEAGUES).filter(c =>
     COUNTRY_LEAGUES[c].some(l => allLeagues.includes(l))
   ).sort();
   const cSel = document.getElementById('summerCountry');
   countries.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; cSel.appendChild(o); });
-  const lSel = document.getElementById('summerLeague');
-  allLeagues.forEach(l => { const o = document.createElement('option'); o.value = l; o.textContent = l; lSel.appendChild(o); });
 
-  // Save which league is at the top so it survives a page refresh
+  // Restore country filter, then build league list for that country
+  const savedCountry = localStorage.getItem('summer-country') || '';
+  if (savedCountry && cSel) cSel.value = savedCountry;
+  const leaguesForCountry = savedCountry
+    ? (COUNTRY_LEAGUES[savedCountry] || []).filter(l => allLeagues.includes(l))
+    : allLeagues;
+  _slpBuildList(leaguesForCountry);
+
+  // Save scroll position (by league heading) on scroll
   const scrollEl = document.querySelector('.summer-wrap');
   if (scrollEl) {
     let _saveScrollTimer = null;
     scrollEl.addEventListener('scroll', function() {
       clearTimeout(_saveScrollTimer);
       _saveScrollTimer = setTimeout(function() {
-        // Find the last league header that has scrolled past the top of the container
         const headers = scrollEl.querySelectorAll('.summer-dir-lg-hdr[data-league]');
         let current = null;
         const containerTop = scrollEl.getBoundingClientRect().top;
@@ -5092,29 +5210,26 @@ function initSummerOutreach() {
 
 function onSummerCountry() {
   const country = document.getElementById('summerCountry').value;
-  const lSel = document.getElementById('summerLeague');
-  while (lSel.options.length > 1) lSel.remove(1);
+  localStorage.setItem('summer-country', country);
   const available = country ? (COUNTRY_LEAGUES[country] || []).filter(l => allLeagues.includes(l)) : allLeagues;
-  available.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; lSel.appendChild(o); });
+  _slpBuildList(available);
+  _summerScrollRestored = false;
   renderSummerOutreach();
 }
 
 function renderSummerOutreach() {
   const wrap = document.getElementById('summerTableWrap');
   if (!wrap) return;
-  const country = (document.getElementById('summerCountry') || {}).value || '';
-  const filterLeague = (document.getElementById('summerLeague') || {}).value || '';
+  const selectedLeagues = getSummerLeagues();
   const channel = (document.getElementById('summerChannel') || {}).value || '';
   const warmth = (document.getElementById('summerWarmth') || {}).value || '';
   const search = ((document.getElementById('summerSearch') || {}).value || '').toLowerCase().trim();
 
   let data = buildSummerData();
-  const leagueSet = country ? new Set(COUNTRY_LEAGUES[country] || []) : null;
 
   // Filter leagues/clubs based on active filters
   data = data
-    .filter(lg => !leagueSet || leagueSet.has(lg.league))
-    .filter(lg => !filterLeague || lg.league === filterLeague)
+    .filter(lg => !selectedLeagues || selectedLeagues.has(lg.league))
     .map(lg => {
       const clubs = lg.clubs.filter(cb => {
         const cs = cb.contacts;
