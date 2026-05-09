@@ -5231,9 +5231,15 @@ function renderSummerOutreach() {
       setTimeout(function() {
         const scrollEl = document.querySelector('.summer-wrap');
         if (!scrollEl) return;
-        const target = scrollEl.querySelector('.summer-dir-lg-hdr[data-league="' + savedLeague.replace(/"/g, '\\"') + '"]');
-        if (target) scrollEl.scrollTop = target.offsetTop;
-      }, 100);
+        // Double-rAF to ensure flex layout has fully painted before scrolling
+        requestAnimationFrame(function() { requestAnimationFrame(function() {
+          const target = scrollEl.querySelector('.summer-dir-lg-hdr[data-league="' + savedLeague.replace(/"/g, '\\"') + '"]');
+          if (target) {
+            const containerRect = scrollEl.getBoundingClientRect();
+            const targetRect = target.getBoundingClientRect();
+            scrollEl.scrollTop = scrollEl.scrollTop + (targetRect.top - containerRect.top);
+          }
+        }); }); }, 200);
     }
   }
 }
