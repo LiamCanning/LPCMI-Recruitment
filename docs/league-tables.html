@@ -1047,66 +1047,73 @@ function toggleSidebarCollapse() {
     }
   }
 
-  // Group consecutive 1st-Leg / 2nd-Leg rounds into a single bracket column ('ties').
+  // Build bracket columns: QF -> SF -> Final, ordered left-to-right.
+  // Each leg of a two-leg tie is its own column. The 2nd-leg column carries
+  // the aggregate / tie-winner info so the visual flow stays correct.
+  // If there are only Semi-Finals (no Final yet), a placeholder Final column
+  // is appended so the bracket always ends at the Final.
   function bucketRounds(rounds) {
-    var cols = [];
-    var byBase = {};
-    rounds.forEach(function(rnd) {
-      var lower = rnd.name.toLowerCase();
-      var base = rnd.name;
-      var leg = null;
-      if (lower.indexOf('1st leg') !== -1) { leg = '1st'; base = rnd.name.replace(/1st leg/i, '').trim().replace(/[-,:\s]+$/, ''); }
-      else if (lower.indexOf('2nd leg') !== -1) { leg = '2nd'; base = rnd.name.replace(/2nd leg/i, '').trim().replace(/[-,:\s]+$/, ''); }
-      if (leg) {
-        if (!byBase[base]) { byBase[base] = { name: base, legs: {} }; cols.push(byBase[base]); }
-        byBase[base].legs[leg] = rnd;
-      } else {
-        cols.push({ name: rnd.name, single: rnd });
-      }
+    var cols = (rounds || []).map(function(rnd) {
+      return { name: rnd.name, round: rnd };
     });
-    // Order: ensure standard progression (Preliminary > Quarter-Finals > Semi-Finals > Final)
     var order = ['preliminary','quarter','semi','final'];
+    function legRank(n) {
+      n = (n || '').toLowerCase();
+      if (n.indexOf('1st leg') !== -1) return 0;
+      if (n.indexOf('2nd leg') !== -1) return 1;
+      return 0;
+    }
     cols.sort(function(a, b) {
-      function rank(n) {
+      function stageRank(n) {
         n = (n || '').toLowerCase();
         for (var i = 0; i < order.length; i++) if (n.indexOf(order[i]) !== -1) return i;
         return order.length;
       }
-      return rank(a.name) - rank(b.name);
+      var sa = stageRank(a.name), sb = stageRank(b.name);
+      if (sa !== sb) return sa - sb;
+      return legRank(a.name) - legRank(b.name);
     });
+    // Append a placeholder Final column if missing
+    var hasFinal = cols.some(function(c) {
+      var n = c.name.toLowerCase();
+      return n.indexOf('final') !== -1 && n.indexOf('semi') === -1 && n.indexOf('quarter') === -1;
+    });
+    var hasSemi = cols.some(function(c) { return c.name.toLowerCase().indexOf('semi') !== -1; });
+    if (hasSemi && !hasFinal) {
+      cols.push({ name: 'Final', round: { name: 'Final', fixtures: [] }, placeholder: true });
+    }
     return cols;
   }
 
-  // Build ties array for a column: each tie has fixtures plus optional aggregate and tieWinner
-  function buildTies(col) {
-    if (col.single) {
-      return (col.single.fixtures || []).map(function(fx) {
-        return { fixtures: [fx], dateText: (fx.date || ''), single: true };
-      });
-    }
-    var firstLeg = col.legs['1st'];
-    var secondLeg = col.legs['2nd'];
-    var ties = [];
-    var seenPairs = {};
-    (secondLeg ? secondLeg.fixtures : []).forEach(function(fx2) {
-      // find matching 1st leg fixture (teams flipped)
-      var fx1 = null;
-      if (firstLeg) {
-        for (var i = 0; i < firstLeg.fixtures.length; i++) {
-          var f = firstLeg.fixtures[i];
-          if (f.home === fx2.away && f.away === fx2.home) { fx1 = f; break; }
-        }
+  // Build ties for a column. Each round in our new layout is one column,
+  // so a tie is just one fixture from that round.
+  // For 2nd-leg rounds, we attach the aggregate and tie-winner found via
+  // the matching 1st-leg fixture so the 2nd-leg cards show the running agg.
+  function buildTies(col, allCols) {
+    var rnd = col.round;
+    if (!rnd) return [];
+    return (rnd.fixtures || []).map(function(fx) {
+      var t = { fixtures: [fx], scoreSuffix: fx.score_suffix || '' };
+      if ((col.name || '').toLowerCase().indexOf('2nd leg') !== -1) {
+        t.aggregate = fx.aggregate;
+        t.tieWinner = fx.tie_winner;
+      } else if ((col.name || '').toLowerCase().indexOf('1st leg') === -1) {
+        // Single-leg round (e.g. Final, QF, NL Semi-Final)
+        t.single = true;
       }
-      var key = [fx2.home, fx2.away].sort().join('|');
-      seenPairs[key] = true;
-      ties.push({ fixtures: fx1 ? [fx1, fx2] : [fx2], aggregate: fx2.aggregate, tieWinner: fx2.tie_winner, scoreSuffix: fx2.score_suffix || '' });
+      return t;
     });
-    // Any 1st leg fixture without a matching 2nd leg yet
-    (firstLeg ? firstLeg.fixtures : []).forEach(function(fx1) {
-      var key = [fx1.home, fx1.away].sort().join('|');
-      if (!seenPairs[key]) ties.push({ fixtures: [fx1] });
-    });
-    return ties;
+  }
+
+  // Produce placeholder "TBC vs TBC" cards in the Final column when no final
+  // fixture has been published yet, so the bracket has a visible Final node.
+  function placeholderTies(prevCol) {
+    var prev = prevCol && prevCol.round;
+    if (!prev || !prev.fixtures || !prev.fixtures.length) {
+      return [{ fixtures: [{ home: 'TBC', away: 'TBC', score: '-:-', played: false, date: '', time: '' }], single: true, placeholder: true }];
+    }
+    // Pair each two consecutive fixtures into a TBC final-spot card
+    return [{ fixtures: [{ home: 'Semi-final winner', away: 'Semi-final winner', score: '-:-', played: false, date: '', time: '' }], single: true, placeholder: true }];
   }
 
   function renderFixtureRow(fx, tieWinner, isFinalLeg) {
@@ -1215,7 +1222,12 @@ function toggleSidebarCollapse() {
         var isFinalColumn = /final/i.test(col.name) && !/semi|quarter/i.test(col.name);
         html += '<div class="po-column' + (isFinalColumn ? ' final' : '') + '">';
         html += '<h4 class="po-col-head' + (isFinalColumn ? ' final' : '') + '">' + esc(col.name) + '</h4>';
-        var ties = buildTies(col);
+        var ties;
+        if (col.placeholder) {
+          ties = placeholderTies(cols[ci - 1]);
+        } else {
+          ties = buildTies(col, cols);
+        }
         html += '<div class="po-ties">';
         ties.forEach(function(t) { html += renderTie(t, isFinalColumn); });
         html += '</div></div>';
@@ -1262,6 +1274,19 @@ function toggleSidebarCollapse() {
     // Deep-copy rows so confirmed flags don't persist across re-renders
     rows = rows.map(function(r) { return Object.assign({}, r); });
     computeConfirmation(rows, selected);
+    // Mark the play-off winner as 'Promoted via play-offs' (overrides 'Playoff' confirmation)
+    var poEntries = PO[selected] || [];
+    poEntries.forEach(function(entry) {
+      if (!entry.winner) return;
+      rows.forEach(function(r) {
+        var club = (r.club || '').toLowerCase();
+        var winner = entry.winner.toLowerCase();
+        if (club === winner || club.indexOf(winner) !== -1 || winner.indexOf(club) !== -1) {
+          r.confirmed = 'promoted_po';
+          r.po_competition = entry.competition;
+        }
+      });
+    });
     var tm = URL[selected] || '';
     var title = tm
       ? '<a href="' + esc(tm) + '" target="_blank">' + esc(selected) + ' <span class="ext">&#8599; TM</span></a>'
@@ -1273,15 +1298,20 @@ function toggleSidebarCollapse() {
     rows.forEach(function(r, i) {
       var pos1  = i + 1;
       var zInfo = getZone(selected, pos1, rows.length);
+      // Override: play-off winners get the green 'promoted' tint regardless of league position
+      if (r.confirmed === 'promoted_po') {
+        zInfo = { type:'promo', badge:'Pr', badgeCls:'badge-promo', label:'Promoted via play-offs', cls:'zone-promo' };
+      }
       var zCls  = zInfo ? zInfo.cls : '';
       var zTip  = zInfo ? ' title="' + esc(zInfo.label) + '"' : '';
       if (zInfo && !legendZones[zInfo.type]) legendZones[zInfo.type] = zInfo;
       // Confirmation badge
       var confBadge = '';
-      var CONF_LABELS = { champ:'✓ Champions', promo:'✓ Promoted', playoff:'✓ Playoff', rel:'↓ Relegated' };
+      var CONF_LABELS = { champ:'✓ Champions', promo:'✓ Promoted', playoff:'✓ Playoff', rel:'↓ Relegated', promoted_po:'\u2B06 Promoted via play-offs' };
       if (r.confirmed && CONF_LABELS[r.confirmed]) {
         var confCls = r.confirmed === 'rel' ? 'conf-badge conf-rel' : 'conf-badge conf-up';
-        confBadge = ' <span class="' + confCls + '">' + CONF_LABELS[r.confirmed] + '</span>';
+        var titleAttr = (r.confirmed === 'promoted_po' && r.po_competition) ? ' title="Won the ' + esc(r.po_competition) + '"' : '';
+        confBadge = ' <span class="' + confCls + '"' + titleAttr + '>' + CONF_LABELS[r.confirmed] + '</span>';
       }
       html += '<tr class="' + zCls + '"' + zTip + '>'
            +  '<td class="num">' + pos1 + '</td>'
