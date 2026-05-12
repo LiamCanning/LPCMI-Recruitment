@@ -504,7 +504,7 @@ a.tm-link:hover { text-decoration:underline; }
 .staff-card.dir-club-row .staff-list { max-height:none !important; overflow:visible !important; padding:0 !important; border-top:0 !important; }
 .dir-club-country { font-size:var(--lp-text-xs); color:var(--text-muted); font-weight:var(--lp-weight-regular); margin-left:6px; background:var(--bg); padding:1px 8px; border-radius:var(--lp-radius-pill); }
 .dir-rows { display:flex; flex-direction:column; }
-.dir-row { display:grid; grid-template-columns: 22px minmax(220px, 1.6fr) 230px auto; align-items:center; gap:14px; padding:8px 18px; border-bottom:1px solid var(--lp-border-soft); transition:background .12s; }
+.dir-row { display:grid; grid-template-columns: 22px minmax(0, 1fr) 230px 220px; align-items:center; gap:14px; padding:8px 18px; border-bottom:1px solid var(--lp-border-soft); transition:background .12s; font-family:var(--lp-font-sans); }
 .dir-row:last-child { border-bottom:none; }
 .dir-row:hover { background:var(--lp-surface-sunken); }
 .dir-row.is-contact { background:#f6fdf8; }
@@ -515,22 +515,42 @@ a.tm-link:hover { text-decoration:underline; }
 .dir-row-name a { color:var(--primary); text-decoration:none; }
 .dir-row-name a:hover { color:var(--accent); text-decoration:underline; }
 .dir-row-name .dir-nat { font-size:11px; color:var(--text-muted); font-weight:var(--lp-weight-regular); margin-left:6px; }
-.dir-row-role { min-width:0; display:flex; align-items:center; }
-.dir-row-role .role-badge { font-size:var(--lp-text-2xs); display:inline-block; padding:3px 10px; border-radius:var(--lp-radius-pill); font-weight:var(--lp-weight-semibold); letter-spacing:.1px; line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-.dir-row-role .role-badge.other { background:var(--lp-surface-sunken); color:var(--lp-ink-muted); }
-.dir-row-role .role-badge.gk-coaching { background:#fef3c7; color:#854d0e; }
-.dir-row-role .role-badge.coaching { background:#fef3c7; color:#854d0e; }
-.dir-row-actions { display:flex; align-items:center; gap:6px; justify-self:end; flex-shrink:0; min-height:26px; }
-.dir-act { display:inline-flex; align-items:center; justify-content:center; height:26px; min-width:26px; padding:0 8px; border-radius:var(--lp-radius-ctrl); font-size:11px; font-weight:var(--lp-weight-semibold); text-decoration:none; border:1px solid; line-height:1; cursor:pointer; font-family:var(--lp-font-sans); }
-.dir-act.email { color:var(--blue); border-color:#bfdbfe; background:var(--lp-accent-bg); }
-.dir-act.email:hover { background:var(--lp-status-info-bg); }
-.dir-act.wa { color:var(--green); border-color:#bbf7d0; background:#f0fdf4; }
-.dir-act.wa:hover { background:var(--lp-status-success-bg); }
-.dir-act.outreach { color:var(--lp-accent-hover); border-color:#bfdbfe; background:var(--lp-accent-bg); }
-.dir-act.outreach:hover { background:var(--lp-status-info-bg); }
+.dir-row-role { min-width:0; display:flex; align-items:center; justify-content:flex-start; }
+/* Unified pill — identical for every role. Overrides legacy .role-badge.* tints when used inside a directory row. */
+.dir-row-role .role-badge,
+.dir-row-role .role-badge.management,
+.dir-row-role .role-badge.recruitment,
+.dir-row-role .role-badge.executive,
+.dir-row-role .role-badge.coaching,
+.dir-row-role .role-badge.gk-coaching,
+.dir-row-role .role-badge.other {
+  display:inline-block;
+  padding:3px 12px;
+  font-size:var(--lp-text-2xs);
+  font-weight:var(--lp-weight-semibold);
+  font-family:var(--lp-font-sans);
+  letter-spacing:.1px;
+  line-height:1.5;
+  border-radius:var(--lp-radius-pill);
+  background:#eef2f6;
+  color:#334155;
+  border:1px solid #e2e8f0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+}
+.dir-row-actions { display:flex; align-items:center; gap:6px; justify-content:flex-end; flex-shrink:0; min-height:28px; }
+.dir-act { display:inline-flex; align-items:center; justify-content:center; height:26px; min-width:26px; padding:0 10px; border-radius:var(--lp-radius-pill); font-size:11px; font-weight:var(--lp-weight-semibold); text-decoration:none; border:1px solid #e2e8f0; line-height:1; cursor:pointer; font-family:var(--lp-font-sans); color:#475569; background:#f8fafc; }
+.dir-act:hover { background:#eef2f6; color:#1e293b; }
+.dir-row .copy-btn { background:transparent; border:1px solid transparent; padding:2px 6px; opacity:.35; font-size:13px; cursor:pointer; }
+.dir-row:hover .copy-btn { opacity:1; }
+@media (max-width: 900px) {
+  .dir-row { grid-template-columns: 22px minmax(0,1fr) 180px 170px; gap:10px; }
+}
 @media (max-width: 720px) {
-  .dir-row { grid-template-columns: 22px 1fr auto; row-gap:4px; }
-  .dir-row-role { grid-column: 2 / 4; }
+  .dir-row { grid-template-columns: 22px 1fr; row-gap:4px; padding:10px 14px; }
+  .dir-row-role, .dir-row-actions { grid-column: 2 / 3; justify-content:flex-start; }
 }
 
 .dir-your-contacts { background:#f0fdf4; border-radius:var(--lp-radius-ctrl); padding:10px 12px 8px; margin:10px 0 8px; border:1px solid #bbf7d0; }
