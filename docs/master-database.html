@@ -516,14 +516,7 @@ a.tm-link:hover { text-decoration:underline; }
 .dir-row-name a:hover { color:var(--accent); text-decoration:underline; }
 .dir-row-name .dir-nat { font-size:11px; color:var(--text-muted); font-weight:var(--lp-weight-regular); margin-left:6px; }
 .dir-row-role { min-width:0; display:flex; align-items:center; justify-content:flex-start; }
-/* Unified pill — identical for every role. Overrides legacy .role-badge.* tints when used inside a directory row. */
-.dir-row-role .role-badge,
-.dir-row-role .role-badge.management,
-.dir-row-role .role-badge.recruitment,
-.dir-row-role .role-badge.executive,
-.dir-row-role .role-badge.coaching,
-.dir-row-role .role-badge.gk-coaching,
-.dir-row-role .role-badge.other {
+.dir-row-role .role-badge {
   display:inline-block;
   padding:3px 12px;
   font-size:var(--lp-text-2xs);
@@ -532,17 +525,39 @@ a.tm-link:hover { text-decoration:underline; }
   letter-spacing:.1px;
   line-height:1.5;
   border-radius:var(--lp-radius-pill);
-  background:#eef2f6;
-  color:#334155;
-  border:1px solid #e2e8f0;
+  border:1px solid;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
   max-width:100%;
 }
+.dir-row-role .role-badge.management  { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+.dir-row-role .role-badge.recruitment { background:#ecfdf5; color:#047857; border-color:#a7f3d0; }
+.dir-row-role .role-badge.executive   { background:#f5f3ff; color:#6d28d9; border-color:#ddd6fe; }
+.dir-row-role .role-badge.coaching    { background:#fff7ed; color:#9a3412; border-color:#fed7aa; }
+.dir-row-role .role-badge.gk-coaching { background:#fef3c7; color:#854d0e; border-color:#fde68a; }
+.dir-row-role .role-badge.other       { background:#f1f5f9; color:#475569; border-color:#e2e8f0; }
 .dir-row-actions { display:flex; align-items:center; gap:6px; justify-content:flex-end; flex-shrink:0; min-height:28px; }
-.dir-act { display:inline-flex; align-items:center; justify-content:center; height:26px; min-width:26px; padding:0 10px; border-radius:var(--lp-radius-pill); font-size:11px; font-weight:var(--lp-weight-semibold); text-decoration:none; border:1px solid #e2e8f0; line-height:1; cursor:pointer; font-family:var(--lp-font-sans); color:#475569; background:#f8fafc; }
-.dir-act:hover { background:#eef2f6; color:#1e293b; }
+.dir-act { display:inline-flex; align-items:center; justify-content:center; height:26px; min-width:26px; padding:0 10px; border-radius:var(--lp-radius-pill); font-size:11px; font-weight:var(--lp-weight-semibold); text-decoration:none; border:1px solid; line-height:1; cursor:pointer; font-family:var(--lp-font-sans); }
+.dir-act.email    { color:#1d4ed8; background:#eff6ff; border-color:#bfdbfe; }
+.dir-act.email:hover    { background:#dbeafe; }
+.dir-act.wa       { color:#047857; background:#ecfdf5; border-color:#a7f3d0; }
+.dir-act.wa:hover       { background:#d1fae5; }
+.dir-act.outreach { color:#1d4ed8; background:#eff6ff; border-color:#bfdbfe; }
+.dir-act.outreach:hover { background:#dbeafe; }
+
+/* Legend strip above the directory cards */
+.dir-legend { display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; padding:6px 18px 14px; font-size:var(--lp-text-2xs); color:var(--lp-ink-muted); }
+.dir-legend-label { font-weight:var(--lp-weight-semibold); text-transform:uppercase; letter-spacing:.4px; margin-right:4px; color:var(--lp-ink-muted); }
+.dir-legend-item { display:inline-flex; align-items:center; gap:6px; color:var(--lp-ink-primary); }
+.dir-legend-dot { width:10px; height:10px; border-radius:50%; border:1px solid; display:inline-block; }
+.dir-legend-dot.management  { background:#bfdbfe; border-color:#93c5fd; }
+.dir-legend-dot.recruitment { background:#a7f3d0; border-color:#6ee7b7; }
+.dir-legend-dot.executive   { background:#ddd6fe; border-color:#c4b5fd; }
+.dir-legend-dot.coaching    { background:#fed7aa; border-color:#fdba74; }
+.dir-legend-dot.gk-coaching { background:#fde68a; border-color:#fcd34d; }
+.dir-legend-dot.other       { background:#e2e8f0; border-color:#cbd5e1; }
+.dir-legend-dot.contact     { background:#16a34a; border-color:#15803d; }
 .dir-row .copy-btn { background:transparent; border:1px solid transparent; padding:2px 6px; opacity:.35; font-size:13px; cursor:pointer; }
 .dir-row:hover .copy-btn { opacity:1; }
 @media (max-width: 900px) {
@@ -2502,6 +2517,16 @@ tr:hover td { background: #f9fafb; }
     <span class="kbd-hint">Press <kbd class="kbd">/</kbd> to search</span>
   </div>
   <div class="row-count" id="dirCount"></div>
+  <div class="dir-legend">
+    <span class="dir-legend-label">Key</span>
+    <span class="dir-legend-item"><span class="dir-legend-dot management"></span>Management</span>
+    <span class="dir-legend-item"><span class="dir-legend-dot executive"></span>Executive &amp; Sporting Director</span>
+    <span class="dir-legend-item"><span class="dir-legend-dot recruitment"></span>Recruitment &amp; Scouting</span>
+    <span class="dir-legend-item"><span class="dir-legend-dot coaching"></span>Coaching</span>
+    <span class="dir-legend-item"><span class="dir-legend-dot gk-coaching"></span>Goalkeeping</span>
+    <span class="dir-legend-item"><span class="dir-legend-dot other"></span>Other</span>
+    <span class="dir-legend-item" style="margin-left:auto"><span class="dir-legend-dot contact"></span>Your contact</span>
+  </div>
   <div class="staff-container" id="dirContainer"></div>
 </div>
 
