@@ -2526,7 +2526,8 @@ tr:hover td { background: #f9fafb; }
   </div>
   <div class="controls">
     <select id="dirCountry" onchange="onDirCountry()"><option value="">All Countries</option></select>
-    <select id="dirLeague" onchange="renderDirectory()"><option value="">All Leagues</option></select>
+    <select id="dirLeague" onchange="onDirLeagueChange()"><option value="">All Leagues</option></select>
+    <select id="dirClub" onchange="renderDirectory()" disabled><option value="">All Clubs</option></select>
     <select id="dirNationality" onchange="renderDirectory()">
       <option value="">All Nationalities</option>
       <option value="England">England</option>
@@ -3796,7 +3797,45 @@ function onDirCountry() {
     : allLeagues;
   available.forEach(v => { const o = document.createElement('option'); o.value=v; o.textContent=v; leagueSel.appendChild(o); });
   leagueSel.value = '';
+  refreshDirClubOptions();
   renderDirectory();
+}
+
+function onDirLeagueChange() {
+  refreshDirClubOptions();
+  renderDirectory();
+}
+
+// Populate the Club select with clubs in the chosen country/league.
+// Enabled when a country (or a specific league) is selected.
+function refreshDirClubOptions() {
+  const country = document.getElementById('dirCountry').value;
+  const league  = document.getElementById('dirLeague').value;
+  const clubSel = document.getElementById('dirClub');
+  const prev = clubSel.value;
+  while (clubSel.options.length > 1) clubSel.remove(1);
+  if (!country && !league) {
+    clubSel.disabled = true;
+    clubSel.value = '';
+    return;
+  }
+  const countryLeagues = country ? (COUNTRY_LEAGUES[country] || []) : null;
+  const clubs = STAFF_DATA
+    .filter(e => {
+      if (league && e.league !== league) return false;
+      if (countryLeagues && !countryLeagues.includes(e.league)) return false;
+      return true;
+    })
+    .map(e => e.club);
+  const unique = [...new Set(clubs)].sort((a,b) => a.localeCompare(b));
+  unique.forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    clubSel.appendChild(o);
+  });
+  clubSel.disabled = unique.length === 0;
+  // Restore previous selection if still valid
+  if (prev && unique.includes(prev)) clubSel.value = prev; else clubSel.value = '';
 }
 
 // Tab switching
@@ -4061,6 +4100,8 @@ let _dirRaf = null;
 function renderDirectory() {
   const country = document.getElementById('dirCountry').value;
   const league = document.getElementById('dirLeague').value;
+  const clubSel = document.getElementById('dirClub');
+  const club = clubSel ? clubSel.value : '';
   const nationality = document.getElementById('dirNationality').value;
   const q = document.getElementById('dirSearch').value.trim();
   const search = q.toLowerCase();
@@ -4071,6 +4112,7 @@ function renderDirectory() {
   let filtered = STAFF_DATA.filter(entry => {
     if (country && !(COUNTRY_LEAGUES[country]||[]).includes(entry.league)) return false;
     if (league && entry.league !== league) return false;
+    if (club && entry.club !== club) return false;
     // Nationality filter: exclude home leagues, require at least one matching staff member
     if (nationality) {
       if (!country && homeLeagues.includes(entry.league)) return false;
@@ -5831,5 +5873,6 @@ function toggleSidebarCollapse() {
 </script>
 </main>
 </div><!-- /app-layout -->
+<script src="assets/state-persist.js" defer></script>
 </body>
 </html>
