@@ -296,12 +296,12 @@ mark { background:#fef08a; color:inherit; border-radius:2px; padding:0 1px; font
 .league-hdr-stats { font-size:var(--lp-text-xs); color:var(--text-muted); font-weight:var(--lp-weight-regular); }
 .league-hdr-toggle { margin-left:auto; font-size:var(--lp-text-2xs); color:var(--text-muted); transition:transform .2s; }
 .league-section.collapsed .league-hdr-toggle { transform:rotate(-90deg); }
-.league-section-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:14px; align-items:start; transition:max-height .3s ease, opacity .2s; overflow:hidden; max-height:20000px; opacity:1; }
+.league-section-cards { display:flex; flex-direction:column; gap:10px; transition:max-height .3s ease, opacity .2s; overflow:hidden; max-height:200000px; opacity:1; }
 .league-section.collapsed .league-section-cards { max-height:0; opacity:0; padding:0; margin:0; }
 
 /* Staff cards */
 .staff-container { padding:24px var(--lp-page-pad) 40px; }
-.staff-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:14px; align-items:start; }
+.staff-grid { display:flex; flex-direction:column; gap:10px; }
 .staff-card { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow-sm); border:1px solid var(--border); overflow:hidden; transition:box-shadow .2s, border-color .2s; }
 .staff-card:hover { box-shadow:var(--shadow); border-color:var(--lp-border-strong); }
 .staff-card-header { padding:14px 18px; cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center; transition:background .15s; }
@@ -496,6 +496,43 @@ a.tm-link:hover { text-decoration:underline; }
 .bulk-fallback-item:last-child { border-bottom:none; }
 .bulk-fallback-open { padding:4px 12px; border-radius:var(--lp-radius-ctrl); font-size:var(--lp-text-xs); font-weight:var(--lp-weight-medium); background:var(--lp-accent-bg); color:var(--blue); border:1px solid var(--lp-status-info-bg); cursor:pointer; text-decoration:none; }
 /* ── Directory: Your Contacts highlighted section ── */
+/* ── New unified club row directory (full-width, always expanded) ── */
+.staff-card.dir-club-row { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-sm); overflow:hidden; }
+.staff-card.dir-club-row .staff-card-header { cursor:default; padding:12px 18px; background:var(--lp-surface-sunken); border-bottom:1px solid var(--border); }
+.staff-card.dir-club-row .staff-card-header:hover { background:var(--lp-surface-sunken); }
+.staff-card.dir-club-row .staff-toggle { display:none; }
+.staff-card.dir-club-row .staff-list { max-height:none !important; overflow:visible !important; padding:0 !important; border-top:0 !important; }
+.dir-club-country { font-size:var(--lp-text-xs); color:var(--text-muted); font-weight:var(--lp-weight-regular); margin-left:6px; background:var(--bg); padding:1px 8px; border-radius:var(--lp-radius-pill); }
+.dir-rows { display:flex; flex-direction:column; }
+.dir-row { display:grid; grid-template-columns: 22px minmax(180px, 1.4fr) minmax(120px, 1fr) auto; align-items:center; gap:14px; padding:9px 18px; border-bottom:1px solid var(--lp-border-soft); transition:background .12s; }
+.dir-row:last-child { border-bottom:none; }
+.dir-row:hover { background:var(--lp-surface-sunken); }
+.dir-row.is-contact { background:#f6fdf8; }
+.dir-row.is-contact:hover { background:#ecfaf0; }
+.dir-row-star { font-size:13px; color:#d1d5db; line-height:1; text-align:center; }
+.dir-row.is-contact .dir-row-star { color:#16a34a; }
+.dir-row-name { font-weight:var(--lp-weight-medium); font-size:var(--lp-text-sm); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dir-row-name a { color:var(--primary); text-decoration:none; }
+.dir-row-name a:hover { color:var(--accent); text-decoration:underline; }
+.dir-row-name .dir-nat { font-size:11px; color:var(--text-muted); font-weight:var(--lp-weight-regular); margin-left:6px; }
+.dir-row-role { min-width:0; }
+.dir-row-role .role-badge, .dir-row-role .s-role { font-size:var(--lp-text-2xs); }
+.dir-row-actions { display:flex; align-items:center; gap:6px; justify-self:end; flex-shrink:0; }
+.dir-act { display:inline-flex; align-items:center; justify-content:center; height:26px; min-width:26px; padding:0 8px; border-radius:var(--lp-radius-ctrl); font-size:11px; font-weight:var(--lp-weight-semibold); text-decoration:none; border:1px solid; line-height:1; cursor:pointer; font-family:var(--lp-font-sans); }
+.dir-act.tm { color:#1f7a8c; border-color:#bae6fd; background:#f0f9ff; }
+.dir-act.tm:hover { background:#e0f2fe; }
+.dir-act.tm.missing { color:#cbd5e1; border-color:#e2e8f0; background:transparent; cursor:default; }
+.dir-act.email { color:var(--blue); border-color:#bfdbfe; background:var(--lp-accent-bg); }
+.dir-act.email:hover { background:var(--lp-status-info-bg); }
+.dir-act.wa { color:var(--green); border-color:#bbf7d0; background:#f0fdf4; }
+.dir-act.wa:hover { background:var(--lp-status-success-bg); }
+.dir-act.outreach { color:var(--lp-accent-hover); border-color:#bfdbfe; background:var(--lp-accent-bg); }
+.dir-act.outreach:hover { background:var(--lp-status-info-bg); }
+@media (max-width: 720px) {
+  .dir-row { grid-template-columns: 22px 1fr auto; row-gap:4px; }
+  .dir-row-role { grid-column: 2 / 4; }
+}
+
 .dir-your-contacts { background:#f0fdf4; border-radius:var(--lp-radius-ctrl); padding:10px 12px 8px; margin:10px 0 8px; border:1px solid #bbf7d0; }
 .dir-yc-header { font-size:var(--lp-text-2xs); font-weight:var(--lp-weight-semibold); color:var(--green-dark); text-transform:uppercase; letter-spacing:.5px; margin-bottom:7px; }
 .dir-yc-row { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid #dcfce7; flex-wrap:wrap; }
@@ -2361,7 +2398,7 @@ tr:hover td { background: #f9fafb; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
-</style></head>
+</style><script src="assets/outreach-pipeline.js"></script></head>
 <body>
 
 <div class="app-layout">
@@ -3963,95 +4000,119 @@ function renderDirectory() {
       const sWebUrl = CLUB_WEBSITES[entry.club];
       const sWebLink = sWebUrl ? ' <a href="'+esc(sWebUrl)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:10px;color:var(--accent);text-decoration:none;font-weight:600;background:rgba(59,130,246,.08);padding:1px 6px;border-radius:4px;margin-left:4px" title="Club website">&#127760;</a>' : '';
       const cardId = 'dir_'+cardIdx++;
-      const hasStaffMatch = search && (entry.staff||[]).some(s => s.name.toLowerCase().includes(search));
-      const expandedClass = hasStaffMatch ? ' expanded' : '';
-
-      // Filter staff: nationality → show only matching; role pill → show only matching; default → priority 6
-      let visibleStaff;
-      if (nationality) {
-        visibleStaff = (entry.staff||[]).filter(s => s.nationality === nationality);
-        if (activeDirRole) visibleStaff = visibleStaff.filter(s => roleCategory(s.role) === activeDirRole);
-      } else if (activeDirRole) {
-        visibleStaff = (entry.staff||[]).filter(s => roleCategory(s.role) === activeDirRole);
-      } else {
-        visibleStaff = priorityStaffDir(entry.staff||[]);
-      }
-      const staffCount = visibleStaff.length;
-      const totalCount = (entry.staff||[]).length;
-      const countLabel = (nationality || activeDirRole) && staffCount !== totalCount
-        ? staffCount+' shown of '+totalCount+' staff'
-        : staffCount + (totalCount > staffCount ? ' of '+totalCount : '') + ' staff';
-
-      // Auto-expand when filtering by nationality or role or search match
-      const autoExpand = nationality || activeDirRole || hasStaffMatch;
-      const finalExpand = autoExpand ? ' expanded' : expandedClass;
-
-      // Fix 25: summer link
       const sumLink = summerLink(entry.club);
-      html += '<div class="staff-card'+finalExpand+'" id="'+cardId+'" style="border-left:3px solid '+colour+'">' +
-        '<div class="staff-card-header" onclick="toggleCard(this.parentElement.id)">' +
-        '<div><div class="staff-club">'+crest+clubLink+sWebLink+sumLink+'<span class="staff-count">'+countLabel+'</span></div>' +
-        '</div><span class="staff-toggle">&#9660;</span></div>' +
-        '<div class="staff-list">';
+      const lgCountry = LEAGUE_TO_COUNTRY[entry.league] || '';
+      const countryChip = lgCountry ? '<span class="dir-club-country">'+esc(lgCountry)+'</span>' : '';
 
-      // Your Contacts — football technical/management staff only
-      // Whitelist: must match a football role pattern AND not be a player
+      // Decide which staff to display
+      const allStaff = entry.staff || [];
+      let baseStaff;
+      if (nationality) {
+        baseStaff = allStaff.filter(s => s.nationality === nationality);
+        if (activeDirRole) baseStaff = baseStaff.filter(s => roleCategory(s.role) === activeDirRole);
+      } else if (activeDirRole) {
+        baseStaff = allStaff.filter(s => roleCategory(s.role) === activeDirRole);
+      } else {
+        baseStaff = allStaff.slice(); // always show everyone
+      }
+
+      // Build merged, deduplicated row list: contacts first (priority order kept),
+      // then remaining staff. Each row keeps a reference to contact info when present.
       const dirClubContacts = getContactsForClub(entry.club);
       const footballContacts = dirClubContacts
         ? dirClubContacts.filter(c => isFootballStaff(c.role))
         : [];
-      if (footballContacts.length) {
-        const dcClubJ = entry.club.replace(/'/g,"\\'"); const dcLgJ = (entry.league||'').replace(/'/g,"\\'");
-        html += '<div class="dir-your-contacts">' +
-          '<div class="dir-yc-header">&#9733; Your Contacts (' + footballContacts.length + ')</div>';
+      const contactByName = new Map();
+      footballContacts.forEach(c => contactByName.set((c.name||'').toLowerCase(), c));
+
+      const seen = new Set();
+      const rows = [];
+      // 1. Contacts first (always shown, even if filtered out by nationality/role pill, IF no filter active)
+      const noStaffFilter = !nationality && !activeDirRole;
+      if (noStaffFilter) {
         footballContacts.forEach(c => {
-          const cat = roleCategory(c.role);
-          const badge = cat ? '<span class="role-badge ' + cat + '">' + esc(c.role) + '</span>' : '<span class="s-role">' + esc(c.role) + '</span>';
-          const nameEl = c.tm_profile_url ? '<a href="' + esc(c.tm_profile_url) + '" target="_blank" onclick="event.stopPropagation()">' + esc(c.name) + '</a>' : esc(c.name);
-          const emailBtn = c.email ? '<a class="dir-contact-btn email" href="mailto:' + esc(c.email) + '" onclick="event.stopPropagation()" title="' + esc(c.email) + '">&#128231; Email</a>' : '';
-          const phoneBtn = c.phone ? '<a class="dir-contact-btn phone" href="whatsapp://send?phone=' + normalisePhoneForWA(c.phone) + '" onclick="event.stopPropagation()" title="WhatsApp ' + esc(c.phone) + '">💬</a>' : '';
-          const dirPipelineBtn = '<button class="dir-pipeline-btn" onclick="showContactPicker(\''+dcClubJ+'\',\''+dcLgJ+'\',this);event.stopPropagation()" title="Add to Outreach List">+ Outreach</button>';
-          html += '<div class="dir-yc-row"><span class="s-name">' + nameEl + '</span>' + badge + '<span class="dir-yc-actions">' + emailBtn + phoneBtn + dirPipelineBtn + '</span></div>';
+          const key = (c.name||'').toLowerCase();
+          if (seen.has(key)) return;
+          seen.add(key);
+          // Try to find canonical staff entry to get profile_url / nationality
+          const staffMatch = allStaff.find(s => s.name.toLowerCase() === key);
+          rows.push({
+            name: c.name,
+            role: c.role || (staffMatch && staffMatch.role) || '',
+            nationality: (staffMatch && staffMatch.nationality) || '',
+            profile_url: c.tm_profile_url || (staffMatch && staffMatch.profile_url) || '',
+            contact: c,
+          });
         });
-        html += '</div>';
+      }
+      // 2. Remaining staff
+      baseStaff.forEach(s => {
+        const key = (s.name||'').toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        rows.push({
+          name: s.name,
+          role: s.role,
+          nationality: s.nationality || '',
+          profile_url: s.profile_url || '',
+          contact: contactByName.get(key) || null,
+        });
+      });
+
+      const totalCount = allStaff.length;
+      const contactCount = footballContacts.length;
+      const countLabel = totalCount + ' staff' + (contactCount ? ' &middot; ' + contactCount + ' of yours' : '');
+
+      html += '<div class="staff-card dir-club-row expanded" id="'+cardId+'" style="border-left:3px solid '+colour+'">' +
+        '<div class="staff-card-header">' +
+        '<div><div class="staff-club">'+crest+clubLink+countryChip+sWebLink+sumLink+'<span class="staff-count">'+countLabel+'</span></div>' +
+        '</div></div>' +
+        '<div class="staff-list"><div class="dir-rows">';
+
+      const dcClubJ = entry.club.replace(/'/g,"\\'");
+      const dcLgJ = (entry.league||'').replace(/'/g,"\\'");
+
+      rows.forEach(r => {
+        const isC = !!r.contact;
+        const sName = highlight(r.name, q);
+        const nameEl = r.profile_url
+          ? '<a href="'+esc(r.profile_url)+'" target="_blank" onclick="event.stopPropagation()">'+sName+'</a>'
+          : sName;
+        const natEl = r.nationality ? '<span class="dir-nat">'+esc(r.nationality)+'</span>' : '';
+        const cat = roleCategory(r.role);
+        const badge = cat
+          ? '<span class="role-badge '+cat+'">'+esc(r.role)+'</span>'
+          : (r.role ? '<span class="s-role">'+esc(r.role)+'</span>' : '');
+
+        // Actions: TM (always shown — greyed when missing), Email, WA, +Outreach (for contacts)
+        let actions = '';
+        actions += r.profile_url
+          ? '<a class="dir-act tm" href="'+esc(r.profile_url)+'" target="_blank" onclick="event.stopPropagation()" title="Transfermarkt profile">TM</a>'
+          : '<span class="dir-act tm missing" title="No Transfermarkt link recorded">TM</span>';
+        if (isC && r.contact.email) {
+          actions += '<a class="dir-act email" href="mailto:'+esc(r.contact.email)+'" onclick="event.stopPropagation()" title="'+esc(r.contact.email)+'">&#9993;</a>';
+        }
+        if (isC && r.contact.phone) {
+          actions += '<a class="dir-act wa" href="whatsapp://send?phone='+normalisePhoneForWA(r.contact.phone)+'" onclick="event.stopPropagation()" title="WhatsApp '+esc(r.contact.phone)+'">WA</a>';
+        }
+        if (isC) {
+          actions += '<button class="dir-act outreach" onclick="showContactPicker(\''+dcClubJ+'\',\''+dcLgJ+'\',this);event.stopPropagation()" title="Add to Outreach List">+&nbsp;Outreach</button>';
+        }
+        actions += '<button class="copy-btn" title="Copy" data-name="'+esc(r.name)+'" data-role="'+esc(r.role)+'" data-club="'+esc(entry.club)+'" data-league="'+esc(entry.league)+'" onclick="copyStaff(this)">&#128203;</button>';
+
+        html += '<div class="dir-row'+(isC?' is-contact':'')+'">' +
+          '<div class="dir-row-star">'+(isC?'&#9733;':'&#9734;')+'</div>' +
+          '<div class="dir-row-name">'+nameEl+natEl+'</div>' +
+          '<div class="dir-row-role">'+badge+'</div>' +
+          '<div class="dir-row-actions">'+actions+'</div>' +
+        '</div>';
+      });
+
+      if (!rows.length) {
+        html += '<div class="dir-row"><div class="dir-row-star"></div><div class="dir-row-name" style="color:var(--text-muted);font-style:italic">No staff to show under current filter</div><div></div><div></div></div>';
       }
 
-      // Key staff — priority roles in compact 2-col grid, full list behind toggle
-      if (visibleStaff.length) {
-        const fullId = 'fs_' + cardId;
-        const hasMore = totalCount > visibleStaff.length;
-        html += '<div class="dir-ks-section">';
-        html += '<div class="dir-ks-header">' +
-          '<span class="dir-ks-label">' + (footballContacts.length ? 'KEY STAFF' : 'STAFF') + '</span>' +
-          (hasMore ? '<button class="dir-ks-toggle" data-full-id="' + fullId + '" data-total="' + totalCount + '" onclick="toggleFullStaff(this);event.stopPropagation()">Show all ' + totalCount + ' &#9660;</button>' : '') +
-        '</div>';
-        html += '<div class="dir-ks-grid">';
-        visibleStaff.forEach(s => {
-          const sName = highlight(s.name, q);
-          const sLink = s.profile_url ? '<a href="'+esc(s.profile_url)+'" target="_blank" onclick="event.stopPropagation()">'+sName+'</a>' : sName;
-          const natBadge = s.nationality ? ' <span class="dir-ks-nat">'+esc(s.nationality)+'</span>' : '';
-          const cat = roleCategory(s.role);
-          const badge = cat ? '<span class="role-badge '+cat+'">'+esc(s.role)+'</span>' : '<span class="s-role">'+esc(s.role)+'</span>';
-          html += '<div class="dir-ks-row"><span class="s-name">'+sLink+natBadge+'</span>'+badge+'</div>';
-        });
-        html += '</div>';
-        if (hasMore) {
-          html += '<div class="dir-ks-full" id="' + fullId + '">';
-          (entry.staff||[]).forEach(s => {
-            const sName = highlight(s.name, q);
-            const sLink = s.profile_url ? '<a href="'+esc(s.profile_url)+'" target="_blank" onclick="event.stopPropagation()">'+sName+'</a>' : sName;
-            const cat = roleCategory(s.role);
-            const badge = cat ? '<span class="role-badge '+cat+'">'+esc(s.role)+'</span>' : '<span class="s-role">'+esc(s.role)+'</span>';
-            const myCtLinks = inContactsBadge(s.name, dirClubContacts);
-            html += '<div class="staff-entry"><span class="s-name">'+sLink+'</span>'+badge+myCtLinks+
-              '<button class="copy-btn" title="Copy" data-name="'+esc(s.name)+'" data-role="'+esc(s.role)+'" data-club="'+esc(entry.club)+'" data-league="'+esc(entry.league)+'" onclick="copyStaff(this)">&#128203;</button>' +
-              '</div>';
-          });
-          html += '</div>';
-        }
-        html += '</div>';
-      }
-      html += '</div></div>';
+      html += '</div></div></div>';
     });
 
     html += '</div>';
