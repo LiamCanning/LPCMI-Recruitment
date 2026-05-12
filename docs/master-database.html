@@ -498,10 +498,13 @@ a.tm-link:hover { text-decoration:underline; }
 /* ── Directory: Your Contacts highlighted section ── */
 /* ── New unified club row directory (full-width, always expanded) ── */
 .staff-card.dir-club-row { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-sm); overflow:hidden; }
-.staff-card.dir-club-row .staff-card-header { cursor:default; padding:12px 18px; background:var(--lp-surface-sunken); border-bottom:1px solid var(--border); }
-.staff-card.dir-club-row .staff-card-header:hover { background:var(--lp-surface-sunken); }
-.staff-card.dir-club-row .staff-toggle { display:none; }
-.staff-card.dir-club-row .staff-list { max-height:none !important; overflow:visible !important; padding:0 !important; border-top:0 !important; }
+.staff-card.dir-club-row .staff-card-header { cursor:pointer; padding:12px 18px; background:var(--lp-surface-sunken); border-bottom:1px solid var(--border); }
+.staff-card.dir-club-row .staff-card-header:hover { background:#e9eef5; }
+.staff-card.dir-club-row:not(.expanded) .staff-card-header { border-bottom:none; }
+.staff-card.dir-club-row .staff-toggle { display:inline-flex; transition:transform .2s ease; }
+.staff-card.dir-club-row.expanded .staff-toggle { transform:rotate(180deg); }
+.staff-card.dir-club-row.expanded .staff-list { max-height:200000px; overflow:visible; padding:0; border-top:0; }
+.staff-card.dir-club-row:not(.expanded) .staff-list { max-height:0; overflow:hidden; padding:0; border-top:0; }
 .dir-club-country { font-size:var(--lp-text-xs); color:var(--text-muted); font-weight:var(--lp-weight-regular); margin-left:6px; background:var(--bg); padding:1px 8px; border-radius:var(--lp-radius-pill); }
 .dir-rows { display:flex; flex-direction:column; }
 .dir-row { display:grid; grid-template-columns: 22px minmax(0, 1fr) 230px 220px; align-items:center; gap:14px; padding:8px 18px; border-bottom:1px solid var(--lp-border-soft); transition:background .12s; font-family:var(--lp-font-sans); }
@@ -4204,9 +4207,9 @@ function renderDirectory() {
       const countLabel = totalCount + ' staff' + (contactCount ? ' &middot; ' + contactCount + ' of yours' : '');
 
       html += '<div class="staff-card dir-club-row expanded" id="'+cardId+'" style="border-left:3px solid '+colour+'">' +
-        '<div class="staff-card-header">' +
+        '<div class="staff-card-header" onclick="toggleCard(this.parentElement.id)">' +
         '<div><div class="staff-club">'+crest+clubLink+countryChip+sWebLink+sumLink+'<span class="staff-count">'+countLabel+'</span></div>' +
-        '</div></div>' +
+        '</div><span class="staff-toggle">&#9660;</span></div>' +
         '<div class="staff-list"><div class="dir-rows">';
 
       const dcClubJ = entry.club.replace(/'/g,"\\'");
