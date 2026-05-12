@@ -531,12 +531,37 @@ a.tm-link:hover { text-decoration:underline; }
   text-overflow:ellipsis;
   max-width:100%;
 }
-.dir-row-role .role-badge.management  { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
-.dir-row-role .role-badge.recruitment { background:#ecfdf5; color:#047857; border-color:#a7f3d0; }
-.dir-row-role .role-badge.executive   { background:#f5f3ff; color:#6d28d9; border-color:#ddd6fe; }
-.dir-row-role .role-badge.coaching    { background:#fff7ed; color:#9a3412; border-color:#fed7aa; }
-.dir-row-role .role-badge.gk-coaching { background:#fef3c7; color:#854d0e; border-color:#fde68a; }
-.dir-row-role .role-badge.other       { background:#f1f5f9; color:#475569; border-color:#e2e8f0; }
+/* Per-role colour palette — one tint per distinct job. Soft tones throughout so the row stays readable. */
+.role-badge.r-manager       { background:#dbeafe; color:#1e3a8a; border-color:#bfdbfe; }
+.role-badge.r-assistant     { background:#e0f2fe; color:#075985; border-color:#bae6fd; }
+.role-badge.r-coach         { background:#ccfbf1; color:#115e59; border-color:#99f6e4; }
+.role-badge.r-gk-coach      { background:#fef3c7; color:#854d0e; border-color:#fde68a; }
+.role-badge.r-sporting-dir  { background:#ede9fe; color:#5b21b6; border-color:#ddd6fe; }
+.role-badge.r-dof           { background:#fae8ff; color:#86198f; border-color:#f5d0fe; }
+.role-badge.r-tech-dir      { background:#e0e7ff; color:#3730a3; border-color:#c7d2fe; }
+.role-badge.r-chief-scout   { background:#d1fae5; color:#065f46; border-color:#a7f3d0; }
+.role-badge.r-head-scout    { background:#dcfce7; color:#15803d; border-color:#bbf7d0; }
+.role-badge.r-scout         { background:#ecfccb; color:#3f6212; border-color:#d9f99d; }
+.role-badge.r-recruitment   { background:#dcfce7; color:#15803d; border-color:#bbf7d0; }
+.role-badge.r-academy-mgr   { background:#fce7f3; color:#9d174d; border-color:#fbcfe8; }
+.role-badge.r-academy-coach { background:#ffe4e6; color:#9f1239; border-color:#fecdd3; }
+.role-badge.r-academy-dir   { background:#fae8ff; color:#701a75; border-color:#f5d0fe; }
+.role-badge.r-academy-scout { background:#cffafe; color:#155e75; border-color:#a5f3fc; }
+.role-badge.r-team-mgr      { background:#f1f5f9; color:#334155; border-color:#cbd5e1; }
+.role-badge.r-kit           { background:#f3f4f6; color:#374151; border-color:#e5e7eb; }
+.role-badge.r-chairman      { background:#fef9c3; color:#854d0e; border-color:#fef08a; }
+.role-badge.r-ceo           { background:#ffedd5; color:#7c2d12; border-color:#fed7aa; }
+.role-badge.r-analyst       { background:#cffafe; color:#155e75; border-color:#a5f3fc; }
+.role-badge.r-performance   { background:#fed7d7; color:#9b2c2c; border-color:#feb2b2; }
+.role-badge.r-medical       { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+.role-badge.r-other         { background:#e2e8f0; color:#475569; border-color:#cbd5e1; }
+/* Legacy classes (used by other tabs) — keep visible but visually quiet inside directory rows. */
+.dir-row-role .role-badge.management,
+.dir-row-role .role-badge.recruitment,
+.dir-row-role .role-badge.executive,
+.dir-row-role .role-badge.coaching,
+.dir-row-role .role-badge.gk-coaching,
+.dir-row-role .role-badge.other { background:#e2e8f0; color:#475569; border-color:#cbd5e1; }
 .dir-row-actions { display:flex; align-items:center; gap:6px; justify-content:flex-end; flex-shrink:0; min-height:28px; }
 .dir-act { display:inline-flex; align-items:center; justify-content:center; height:26px; min-width:26px; padding:0 10px; border-radius:var(--lp-radius-pill); font-size:11px; font-weight:var(--lp-weight-semibold); text-decoration:none; border:1px solid; line-height:1; cursor:pointer; font-family:var(--lp-font-sans); }
 .dir-act.email    { color:#1d4ed8; background:#eff6ff; border-color:#bfdbfe; }
@@ -547,7 +572,8 @@ a.tm-link:hover { text-decoration:underline; }
 .dir-act.outreach:hover { background:#dbeafe; }
 
 /* Legend strip above the directory cards */
-.dir-legend { display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; padding:6px 18px 14px; font-size:var(--lp-text-2xs); color:var(--lp-ink-muted); }
+.dir-legend { display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; padding:6px 18px 14px; font-size:var(--lp-text-2xs); color:var(--lp-ink-muted); }
+.dir-legend .role-badge { border-radius:var(--lp-radius-pill); border:1px solid; padding:3px 12px; line-height:1.5; }
 .dir-legend-label { font-weight:var(--lp-weight-semibold); text-transform:uppercase; letter-spacing:.4px; margin-right:4px; color:var(--lp-ink-muted); }
 .dir-legend-item { display:inline-flex; align-items:center; gap:6px; color:var(--lp-ink-primary); }
 .dir-legend-dot { width:10px; height:10px; border-radius:50%; border:1px solid; display:inline-block; }
@@ -2519,12 +2545,29 @@ tr:hover td { background: #f9fafb; }
   <div class="row-count" id="dirCount"></div>
   <div class="dir-legend">
     <span class="dir-legend-label">Key</span>
-    <span class="dir-legend-item"><span class="dir-legend-dot management"></span>Management</span>
-    <span class="dir-legend-item"><span class="dir-legend-dot executive"></span>Executive &amp; Sporting Director</span>
-    <span class="dir-legend-item"><span class="dir-legend-dot recruitment"></span>Recruitment &amp; Scouting</span>
-    <span class="dir-legend-item"><span class="dir-legend-dot coaching"></span>Coaching</span>
-    <span class="dir-legend-item"><span class="dir-legend-dot gk-coaching"></span>Goalkeeping</span>
-    <span class="dir-legend-item"><span class="dir-legend-dot other"></span>Other</span>
+    <span class="role-badge r-manager">Manager</span>
+    <span class="role-badge r-assistant">Assistant Manager</span>
+    <span class="role-badge r-coach">First Team Coach</span>
+    <span class="role-badge r-gk-coach">Goalkeeping Coach</span>
+    <span class="role-badge r-sporting-dir">Sporting Director</span>
+    <span class="role-badge r-dof">Director of Football</span>
+    <span class="role-badge r-tech-dir">Technical Director</span>
+    <span class="role-badge r-chief-scout">Chief Scout</span>
+    <span class="role-badge r-head-scout">Head of Scouting</span>
+    <span class="role-badge r-scout">Scout</span>
+    <span class="role-badge r-recruitment">Recruitment</span>
+    <span class="role-badge r-academy-mgr">Academy Manager</span>
+    <span class="role-badge r-academy-coach">Academy Coach</span>
+    <span class="role-badge r-academy-dir">Academy Director</span>
+    <span class="role-badge r-academy-scout">Academy Scout</span>
+    <span class="role-badge r-chairman">Chairman</span>
+    <span class="role-badge r-ceo">CEO</span>
+    <span class="role-badge r-analyst">Analyst</span>
+    <span class="role-badge r-performance">Performance</span>
+    <span class="role-badge r-medical">Medical</span>
+    <span class="role-badge r-team-mgr">Team Manager</span>
+    <span class="role-badge r-kit">Kit Manager</span>
+    <span class="role-badge r-other">Other</span>
     <span class="dir-legend-item" style="margin-left:auto"><span class="dir-legend-dot contact"></span>Your contact</span>
   </div>
   <div class="staff-container" id="dirContainer"></div>
@@ -3898,6 +3941,39 @@ function roleCategory(role) {
 }
 
 // Role hierarchy for sorting within a club (lower index = higher priority).
+// Fine-grained per-role pill class — each distinct job gets its own colour.
+function roleStyleClass(role) {
+  const r = (role||'').toLowerCase().trim();
+  if (!r) return 'r-other';
+  if (r.includes('goalkeep') && r.includes('coach')) return 'r-gk-coach';
+  if (r.includes('chairman') || r.includes('president')) return 'r-chairman';
+  if (r.includes('ceo') || r.includes('owner') || r === 'general manager') return 'r-ceo';
+  if (r.includes('technical director')) return 'r-tech-dir';
+  if (r.includes('sporting director')) return 'r-sporting-dir';
+  if (r.includes('director of football') || r.includes('director of recruit')) return 'r-dof';
+  if (r.includes('chief scout')) return 'r-chief-scout';
+  if (r.includes('head of recruit') || r.includes('head of scout') || r.includes('head scout')) return 'r-head-scout';
+  if (r.includes('academy') || r.includes('youth') || r.includes('reserve')) {
+    if (r.includes('director')) return 'r-academy-dir';
+    if (r.includes('manager')) return 'r-academy-mgr';
+    if (r.includes('scout')) return 'r-academy-scout';
+    return 'r-academy-coach';
+  }
+  if (r.includes('first team scout')) return 'r-scout';
+  if (r.includes('scout') || r.includes('scouting')) return 'r-scout';
+  if (r.includes('recruitment')) return 'r-recruitment';
+  if (r.includes('analyst') || r.includes('analysis') || r.includes('data') || r.includes('video')) return 'r-analyst';
+  if (r.includes('performance') || r.includes('fitness') || r.includes('conditioning') || r.includes('strength')) return 'r-performance';
+  if (r.includes('physio') || r.includes('medical') || r.includes('doctor')) return 'r-medical';
+  if (r.includes('assistant') && (r.includes('manager') || r.includes('coach'))) return 'r-assistant';
+  if (r === 'manager' || r.includes('head coach') || (r.includes('manager') && !r.includes('kit') && !r.includes('team manager') && !r.includes('academy'))) return 'r-manager';
+  if (r.includes('first team coach') || r === 'coach') return 'r-coach';
+  if (r.includes('team manager')) return 'r-team-mgr';
+  if (r.includes('kit')) return 'r-kit';
+  if (r.includes('coach')) return 'r-coach';
+  return 'r-other';
+}
+
 function rolePriority(role) {
   const r = (role||'').toLowerCase();
   const isAssistant = r.includes('assistant');
@@ -4170,9 +4246,9 @@ function renderDirectory() {
           ? '<a href="'+esc(r.profile_url)+'" target="_blank" onclick="event.stopPropagation()">'+sName+'</a>'
           : sName;
         const natEl = r.nationality ? '<span class="dir-nat">'+esc(r.nationality)+'</span>' : '';
-        const cat = roleCategory(r.role) || 'other';
+        const roleCls = roleStyleClass(r.role);
         const badge = r.role
-          ? '<span class="role-badge '+cat+'" title="'+esc(r.role)+'">'+esc(r.role)+'</span>'
+          ? '<span class="role-badge '+roleCls+'" title="'+esc(r.role)+'">'+esc(r.role)+'</span>'
           : '';
 
         // Actions: Email, WA, +Outreach (for contacts). Name itself links to TM.
