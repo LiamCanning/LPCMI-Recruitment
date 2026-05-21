@@ -717,62 +717,62 @@ table.lt td.club { font-weight:var(--lp-weight-medium); display:flex; align-item
 /* ── Fixtures view ─────────────────────────────────────────────── */
 .fx-nav {
   display:flex; align-items:center; justify-content:center;
-  gap:16px; padding:16px 0 20px;
+  gap:20px; padding:20px 0 24px;
 }
 .fx-nav-btn {
   background:var(--card); border:1px solid var(--border);
-  border-radius:var(--lp-radius-ctrl); padding:6px 18px;
-  font-size:22px; line-height:1; cursor:pointer; color:var(--text);
+  border-radius:var(--lp-radius-ctrl); padding:8px 24px;
+  font-size:26px; line-height:1; cursor:pointer; color:var(--text);
   transition:background var(--lp-duration);
 }
 .fx-nav-btn:hover:not(:disabled) { background:var(--lp-surface-sunken); }
 .fx-nav-btn:disabled { opacity:.3; cursor:not-allowed; }
 .fx-nav-label {
-  font-size:var(--lp-text-base); font-weight:var(--lp-weight-semibold);
-  color:var(--text); min-width:170px; text-align:center;
+  font-size:var(--lp-text-md); font-weight:var(--lp-weight-semibold);
+  color:var(--text); min-width:200px; text-align:center;
 }
 .fx-list {
-  display:flex; flex-direction:column; gap:20px;
-  max-width:620px; margin:0 auto; width:100%;
+  display:flex; flex-direction:column; gap:24px;
+  max-width:900px; margin:0 auto; width:100%;
 }
 .fx-date-label {
-  font-size:var(--lp-text-xs); font-weight:var(--lp-weight-semibold);
+  font-size:var(--lp-text-sm); font-weight:var(--lp-weight-semibold);
   color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;
-  padding-bottom:6px; border-bottom:1px solid var(--border); margin-bottom:0;
+  padding-bottom:8px; border-bottom:1px solid var(--border); margin-bottom:0;
 }
 .fx-row {
-  display:flex; align-items:center; gap:8px;
-  padding:10px 14px;
+  display:flex; align-items:center; gap:12px;
+  padding:14px 20px;
   background:var(--card); border-bottom:1px solid var(--lp-border-soft);
 }
 .fx-row:first-of-type { border-radius:var(--lp-radius-ctrl) var(--lp-radius-ctrl) 0 0; }
 .fx-row:last-of-type  { border-radius:0 0 var(--lp-radius-ctrl) var(--lp-radius-ctrl); border-bottom:none; }
 .fx-row:only-of-type  { border-radius:var(--lp-radius-ctrl); border-bottom:none; }
 .fx-crest {
-  width:22px; height:22px; object-fit:contain; flex-shrink:0;
+  width:30px; height:30px; object-fit:contain; flex-shrink:0;
 }
-.fx-crest-placeholder { width:22px; flex-shrink:0; }
+.fx-crest-placeholder { width:30px; flex-shrink:0; }
 .fx-team {
-  flex:1; font-size:var(--lp-text-sm); font-weight:var(--lp-weight-medium);
+  flex:1; font-size:var(--lp-text-base); font-weight:var(--lp-weight-medium);
   color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .fx-team.home { text-align:right; }
 .fx-team.away { text-align:left; }
-.fx-pos { font-size:var(--lp-text-2xs); color:var(--text-muted); font-weight:normal; margin-left:3px; }
+.fx-pos { font-size:var(--lp-text-xs); color:var(--text-muted); font-weight:normal; margin-left:4px; }
 .fx-score {
-  display:flex; align-items:center; gap:3px;
-  min-width:52px; justify-content:center; flex-shrink:0;
+  display:flex; align-items:center; gap:4px;
+  min-width:64px; justify-content:center; flex-shrink:0;
 }
 .fx-goal {
-  font-size:var(--lp-text-base); font-weight:var(--lp-weight-semibold);
-  color:var(--text-muted); min-width:16px; text-align:center;
+  font-size:var(--lp-text-md); font-weight:var(--lp-weight-semibold);
+  color:var(--text-muted); min-width:20px; text-align:center;
   font-variant-numeric:tabular-nums;
 }
 .fx-goal.winner { color:var(--text); }
-.fx-sep { color:var(--lp-ink-disabled); font-size:var(--lp-text-sm); }
+.fx-sep { color:var(--lp-ink-disabled); font-size:var(--lp-text-base); }
 .fx-vs {
-  font-size:var(--lp-text-xs); color:var(--text-muted);
-  min-width:52px; text-align:center; flex-shrink:0;
+  font-size:var(--lp-text-sm); color:var(--text-muted);
+  min-width:64px; text-align:center; flex-shrink:0;
   font-weight:var(--lp-weight-medium);
 }
 .fx-empty { padding:48px 0; text-align:center; color:var(--text-muted); font-size:var(--lp-text-sm); }
