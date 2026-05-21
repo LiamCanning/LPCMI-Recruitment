@@ -1431,7 +1431,7 @@ function toggleSidebarCollapse() {
       var pos   = _lookupPos(posMap, name);
       var posHtml = pos !== null ? '<span class="fx-pos">(' + pos + ')</span>' : '';
       var crestHtml = crest
-        ? '<img class="fx-crest" src="' + esc(crest) + '" alt="" onerror="this.style.visibility='hidden'">'
+        ? '<img class="fx-crest" src="' + esc(crest) + '" alt="" onerror="this.remove()">'
         : '<span class="fx-crest-placeholder"></span>';
       // Layout: home = [name+pos][crest]  |score|  [crest][name+pos] = away
       // Crests sit adjacent to the score; names fill remaining space outward
