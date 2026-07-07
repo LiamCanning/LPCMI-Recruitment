@@ -2207,7 +2207,7 @@ tr:hover td { background: #f9fafb; }
       <div class="sidebar-submenu" id="sidebar-sub-summer2026">
         <a class="sidebar-subitem" href="summer-2026.html"><span class="si-icon">&#128203;</span><span class="si-label">Club Requirements</span></a>
         <a class="sidebar-subitem" href="club-editor.html"><span class="si-icon">&#9999;&#65039;</span><span class="si-label">Edit Requirements</span></a>
-      <a class="sidebar-subitem" href="master-database.html#tab=summer"><span class="si-icon">&#9993;&#65039;</span><span class="si-label">Summer Outreach</span></a>
+      
       </div>
     </div>
 
@@ -2215,8 +2215,7 @@ tr:hover td { background: #f9fafb; }
     <a class="sidebar-item" href="master-database.html"><span class="si-icon">&#127967;</span><span class="si-label">League Directory</span></a>
     <a class="sidebar-item" href="master-database.html#tab=search"><span class="si-icon">&#128269;</span><span class="si-label">Staff Search</span></a>
     <a class="sidebar-item" href="master-database.html#tab=roles"><span class="si-icon">&#127919;</span><span class="si-label">Key Roles</span></a>
-    <a class="sidebar-item" href="master-database.html#tab=contacts"><span class="si-icon">&#128100;</span><span class="si-label">My Contacts</span></a>
-    <a class="sidebar-item" href="master-database.html#tab=outreach"><span class="si-icon">&#128236;</span><span class="si-label">Outreach Log</span></a>
+
   </nav>
 
 </aside>
@@ -2356,10 +2355,7 @@ const IS_GK_PAGE = PAGE_POSITIONS.includes('Goalkeeper');
 </script>
 <script id="data-client-names" type="application/json">["Harry French", "Tom Nixon"]</script>
 <script id="data-drafts" type="application/json">{}</script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-check-compat.js"></script>
+
 <script>// ── Contact Verify — shared cross-page freshness/verification module ─────────
 // Combines two signals:
 //   1. Scraper diff (written into contacts.json by football_tracker.py):
@@ -6339,37 +6335,7 @@ sortData(); renderTable();
 })();
 
 (function() {
-  function initModules(db) {
-    if (typeof OutreachLog !== 'undefined' && OutreachLog.initFirebase) OutreachLog.initFirebase(db);
-    if (typeof ReachedOut !== 'undefined' && ReachedOut.initFirebase) ReachedOut.initFirebase(db);
-    if (typeof ContactVerify !== 'undefined' && ContactVerify.initFirebase) ContactVerify.initFirebase(db);
-    if (typeof listenClubRequirementsOverrides !== 'undefined') listenClubRequirementsOverrides(db);
-    if (typeof ClubEditor !== 'undefined' && ClubEditor.init) ClubEditor.init(db);
-  }
-  function initOffline() {
-    if (typeof ClubEditor !== 'undefined' && ClubEditor.init) ClubEditor.init(null);
-  }
-  try {
-    var _fbApp = firebase.initializeApp({
-      apiKey: "AIzaSyDa5tYLrNaB9vgJJDJbx-2GXCZjj9y5I9k",
-      authDomain: "lpcmi-tracker.firebaseapp.com",
-      projectId: "lpcmi-tracker",
-      storageBucket: "lpcmi-tracker.firebasestorage.app",
-      messagingSenderId: "980562310594",
-      appId: "1:980562310594:web:2fcdf064229d910404525b",
-      databaseURL: "https://lpcmi-tracker-default-rtdb.europe-west1.firebasedatabase.app"
-    });
-    // App Check — locks database access to requests from liamcanning.github.io
-    firebase.appCheck().activate('6LdqDNosAAAAAOsiSG1MSfepUQ2i9GQ6B5EIvW_a', true);
-    // Sign in anonymously so Firebase rules can require auth != null
-    firebase.auth().signInAnonymously().then(function() {
-      initModules(firebase.database());
-    }).catch(function(e) {
-      console.warn('Firebase auth failed, trying unauthenticated:', e.message);
-      try { initModules(firebase.database()); }
-      catch (err) { console.warn('Firebase modules unavailable:', err.message); initOffline(); }
-    });
-  } catch(e) { console.warn('Firebase sync unavailable:', e.message); initOffline(); }
+  if (typeof ClubEditor !== 'undefined' && ClubEditor.init) ClubEditor.init(null);
 })();
 </script>
 <script>
