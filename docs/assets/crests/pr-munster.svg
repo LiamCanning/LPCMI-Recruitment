@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" version="1.0" viewBox="0 0 140.8 140.8">
+  <path stroke="#000" stroke-opacity=".87843137" stroke-width="7.73120022" d="M124.13406 76.800172c0 33.211218-26.923012 60.134228-60.13423 60.134228S3.8655992 110.01139 3.8656001 76.800172c-9e-7-33.21121 26.9230119-60.13423 60.1342299-60.13423s60.13423 26.92302 60.13423 60.13423z" opacity=".5"/>
+  <path fill="#fff" stroke="red" stroke-width="7.73154449" d="M136.93423 64.000002c0 33.21122-26.92301 60.134228-60.13423 60.134228-33.211218 0-60.13423-26.923008-60.134229-60.134228C16.66577 30.788792 43.588782 3.8657722 76.8 3.8657722c33.21122 0 60.13423 26.9230198 60.13423 60.1342298z"/>
+  <path fill="none" stroke="#e0e0e0" stroke-linecap="round" stroke-linejoin="round" stroke-width="8.53333378" d="m53.943467 24.410272 22.85714 39.58973"/>
+  <path fill="none" stroke="#bfbfbf" stroke-linecap="round" stroke-linejoin="round" stroke-width="8.53333378" d="M76.799997 18.285712v45.71429"/>
+  <path fill="none" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="8.53333378" d="m99.657147 24.410272-22.85715 39.58973"/>
+  <path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="8.53333378" d="m46.596267 46.560852 30.20462 17.43915 39.588843-22.85713"/>
+</svg>
