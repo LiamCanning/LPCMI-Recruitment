@@ -5149,7 +5149,7 @@ function priorityStaff(staffList) {
 function scoreOpportunity(combo) {
   let s = 0;
   const n = combo.players.length;
-  if (n===1) s+=30; else if (n===2) s+=15;
+  if (n===0) s+=40; else if (n===1) s+=30; else if (n===2) s+=15;
   let agingPts=0, contractPts=0;
   combo.players.forEach(p => {
     const age = parseInt(p.age||0);
@@ -5231,6 +5231,27 @@ function renderOpps() {
     if (!combos[k]) combos[k] = {team:p.team, league:p.league, position:p.position, club_url:p.club_url, players:[]};
     combos[k].players.push(p);
   });
+
+  // Include clubs with ZERO of the tracked position so keeperless / squad-gap
+  // clubs surface as top opportunities instead of vanishing (combos above only
+  // covers clubs that HAVE players). Full club list comes from CLUB_STAFF.
+  // Guarded to single-position pages (or an explicit position filter) so the
+  // multi-position "all" view isn't flooded with every missing-position combo.
+  if (typeof CLUB_STAFF !== 'undefined') {
+    const zeroPositions = position ? [position] : (allPositions.length===1 ? allPositions : []);
+    if (zeroPositions.length) {
+      CLUB_STAFF.forEach(s => {
+        const lg = s.league, tm = s.club;
+        if (!lg || !tm) return;
+        if (country && !(COUNTRY_LEAGUES[country]||[]).includes(lg)) return;
+        if (league && lg!==league) return;
+        zeroPositions.forEach(pos => {
+          const k = lg+'|'+tm+'|'+pos;
+          if (!combos[k]) combos[k] = {team:tm, league:lg, position:pos, club_url:s.club_url||'', players:[]};
+        });
+      });
+    }
+  }
 
   // Group by player count
   const byCount = {};
