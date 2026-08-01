@@ -3549,7 +3549,7 @@ tr:hover td { background: #f9fafb; }
 <main class="main-content">
 <div class="page-hdr">
   <h2 class="page-hdr-title">&#9728; Summer 2026</h2>
-  <p class="page-hdr-sub">224 clubs &middot; 1068 positions</p>
+  <p class="page-hdr-sub">301 clubs &middot; 1377 positions</p>
 </div>
 
 <div class="s26-tabs" style="display:flex;gap:0;padding:0 24px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0">
@@ -7786,7 +7786,10 @@ function setCountryFilter(country) {
   activeCountry = country;
   activeLeague  = '';
   activeLeagues.clear();
+  _saveLeagueFilter(); // persist the clear, else stale leagues come back on reload
+  try { localStorage.setItem('s26_activeCountry', country || ''); } catch(e) {}
   buildLeaguePicker(); // refresh picker to show only leagues in this country
+  updateLeaguePickerLabel();
   renderAll(); pushHash();
 }
 
@@ -9345,9 +9348,24 @@ function pushHash() {
   history.replaceState(null, '', '#' + parts.join('&'));
 }
 
+// Sync the topbar UI (country dropdown, league picker) to restored state —
+// restoring the state vars alone leaves the dropdowns visually reset.
+function _syncGeoUI() {
+  const cs = document.getElementById('countrySelect');
+  if (cs) cs.value = activeCountry || '';
+  buildLeaguePicker();
+  updateLeaguePickerLabel();
+}
+
 function restoreFromHash() {
   const hash = window.location.hash.replace(/^#/, '');
-  if (!hash) { renderAll(); return; }
+  if (!hash) {
+    // No hash (e.g. arrived via sidebar link): fall back to localStorage
+    try { activeCountry = localStorage.getItem('s26_activeCountry') || ''; } catch(e) {}
+    _syncGeoUI();
+    renderAll();
+    return;
+  }
   const params = {};
   hash.split('&').forEach(p => {
     const [k, v] = p.split('=');
@@ -9364,9 +9382,11 @@ function restoreFromHash() {
   // Restore strip
   if (params.strip) activeStripPos = params.strip;
 
-  // Restore country / league filter
+  // Restore country / league filter (hash wins; keep localStorage in step)
   if (params.country) activeCountry = params.country;
   if (params.league)  activeLeague  = params.league;
+  try { localStorage.setItem('s26_activeCountry', activeCountry || ''); } catch(e) {}
+  _syncGeoUI();
 
   // View toggle removed — always card grid. Ignore legacy 'view=position' params.
 
