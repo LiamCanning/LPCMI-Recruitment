@@ -5,7 +5,7 @@
    routing, so it works on GitHub Pages with no server config.
    ═══════════════════════════════════════════════════════════════════ */
 
-const S = { clubs: [], leagues: [], meta: null, people: [], ready: false };
+const S = { clubs: [], leagues: [], meta: null, people: [], changes: null, expiring: [], ready: false };
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
@@ -41,6 +41,11 @@ const ICON = {
   back: 'M15 18l-6-6 6-6',
   ext: 'M14 5h5v5M19 5l-8 8M18 14v4.5A1.5 1.5 0 0 1 16.5 20h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10',
   menu: 'M4 7h16M4 12h16M4 17h16',
+  bolt: 'M13 3 5 13.5h6L11 21l8-10.5h-6z',
+  clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 7.5V12l3 2',
+  swap: 'M7 9h12l-3-3M17 15H5l3 3',
+  arrowIn: 'M12 4v11M8 11l4 4 4-4M5 20h14',
+  arrowOut: 'M12 20V9M8 13l4-4 4 4M5 4h14',
 };
 
 const svg = (name, cls = 'icon') =>
@@ -54,7 +59,8 @@ const crestImg = (c, cls) => c.crest
 const routes = [
   { re: /^\/clubs\/([^/]+)$/, view: clubPage },
   { re: /^\/clubs$/, view: clubsPage },
-  { re: /^\/?$/, view: clubsPage },
+  { re: /^\/today$/, view: todayPage },
+  { re: /^\/?$/, view: todayPage },
 ];
 
 function go(hash) { location.hash = hash; }
@@ -76,6 +82,96 @@ function render() {
     }
   }
   $('#view').innerHTML = `<div class="page"><p class="empty">Nothing here.</p></div>`;
+}
+
+
+/* ── Today ────────────────────────────────────────────────────────── */
+function fmtSince(d) {
+  if (!d || d.length !== 8) return '';
+  const dt = new Date(`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`);
+  return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+}
+
+function clubBySlug(slug) { return S.clubs.find(c => c.slug === slug); }
+
+function changeRow(kind, r) {
+  const to = r.toSlug || r.clubSlug;
+  const c = clubBySlug(to);
+  const sub = kind === 'move'
+    ? `${esc(r.from)} → ${esc(r.to)}`
+    : esc(r.club || '');
+  return `<a class="row" href="#/clubs/${esc(to || '')}">
+    <span class="chg ${kind}">${svg(kind === 'move' ? 'swap' : kind === 'in' ? 'arrowIn' : 'arrowOut')}</span>
+    ${c ? crestImg(c, 'row-crest') : ''}
+    <div class="row-main">
+      <div class="row-name">${esc(r.n)}</div>
+      <div class="row-sub">${sub}</div>
+    </div>
+    <span class="role${isKeyRole(r.r) ? ' key' : ''}">${esc(r.r || '—')}</span>
+  </a>`;
+}
+
+function todayPage() {
+  const ch = S.changes;
+  const since = ch && ch.since ? fmtSince(ch.since) : null;
+  const moves = ch ? ch.moves : [];
+  const arrivals = ch ? ch.arrivals : [];
+  const departures = ch ? ch.departures : [];
+  const total = moves.length + arrivals.length + departures.length;
+
+  // Expiring contracts matter most where the club has said it needs that role.
+  const needSlugs = new Set(S.clubs.filter(c => c.needs.length).map(c => c.slug));
+  const exp = S.expiring.filter(p => p.months <= 12);
+  const expHot = exp.filter(p => needSlugs.has(p.clubSlug));
+
+  return `
+  <div class="page">
+    <div class="page-head">
+      <h1>Today</h1>
+      <p>${total
+        ? `${total} staff change${total === 1 ? '' : 's'} since ${esc(since)}, across ${ch.clubsCompared} clubs compared.`
+        : `No staff changes since ${esc(since || 'the last scan')}.`}</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b>${moves.length}</b><span>Moves</span></div>
+      <div class="stat up"><b>${arrivals.length}</b><span>Arrivals</span></div>
+      <div class="stat down"><b>${departures.length}</b><span>Departures</span></div>
+      <div class="stat"><b>${expHot.length}</b><span>Expiring at a club that is recruiting</span></div>
+    </div>
+
+    <div class="cols">
+      <div style="display:grid;gap:18px">
+        ${section('Moves', 'move', moves, 'Nobody changed club.')}
+        ${section('Arrivals', 'in', arrivals, 'No new appointments.')}
+        ${section('Departures', 'out', departures, 'Nobody left.')}
+      </div>
+
+      <section class="panel">
+        <h2>${svg('clock')} Contracts running down <em>${expHot.length}</em></h2>
+        ${expHot.length ? expHot.slice(0, 40).map(p => {
+          const c = clubBySlug(p.clubSlug);
+          return `<a class="row" href="#/clubs/${esc(p.clubSlug)}">
+            ${c ? crestImg(c, 'row-crest') : ''}
+            <div class="row-main">
+              <div class="row-name">${esc(p.n)}</div>
+              <div class="row-sub">${esc(p.pos || '')} · ${esc(p.club || '')}</div>
+            </div>
+            <span class="role${p.months <= 6 ? ' hot' : ''}">${esc(p.exp || '')}</span>
+          </a>`;
+        }).join('')
+        : `<p class="empty">Nothing expiring within a year at a club with an open requirement.</p>`}
+      </section>
+    </div>
+  </div>`;
+}
+
+function section(title, kind, rows, emptyText) {
+  return `<section class="panel">
+    <h2>${title} <em>${rows.length}</em></h2>
+    ${rows.length ? rows.slice(0, 25).map(r => changeRow(kind, r)).join('')
+                  : `<p class="empty">${esc(emptyText)}</p>`}
+  </section>`;
 }
 
 /* ── Clubs index ──────────────────────────────────────────────────── */
@@ -333,8 +429,9 @@ function chrome() {
   $('.shell').innerHTML = `
     <nav class="rail">
       <div class="brand"><b>LPCMI</b><span>Recruitment</span></div>
+      <a class="nav-item" data-route="/today" href="#/today">${svg('bolt')} Today</a>
       <a class="nav-item" data-route="/clubs" href="#/clubs">${svg('clubs')} Clubs</a>
-      <div class="nav-label">Coming next</div>
+      <div class="nav-label">Previous build</div>
       <a class="nav-item" href="../index.html">${svg('home')} Old dashboard</a>
       <a class="nav-item" href="../league-tables.html">${svg('trophy')} League tables</a>
       <a class="nav-item" href="../all.html">${svg('players')} Players</a>
@@ -382,12 +479,15 @@ window.addEventListener('hashchange', () => { render(); if (location.hash.includ
   chrome();
   $('#view').innerHTML = `<div class="page"><p class="empty">Loading…</p></div>`;
   try {
-    const [clubs, leagues, meta] = await Promise.all(
-      ['clubs', 'leagues', 'meta'].map(n => fetch(`../data/${n}.json`).then(r => {
-        if (!r.ok) throw new Error(`${n}.json ${r.status}`);
-        return r.json();
-      })));
-    S.clubs = clubs; S.leagues = leagues; S.meta = meta;
+    const [clubs, leagues, meta, changes, expiring] = await Promise.all(
+      ['clubs', 'leagues', 'meta', 'changes', 'expiring'].map(n =>
+        fetch(`../data/${n}.json`).then(r => {
+          if (!r.ok) throw new Error(`${n}.json ${r.status}`);
+          return r.json();
+        }).catch(() => null)));
+    if (!clubs) throw new Error('clubs.json could not be loaded');
+    S.clubs = clubs; S.leagues = leagues || []; S.meta = meta;
+    S.changes = changes; S.expiring = expiring || [];
     // Staff search flattens clubs rather than shipping a duplicate bundle.
     S.people = clubs.flatMap(c => c.staff.map(s => ({ ...s, club: c.name, clubSlug: c.slug })));
     S.ready = true;

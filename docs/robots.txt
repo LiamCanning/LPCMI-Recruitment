@@ -1,0 +1,4 @@
+# This is a private recruitment tool. It carries club staff records and
+# confidential club requirements, and is not intended for public discovery.
+User-agent: *
+Disallow: /

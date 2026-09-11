@@ -368,3 +368,22 @@ input.field::placeholder { color: var(--ink-3); }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ── Today: change feed ──────────────────────────────────────────── */
+.chg {
+  width: 24px; height: 24px; flex-shrink: 0;
+  display: grid; place-items: center; border-radius: 50%;
+}
+.chg .icon { width: 14px; height: 14px; }
+.chg.move { background: var(--accent-soft); color: var(--accent); }
+.chg.in   { background: var(--up-soft);     color: var(--up); }
+.chg.out  { background: var(--down-soft);   color: var(--down); }
+
+.row-crest { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+
+.role.hot { background: var(--warn-soft); color: var(--warn); }
+
+.panel > h2 .icon { width: 14px; height: 14px; }
+
+/* The Today stat tiles carry longer labels than the club page ones. */
+.stat span { display: block; max-width: 15ch; line-height: 1.3; }

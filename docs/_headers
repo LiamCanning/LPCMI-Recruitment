@@ -1,0 +1,20 @@
+# Cloudflare Pages reads this file; GitHub Pages ignores it, so it is safe to
+# ship from either host.
+
+/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+
+# Crests are content-addressed by name and change only when a club rebrands.
+/assets/crests/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Data is rebuilt on every scrape, so revalidate rather than serve stale squads.
+/data/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# The app shell changes whenever the interface does.
+/app/*
+  Cache-Control: public, max-age=0, must-revalidate
