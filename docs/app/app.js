@@ -5,7 +5,7 @@
    routing, so it works on GitHub Pages with no server config.
    ═══════════════════════════════════════════════════════════════════ */
 
-const S = { clubs: [], leagues: [], meta: null, people: [], changes: null, expiring: [], ready: false };
+const S = { clubs: [], leagues: [], players: [], meta: null, people: [], changes: null, expiring: [], ready: false };
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
@@ -59,6 +59,7 @@ const crestImg = (c, cls) => c.crest
 const routes = [
   { re: /^\/clubs\/([^/]+)$/, view: clubPage },
   { re: /^\/clubs$/, view: clubsPage },
+  { re: /^\/players$/, view: playersPage },
   { re: /^\/today$/, view: todayPage },
   { re: /^\/?$/, view: todayPage },
 ];
@@ -172,6 +173,114 @@ function section(title, kind, rows, emptyText) {
     ${rows.length ? rows.slice(0, 25).map(r => changeRow(kind, r)).join('')
                   : `<p class="empty">${esc(emptyText)}</p>`}
   </section>`;
+}
+
+
+/* ── Players ──────────────────────────────────────────────────────── */
+/* 3,381 rows. The old page rendered every one into the markup, which is how
+   all.html reached 192,099 DOM nodes. This renders a window of them and grows
+   it on scroll, so the node count stays in the hundreds however long the list. */
+
+const P = { q: '', league: '', pos: '', status: '', sort: 'n', dir: 1, shown: 60 };
+const PAGE = 60;
+
+const MV = v => {
+  const m = /([\d.]+)\s*(m|k|bn)?/i.exec(String(v || ''));
+  if (!m) return -1;
+  const mult = { bn: 1e9, m: 1e6, k: 1e3 }[(m[2] || '').toLowerCase()] || 1;
+  return parseFloat(m[1]) * mult;
+};
+const EXPKEY = v => {
+  const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(String(v || ''));
+  return m ? +`${m[3]}${m[2]}${m[1]}` : Infinity;
+};
+
+const COLS = [
+  { k: 'n',   label: 'Player',   get: p => p.n },
+  { k: 'club',label: 'Club',     get: p => p.club },
+  { k: 'pos', label: 'Position', get: p => p.pos },
+  { k: 'age', label: 'Age',      get: p => +p.age || 0, num: true },
+  { k: 'nat', label: 'Nationality', get: p => p.nat },
+  { k: 'exp', label: 'Contract', get: p => EXPKEY(p.exp), num: true },
+  { k: 'mv',  label: 'Value',    get: p => MV(p.mv), num: true },
+];
+
+function playersPage() {
+  const leagues = [...new Set(S.players.map(p => p.lg).filter(Boolean))].sort();
+  const poss = [...new Set(S.players.map(p => p.pos).filter(Boolean))].sort();
+  return `
+  <div class="page">
+    <div class="page-head">
+      <h1>Players</h1>
+      <p>Every tracked player. Sort any column; the list loads as you scroll.</p>
+    </div>
+    <div class="filters">
+      <input class="field" id="p-q" type="search" placeholder="Search player or club…" value="${esc(P.q)}" style="flex:1 1 200px">
+      <select class="field" id="p-league"><option value="">All leagues</option>
+        ${leagues.map(l => `<option${l === P.league ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>
+      <select class="field" id="p-pos"><option value="">All positions</option>
+        ${poss.map(l => `<option${l === P.pos ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>
+      <select class="field" id="p-status">
+        <option value="">Any contract</option>
+        <option value="expiring"${P.status === 'expiring' ? ' selected' : ''}>Expiring within a year</option>
+        <option value="loan"${P.status === 'loan' ? ' selected' : ''}>On loan</option>
+      </select>
+      <span class="count" id="p-count"></span>
+    </div>
+    <div class="table-wrap">
+      <table class="tbl">
+        <thead><tr>${COLS.map(c =>
+          `<th data-sort="${c.k}" class="${P.sort === c.k ? 'on' : ''}" tabindex="0" role="button">
+             ${esc(c.label)}<i>${P.sort === c.k ? (P.dir > 0 ? '▴' : '▾') : ''}</i></th>`).join('')}
+        </tr></thead>
+        <tbody id="p-body"></tbody>
+      </table>
+    </div>
+    <div id="p-more"></div>
+  </div>`;
+}
+
+function playersFiltered() {
+  const q = P.q.trim().toLowerCase();
+  let list = S.players.filter(p =>
+    (!q || (p.n || '').toLowerCase().includes(q) || (p.club || '').toLowerCase().includes(q)) &&
+    (!P.league || p.lg === P.league) &&
+    (!P.pos || p.pos === P.pos) &&
+    (P.status !== 'loan' || /on loan/i.test(p.status || '')) &&
+    (P.status !== 'expiring' || EXPKEY(p.exp) <= 20270911));
+  const col = COLS.find(c => c.k === P.sort) || COLS[0];
+  return list.sort((a, b) => {
+    const x = col.get(a), y = col.get(b);
+    const r = col.num ? x - y : String(x || '').localeCompare(String(y || ''));
+    return r * P.dir;
+  });
+}
+
+function paintPlayers(reset) {
+  const body = $('#p-body');
+  if (!body) return;
+  if (reset) P.shown = PAGE;
+  const list = playersFiltered();
+  const slice = list.slice(0, P.shown);
+  body.innerHTML = slice.map(p => {
+    const soon = EXPKEY(p.exp) <= 20270911;
+    const loan = /on loan/i.test(p.status || '');
+    return `<tr>
+      <td><a href="${esc(p.tm || '#')}" target="_blank" rel="noopener">${esc(p.n)}</a>
+        ${loan ? '<span class="tag">Loan</span>' : ''}</td>
+      <td><a href="#/clubs/${esc(p.clubSlug)}">${esc(p.club || '')}</a></td>
+      <td>${esc(p.pos || '')}</td>
+      <td class="num">${esc(p.age || '')}</td>
+      <td>${esc(p.nat || '')}</td>
+      <td class="num${soon ? ' hot' : ''}">${esc(p.exp || '')}</td>
+      <td class="num">${esc(p.mv || '')}</td>
+    </tr>`;
+  }).join('');
+  $('#p-count').textContent = `${list.length.toLocaleString()} of ${S.players.length.toLocaleString()}`;
+  $('#p-more').innerHTML = list.length > P.shown
+    ? `<button class="more" id="p-more-btn">Show more (${(list.length - P.shown).toLocaleString()} left)</button>` : '';
+  const btn = $('#p-more-btn');
+  if (btn) btn.addEventListener('click', () => { P.shown += PAGE * 4; paintPlayers(); });
 }
 
 /* ── Clubs index ──────────────────────────────────────────────────── */
@@ -431,6 +540,7 @@ function chrome() {
       <div class="brand"><b>LPCMI</b><span>Recruitment</span></div>
       <a class="nav-item" data-route="/today" href="#/today">${svg('bolt')} Today</a>
       <a class="nav-item" data-route="/clubs" href="#/clubs">${svg('clubs')} Clubs</a>
+      <a class="nav-item" data-route="/players" href="#/players">${svg('players')} Players</a>
       <div class="nav-label">Previous build</div>
       <a class="nav-item" href="../index.html">${svg('home')} Old dashboard</a>
       <a class="nav-item" href="../league-tables.html">${svg('trophy')} League tables</a>
@@ -466,28 +576,54 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('input', e => {
   if (e.target.id === 'f-q') { F.q = e.target.value; paintGrid(); }
+  if (e.target.id === 'p-q') { P.q = e.target.value; paintPlayers(true); }
 });
 document.addEventListener('change', e => {
   if (e.target.id === 'f-league') { F.league = e.target.value; paintGrid(); }
   if (e.target.id === 'f-need') { F.need = e.target.value; paintGrid(); }
+  if (e.target.id === 'p-league') { P.league = e.target.value; paintPlayers(true); }
+  if (e.target.id === 'p-pos') { P.pos = e.target.value; paintPlayers(true); }
+  if (e.target.id === 'p-status') { P.status = e.target.value; paintPlayers(true); }
 });
 
-window.addEventListener('hashchange', () => { render(); if (location.hash.includes('/clubs') && !location.hash.includes('/clubs/')) paintGrid(); });
+function sortBy(k) {
+  if (P.sort === k) P.dir *= -1; else { P.sort = k; P.dir = 1; }
+  $('#view').innerHTML = playersPage();
+  paintPlayers(true);
+}
+document.addEventListener('click', e => {
+  const th = e.target.closest('th[data-sort]');
+  if (th) sortBy(th.dataset.sort);
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const th = e.target.closest && e.target.closest('th[data-sort]');
+  if (th) { e.preventDefault(); sortBy(th.dataset.sort); }
+});
+
+window.addEventListener('hashchange', afterRoute);
+
+function afterRoute() {
+  render();
+  const h = location.hash;
+  if (h.includes('/clubs') && !h.includes('/clubs/')) paintGrid();
+  if (h.includes('/players')) paintPlayers(true);
+}
 
 (async function boot() {
   initTheme();
   chrome();
   $('#view').innerHTML = `<div class="page"><p class="empty">Loading…</p></div>`;
   try {
-    const [clubs, leagues, meta, changes, expiring] = await Promise.all(
-      ['clubs', 'leagues', 'meta', 'changes', 'expiring'].map(n =>
+    const [clubs, leagues, meta, changes, expiring, players] = await Promise.all(
+      ['clubs', 'leagues', 'meta', 'changes', 'expiring', 'players'].map(n =>
         fetch(`../data/${n}.json`).then(r => {
           if (!r.ok) throw new Error(`${n}.json ${r.status}`);
           return r.json();
         }).catch(() => null)));
     if (!clubs) throw new Error('clubs.json could not be loaded');
     S.clubs = clubs; S.leagues = leagues || []; S.meta = meta;
-    S.changes = changes; S.expiring = expiring || [];
+    S.changes = changes; S.expiring = expiring || []; S.players = players || [];
     // Staff search flattens clubs rather than shipping a duplicate bundle.
     S.people = clubs.flatMap(c => c.staff.map(s => ({ ...s, club: c.name, clubSlug: c.slug })));
     S.ready = true;
@@ -495,8 +631,7 @@ window.addEventListener('hashchange', () => { render(); if (location.hash.includ
     $('#rail-foot').innerHTML =
       `<p><b>${n.clubs}</b> clubs · <b>${n.staff.toLocaleString()}</b> staff</p>
        <p><b>${n.players.toLocaleString()}</b> players · <b>${n.leagues}</b> leagues</p>`;
-    render();
-    paintGrid();
+    afterRoute();
   } catch (err) {
     $('#view').innerHTML = `<div class="page"><p class="empty">Could not load data.<br>${esc(err.message)}</p></div>`;
   }

@@ -387,3 +387,54 @@ input.field::placeholder { color: var(--ink-3); }
 
 /* The Today stat tiles carry longer labels than the club page ones. */
 .stat span { display: block; max-width: 15ch; line-height: 1.3; }
+
+/* ── Players table ───────────────────────────────────────────────── */
+/* No overflow container on wide screens: setting overflow-x also computes
+   overflow-y to auto, which makes the wrapper its own scrollport and breaks the
+   sticky header. Narrow screens get the scroller and give up sticky instead. */
+.table-wrap {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+@media (max-width: 1000px) {
+  .table-wrap { overflow-x: auto; }
+  .tbl th { position: static; }
+}
+
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 720px; }
+
+.tbl th {
+  position: sticky; top: 65px; z-index: 5;
+  background: var(--sunken); color: var(--ink-3);
+  font: 600 12px/1 var(--sans); letter-spacing: .07em; text-transform: uppercase;
+  text-align: left; padding: 11px 14px; white-space: nowrap; cursor: pointer;
+  border-bottom: 1px solid var(--line);
+  user-select: none;
+}
+.tbl th:hover { color: var(--ink); }
+.tbl th.on { color: var(--accent-ink); }
+.tbl th i { font-style: normal; margin-left: 4px; }
+
+.tbl td {
+  padding: 10px 14px; border-bottom: 1px solid var(--line-soft);
+  white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis;
+}
+.tbl tbody tr:last-child td { border-bottom: 0; }
+.tbl tbody tr:hover { background: var(--sunken); }
+.tbl td.num { font-variant-numeric: tabular-nums; }
+.tbl td.hot { color: var(--warn); font-weight: 600; }
+.tbl a:hover { color: var(--accent-ink); text-decoration: underline; }
+
+.tag {
+  margin-left: 7px; font-size: 12px; font-weight: 600; padding: 2px 7px;
+  border-radius: 999px; background: var(--sunken); color: var(--ink-3);
+}
+
+.more {
+  display: block; width: 100%; margin-top: 12px; padding: 12px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-sm); color: var(--ink-2);
+  font: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+  min-height: var(--tap);
+}
+.more:hover { border-color: var(--ink-3); color: var(--ink); }
