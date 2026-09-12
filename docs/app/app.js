@@ -509,6 +509,11 @@ function movePal(d) {
   rows[palSel].scrollIntoView({ block: 'nearest' });
 }
 
+function paintNet() {
+  const el = $('#net');
+  if (el) el.innerHTML = navigator.onLine ? '' : '<span class="offline">Offline · showing last saved data</span>';
+}
+
 /* ── Theme ────────────────────────────────────────────────────────── */
 function initTheme() {
   let t = null;
@@ -610,6 +615,11 @@ function afterRoute() {
   if (h.includes('/players')) paintPlayers(true);
 }
 
+if ('serviceWorker' in navigator) {
+  // Registered after load so it never competes with the first data fetch.
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
 (async function boot() {
   initTheme();
   chrome();
@@ -630,7 +640,11 @@ function afterRoute() {
     const n = meta.counts;
     $('#rail-foot').innerHTML =
       `<p><b>${n.clubs}</b> clubs · <b>${n.staff.toLocaleString()}</b> staff</p>
-       <p><b>${n.players.toLocaleString()}</b> players · <b>${n.leagues}</b> leagues</p>`;
+       <p><b>${n.players.toLocaleString()}</b> players · <b>${n.leagues}</b> leagues</p>
+       <p id="net"></p>`;
+    paintNet();
+    addEventListener('online', paintNet);
+    addEventListener('offline', paintNet);
     afterRoute();
   } catch (err) {
     $('#view').innerHTML = `<div class="page"><p class="empty">Could not load data.<br>${esc(err.message)}</p></div>`;

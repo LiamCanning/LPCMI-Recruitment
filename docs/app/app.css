@@ -438,3 +438,10 @@ input.field::placeholder { color: var(--ink-3); }
   min-height: var(--tap);
 }
 .more:hover { border-color: var(--ink-3); color: var(--ink); }
+
+.offline {
+  display: inline-block; margin-top: 4px;
+  font-size: 12px; font-weight: 600;
+  color: var(--warn); background: var(--warn-soft);
+  padding: 3px 8px; border-radius: 999px;
+}

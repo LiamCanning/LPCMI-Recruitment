@@ -1,0 +1,20 @@
+{
+  "name": "LPCMI Recruitment",
+  "short_name": "LPCMI",
+  "description": "Club staff, requirements, squad depth and staff movement in one place.",
+  "start_url": "./#/today",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf8f5",
+  "theme_color": "#faf8f5",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Today", "url": "./#/today" },
+    { "name": "Clubs", "url": "./#/clubs" },
+    { "name": "Players", "url": "./#/players" }
+  ]
+}
