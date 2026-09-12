@@ -445,3 +445,57 @@ input.field::placeholder { color: var(--ink-3); }
   color: var(--warn); background: var(--warn-soft);
   padding: 3px 8px; border-radius: 999px;
 }
+
+/* ── Pipeline board ──────────────────────────────────────────────── */
+.board {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+  align-items: start;
+}
+
+.col { display: grid; gap: 9px; align-content: start; }
+
+.col-head {
+  margin: 0; padding: 9px 12px; border-radius: var(--r-sm);
+  background: var(--sunken); color: var(--ink-2);
+  font: 600 12px/1 var(--sans); letter-spacing: .07em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+}
+.col-head em { margin-left: auto; font-style: normal; letter-spacing: 0; }
+.col-head.to_contact { background: var(--accent-soft); color: var(--accent-ink); }
+.col-head.in_talks   { background: var(--up-soft);     color: var(--up); }
+.col-head.rejected   { background: var(--down-soft);   color: var(--down); }
+
+.col-empty { margin: 0; padding: 14px 12px; font-size: 13px; color: var(--ink-3); }
+
+.o-card {
+  display: block; padding: 12px 13px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r);
+  transition: border-color .12s, transform .12s, box-shadow .12s;
+}
+.o-card:hover { border-color: var(--ink-3); transform: translateY(-1px); box-shadow: var(--shadow); }
+.o-card.due { border-left: 3px solid var(--warn); }
+
+.o-top { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+.o-club { font-size: 13px; color: var(--ink-2); }
+.o-for { font-size: 12px; color: var(--accent-ink); margin-top: 2px; }
+.o-note {
+  margin: 8px 0 0; font-size: 13px; color: var(--ink-2); line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.o-foot {
+  margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line-soft);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--ink-3);
+}
+.o-method { text-transform: capitalize; }
+.o-due { margin-left: auto; color: var(--warn); font-weight: 600; }
+
+.howto { padding: 18px; }
+.howto p { margin: 0 0 10px; font-size: 14px; color: var(--ink-2); }
+.howto pre {
+  margin: 0 0 12px; padding: 13px 15px; overflow-x: auto;
+  background: var(--sunken); border-radius: var(--r-sm);
+  font: 500 13px/1.6 ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink);
+}

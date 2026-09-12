@@ -5,7 +5,7 @@
    routing, so it works on GitHub Pages with no server config.
    ═══════════════════════════════════════════════════════════════════ */
 
-const S = { clubs: [], leagues: [], players: [], meta: null, people: [], changes: null, expiring: [], ready: false };
+const S = { clubs: [], leagues: [], players: [], meta: null, people: [], changes: null, expiring: [], outreach: [], ready: false };
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
@@ -42,6 +42,7 @@ const ICON = {
   ext: 'M14 5h5v5M19 5l-8 8M18 14v4.5A1.5 1.5 0 0 1 16.5 20h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10',
   menu: 'M4 7h16M4 12h16M4 17h16',
   bolt: 'M13 3 5 13.5h6L11 21l8-10.5h-6z',
+  pipe: 'M4 6h5v12H4zM10 6h5v8h-5zM16 6h4v5h-4z',
   clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 7.5V12l3 2',
   swap: 'M7 9h12l-3-3M17 15H5l3 3',
   arrowIn: 'M12 4v11M8 11l4 4 4-4M5 20h14',
@@ -60,6 +61,7 @@ const routes = [
   { re: /^\/clubs\/([^/]+)$/, view: clubPage },
   { re: /^\/clubs$/, view: clubsPage },
   { re: /^\/players$/, view: playersPage },
+  { re: /^\/pipeline$/, view: pipelinePage },
   { re: /^\/today$/, view: todayPage },
   { re: /^\/?$/, view: todayPage },
 ];
@@ -281,6 +283,76 @@ function paintPlayers(reset) {
     ? `<button class="more" id="p-more-btn">Show more (${(list.length - P.shown).toLocaleString()} left)</button>` : '';
   const btn = $('#p-more-btn');
   if (btn) btn.addEventListener('click', () => { P.shown += PAGE * 4; paintPlayers(); });
+}
+
+
+/* ── Pipeline ─────────────────────────────────────────────────────── */
+/* Read-only on purpose. Logging happens in scripts/outreach.py, because the
+   reason the old web form went unused was that filling it in was slower than
+   not bothering. The web side is for seeing where everything stands. */
+
+const STAGES = [
+  { k: 'to_contact', label: 'To contact' },
+  { k: 'contacted',  label: 'Contacted' },
+  { k: 'in_talks',   label: 'In talks' },
+  { k: 'rejected',   label: 'Rejected' },
+];
+
+const today = () => new Date().toISOString().slice(0, 10);
+const isDue = o => o.follow_up_date && o.follow_up_date <= today() && o.status !== 'rejected';
+
+function pipelinePage() {
+  const all = S.outreach;
+  if (!all.length) {
+    return `<div class="page">
+      <div class="page-head"><h1>Pipeline</h1>
+        <p>Nothing logged yet.</p></div>
+      <div class="panel"><div class="howto">
+        <p>Log a contact from the terminal, and it appears here on the next deploy:</p>
+        <pre>python3 scripts/outreach.py add "James Hicks" \\
+    --player "Tom Nixon" --method whatsapp --note "keen"</pre>
+        <p>Club, role and league are filled in from the scan, so a name is usually enough.</p>
+      </div></div></div>`;
+  }
+  const due = all.filter(isDue);
+  return `
+  <div class="page">
+    <div class="page-head">
+      <h1>Pipeline</h1>
+      <p>${all.length} contact${all.length === 1 ? '' : 's'} logged${due.length ? `, ${due.length} needing a follow-up` : ''}.</p>
+    </div>
+    <div class="board">
+      ${STAGES.map(st => {
+        const rows = all.filter(o => o.status === st.k);
+        return `<section class="col">
+          <h2 class="col-head ${st.k}">${esc(st.label)} <em>${rows.length}</em></h2>
+          ${rows.length ? rows.map(outreachCard).join('')
+                        : `<p class="col-empty">None</p>`}
+        </section>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function outreachCard(o) {
+  const c = S.clubs.find(x => x.slug === o.clubSlug);
+  return `<a class="o-card${isDue(o) ? ' due' : ''}" href="#/clubs/${esc(o.clubSlug || '')}">
+    <div class="o-top">
+      ${c ? crestImg(c, 'row-crest') : ''}
+      <div class="row-main">
+        <div class="row-name">${esc(o.contact_name)}</div>
+        <div class="row-sub">${esc(o.contact_role || '')}</div>
+      </div>
+    </div>
+    <div class="o-club">${esc(o.club || '')}</div>
+    ${o.player ? `<div class="o-for">for ${esc(o.player)}</div>` : ''}
+    ${o.notes ? `<p class="o-note">${esc(o.notes)}</p>` : ''}
+    <div class="o-foot">
+      <span class="o-method">${esc(o.method || '')}</span>
+      ${isDue(o) ? `<span class="o-due">Follow up</span>`
+                 : (o.follow_up_date ? `<span>${esc(o.follow_up_date)}</span>` : '')}
+    </div>
+  </a>`;
 }
 
 /* ── Clubs index ──────────────────────────────────────────────────── */
@@ -546,6 +618,7 @@ function chrome() {
       <a class="nav-item" data-route="/today" href="#/today">${svg('bolt')} Today</a>
       <a class="nav-item" data-route="/clubs" href="#/clubs">${svg('clubs')} Clubs</a>
       <a class="nav-item" data-route="/players" href="#/players">${svg('players')} Players</a>
+      <a class="nav-item" data-route="/pipeline" href="#/pipeline">${svg('pipe')} Pipeline</a>
       <div class="nav-label">Previous build</div>
       <a class="nav-item" href="../index.html">${svg('home')} Old dashboard</a>
       <a class="nav-item" href="../league-tables.html">${svg('trophy')} League tables</a>
@@ -625,8 +698,8 @@ if ('serviceWorker' in navigator) {
   chrome();
   $('#view').innerHTML = `<div class="page"><p class="empty">Loading…</p></div>`;
   try {
-    const [clubs, leagues, meta, changes, expiring, players] = await Promise.all(
-      ['clubs', 'leagues', 'meta', 'changes', 'expiring', 'players'].map(n =>
+    const [clubs, leagues, meta, changes, expiring, players, outreach] = await Promise.all(
+      ['clubs', 'leagues', 'meta', 'changes', 'expiring', 'players', 'outreach'].map(n =>
         fetch(`../data/${n}.json`).then(r => {
           if (!r.ok) throw new Error(`${n}.json ${r.status}`);
           return r.json();
@@ -634,6 +707,7 @@ if ('serviceWorker' in navigator) {
     if (!clubs) throw new Error('clubs.json could not be loaded');
     S.clubs = clubs; S.leagues = leagues || []; S.meta = meta;
     S.changes = changes; S.expiring = expiring || []; S.players = players || [];
+    S.outreach = outreach || [];
     // Staff search flattens clubs rather than shipping a duplicate bundle.
     S.people = clubs.flatMap(c => c.staff.map(s => ({ ...s, club: c.name, clubSlug: c.slug })));
     S.ready = true;
