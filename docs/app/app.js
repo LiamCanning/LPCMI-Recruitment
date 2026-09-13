@@ -37,6 +37,7 @@ const ICON = {
   mine: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z',
   pipe: 'M4 5h5v14H4zM10.5 5h5v9h-5zM17 5h3v6h-3z',
   archive: 'M3 7h18v4H3zM5 11v9h14v-9M10 15h4',
+  table: 'M3 5h18v14H3zM3 10h18M3 15h18M9 5v14',
   search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14M20 20l-4-4',
   sun: 'M12 5V3M12 21v-2M5 12H3M21 12h-2M6.3 6.3 4.9 4.9M19.1 19.1l-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
   moon: 'M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5',
@@ -72,12 +73,33 @@ const routes = [
   { re: /^\/pipeline$/, view: pipelinePage },
   { re: /^\/people\/([^/]+)$/, view: personPage },
   { re: /^\/people$/, view: peoplePage },
+  { re: /^\/leagues\/([^/]+)$/, view: leaguePage },
+  { re: /^\/leagues$/, view: leaguesPage },
   { re: /^\/archive$/, view: archivePage },
   { re: /^\/today$/, view: todayPage },
   { re: /^\/?$/, view: todayPage },
 ];
 
 function go(hash) { location.hash = hash; }
+
+/* Going back should land where you left, not at the top of a 700-row list.
+   Each hash keeps its own scroll offset, saved as you leave it. */
+const SCROLL = Object.create(null);
+let lastHash = location.hash || '#/';
+
+function rememberScroll() { SCROLL[lastHash] = window.scrollY; }
+
+function restoreScroll(hash) {
+  const y = SCROLL[hash];
+  if (!y) { window.scrollTo(0, 0); return; }
+  // Two frames: one for the new markup, one for images settling into place.
+  requestAnimationFrame(() => {
+    window.scrollTo(0, y);
+    requestAnimationFrame(() => window.scrollTo(0, y));
+  });
+}
+window.addEventListener('scroll', () => { SCROLL[location.hash || '#/'] = window.scrollY; },
+                        { passive: true });
 
 function render() {
   const path = (location.hash || '#/').slice(1) || '/';
@@ -91,7 +113,7 @@ function render() {
         .filter(el => path === el.dataset.route || path.startsWith(el.dataset.route + '/'))
         .sort((a, b) => b.dataset.route.length - a.dataset.route.length)[0];
       if (best) best.setAttribute('aria-current', 'page');
-      window.scrollTo(0, 0);
+      restoreScroll(location.hash || '#/');
       $('.shell').dataset.rail = '';
       return;
     }
@@ -401,17 +423,13 @@ function clubPage(slug) {
 
   const staff = [...c.staff].sort((a, b) =>
     roleRank(a.r) - roleRank(b.r) || (a.n || '').localeCompare(b.n || ''));
-  const groups = [
-    ['Decision makers', s => roleRank(s.r) < 1 || /^(manager|head coach|chief executive|president|owner)$/i.test(s.r || '')],
-    ['Recruitment and scouting', s => /recruit|scout/i.test(s.r || '')],
-    ['Everyone else', () => true],
+  const ORDER = [
+    ['recruitment', 'Recruitment'], ['manager', 'Manager'], ['scouting', 'Scouting'],
+    ['board', 'Board'], ['coaching', 'Coaching and support'], ['other', 'Everyone else'],
   ];
-  const used = new Set();
-  const grouped = groups.map(([label, test]) => {
-    const rows = staff.filter(s => !used.has(s) && test(s));
-    rows.forEach(s => used.add(s));
-    return [label, rows];
-  }).filter(([, rows]) => rows.length);
+  const grouped = ORDER
+    .map(([k, label]) => [label, staff.filter(s => (s.g || 'other') === k)])
+    .filter(([, rows]) => rows.length);
 
   const squad = Object.entries(c.squad).sort((a, b) => b[1] - a[1]);
   const smax = Math.max(1, ...squad.map(s => s[1]));
@@ -462,25 +480,38 @@ function clubPage(slug) {
       </div>
     </div>
 
+    ${c.needs.length ? `
     <section class="card" style="margin-bottom:16px">
-      <div class="hd"><h2>What they are looking for</h2>
-        <span class="pill">Requirement list, ${esc(WINDOW().label)} window</span></div>
-      ${c.needs.length ? `<div class="pitchwrap">
+      <div class="hd"><h2>Where they need players</h2>
+        <span class="pill">${c.needs.length} position${c.needs.length === 1 ? '' : 's'}${lead ? ` · ${esc(lead[0])} heavy` : ''}</span></div>
+      <div class="pitchonly">
         ${pitchMap(c.needs)}
-        <div class="needlist">
-          <h3>${c.needs.length} position${c.needs.length === 1 ? '' : 's'}${lead ? ` · ${esc(lead[0])} heavy` : ''}</h3>
-          ${c.needs.map(x => {
-            const scan = NEED_TO_SCAN[(x.pos || '').toUpperCase()];
-            const have = scan ? (c.squad[scan] || 0) : null;
-            return `<div class="needrow">
-              <span class="tag">${esc(x.pos)}</span>
-              <div><b>${esc(x.label || x.pos)}</b><small>${esc(x.type ? x.type[0].toUpperCase() + x.type.slice(1) : '')}</small></div>
-              <span class="sq">${have === null ? '' : `in squad <b>${have}</b>`}</span>
-            </div>`;
-          }).join('')}
+        <div class="pitchkey">
+          <p>Every position on a 4-2-3-1. The white markers are what ${esc(c.name)} is recruiting.</p>
+          <div class="keyrow"><span class="pos need" style="position:static;transform:none">POS</span> Wanted</div>
+          <div class="keyrow"><span class="pos" style="position:static;transform:none">POS</span> Covered, or not listed</div>
         </div>
-      </div>` : `<p class="empty">No requirements recorded for this club.</p>`}
+      </div>
     </section>
+
+    <section class="card" style="margin-bottom:16px">
+      <div class="hd"><h2>The requirement list</h2>
+        <span class="pill">${esc(WINDOW().label)} window</span></div>
+      <div class="needgrid">
+        ${c.needs.map(x => {
+          const scan = NEED_TO_SCAN[(x.pos || '').toUpperCase()];
+          const have = scan ? (c.squad[scan] || 0) : null;
+          return `<div class="needrow">
+            <span class="tag">${esc(x.pos)}</span>
+            <div><b>${esc(x.label || x.pos)}</b><small>${esc(x.type ? x.type[0].toUpperCase() + x.type.slice(1) : '')}</small></div>
+            <span class="sq">${have === null ? '' : `in squad <b>${have}</b>`}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </section>`
+    : `<section class="card" style="margin-bottom:16px">
+        <div class="hd"><h2>What they are looking for</h2></div>
+        <p class="empty">No requirements recorded for this club.</p></section>`}
 
     <div class="g2">
       <section class="card">
@@ -541,7 +572,9 @@ function minePage() {
   </div>`;
 }
 
-const MINE = { shown: 25, only: false };
+// Default to the clubs with a reason. A list that opens on 60 rows of "nothing
+// in the data points here" buries the seven that matter.
+const MINE = { shown: 25, only: true };
 
 function clientPage(slug) {
   const cl = S.clients.find(c => c.slug === decodeURIComponent(slug));
@@ -551,6 +584,7 @@ function clientPage(slug) {
   const list = (MINE.only ? live : cl.candidates).slice(0, MINE.shown);
   const smax = Math.max(1, ...cl.candidates.map(x => x.score));
   const prior = S.outreach.filter(o => o.player === cl.name);
+  const tm = cl.tmProfile;
 
   return `
   <div class="page">
@@ -574,8 +608,8 @@ function clientPage(slug) {
 
     <div class="g3">
       <div class="card stat"><div class="eyebrow">Contract</div>
-        <div class="v">${esc(cl.exp || '—')}</div>
-        <div class="sub">${esc(cl.expNote || '')}</div></div>
+        <div class="v">${esc((tm && tm.exp && tm.exp !== '-' ? tm.exp : cl.exp) || 'None listed')}</div>
+        <div class="sub">${esc(tm && tm.exp && tm.exp !== '-' ? 'Per Transfermarkt' : (cl.expNote || ''))}</div></div>
       <div class="card stat"><div class="eyebrow">Clubs worth calling</div>
         <div class="v num">${live.length}<small>of ${cl.candidates.length} clubs at loan level</small></div>
         <div class="sub">Tiers 4 to 6: League Two, National League, North and South.</div></div>
@@ -583,6 +617,41 @@ function clientPage(slug) {
         <div class="v num">${prior.length}</div>
         <div class="sub">${prior.length ? esc([...new Set(prior.map(p => p.club))].join(' · ')) : 'Nothing logged for him yet.'}</div></div>
     </div>
+
+    ${tm ? `<section class="card" style="margin-bottom:16px">
+      <div class="hd"><h2>Player data</h2>
+        <span class="pill">Transfermarkt, read ${esc(tm.fetched || '')}</span>
+        ${cl.tm ? `<a class="more" href="${esc(cl.tm)}" target="_blank" rel="noopener">Profile ${svg('ext')}</a>` : ''}</div>
+      <div class="factgrid">
+        ${fact('Date of birth', tm.dob)}
+        ${fact('Born', tm.birthplace)}
+        ${fact('Height', heightNote(tm.height, cl.height))}
+        ${fact('Foot', tm.foot)}
+        ${fact('Position', tm.pos)}
+        ${fact('Club', tm.club)}
+        ${fact('Joined', tm.joined)}
+        ${fact('Contract', tm.exp && tm.exp !== '-' ? tm.exp : 'None listed')}
+        ${fact('Market value', tm.mv)}
+        ${fact('Youth clubs', tm.youth)}
+        ${fact('Agent', tm.agent)}
+      </div>
+      ${tm.thin ? `<div class="howto" style="padding-top:0"><p class="count">Transfermarkt carries no appearance or transfer history for him yet, which is normal for an academy player. The season numbers below come from his own CV.</p></div>` : ''}
+    </section>` : ''}
+
+    ${(cl.cvProfile || cl.cvSeason || (cl.traits || []).length) ? `<section class="card" style="margin-bottom:16px">
+      <div class="hd"><h2>The pitch</h2><span class="pill">From his LPCMI CV</span></div>
+      <div class="howto">
+        ${cl.cvProfile ? `<p>${esc(cl.cvProfile)}</p>` : ''}
+        ${(cl.traits || []).length ? `<div class="facts" style="margin:10px 0">${cl.traits.map(t => `<span class="pill acc">${esc(t)}</span>`).join('')}</div>` : ''}
+        ${cl.cvSeason ? `<div class="kpis" style="margin:12px 0 0">
+          ${[['Appearances', cl.cvSeason.apps], ['Goals', cl.cvSeason.goals],
+             ['Assists', cl.cvSeason.assists], ['Minutes', cl.cvSeason.minutes]]
+            .map(([k, v]) => `<div class="card kpi"><span class="eyebrow">${esc(k)}</span><span class="v num">${n(v)}</span>
+              <span class="d">${esc(cl.cvSeason.label || '')}</span></div>`).join('')}
+        </div>` : ''}
+        ${(cl.previous || []).length ? `<p class="count" style="margin-top:12px">Previously: ${cl.previous.map(esc).join(' · ')}</p>` : ''}
+      </div>
+    </section>` : ''}
 
     ${cl.notes ? `<div class="callout info">${esc(cl.notes)}</div>` : ''}
     ${cl.scanned
@@ -613,6 +682,22 @@ function clientPage(slug) {
     ${cl.summer2026 && cl.summer2026.length ? `<p class="count" style="margin-top:14px">
       His ${cl.summer2026.length}-club Summer 2026 shortlist is in <a href="#/archive" style="color:var(--acc);font-weight:600">Archive</a>.</p>` : ''}
   </div>`;
+}
+
+/* Transfermarkt and a player's own CV can disagree, and a sporting director
+   will notice. Show both rather than silently picking one. */
+function heightNote(tmH, cvH) {
+  if (!tmH) return cvH || '';
+  const ft = /(\d+)\s*ft\s*(\d+)/.exec(tmH);
+  const cm = ft ? Math.round((+ft[1] * 12 + +ft[2]) * 2.54) : null;
+  const cvCm = cvH ? Math.round(parseFloat(cvH) * 100) : null;
+  if (cm && cvCm && Math.abs(cm - cvCm) > 4) return `${tmH} — his CV says ${cvH}`;
+  return tmH;
+}
+
+function fact(label, value) {
+  if (!value) return '';
+  return `<div class="fact"><span class="eyebrow">${esc(label)}</span><b>${esc(value)}</b></div>`;
 }
 
 /* ── Players ──────────────────────────────────────────────────────── */
@@ -724,11 +809,16 @@ function paintPlayers(reset) {
 
 /* ── People ───────────────────────────────────────────────────────── */
 const PF = { q: '', role: '', movers: false, shown: 60 };
-const ROLE_GROUP = {
-  director: /director|chief executive|president|chairman|owner/i,
-  recruit: /recruit|scout/i,
-  manager: /manager|head coach|coach/i,
-};
+/* The groups a recruiter actually thinks in. The builder tags every staff
+   member with one of these, so the filter is a lookup rather than a regex
+   race where "Assistant Manager" wins the Manager bucket. */
+const GROUPS = [
+  ['recruitment', 'Recruitment', 'Sporting directors, directors of football, heads of recruitment'],
+  ['scouting', 'Scouting', 'Chief scouts, heads of scouting, first-team scouts'],
+  ['manager', 'Managers only', 'The manager or head coach, nobody else'],
+  ['coaching', 'Coaching staff', 'Assistants, coaches, analysts, medical'],
+  ['board', 'Board', 'Owners, presidents, chief executives'],
+];
 
 function peoplePage() {
   return `
@@ -740,9 +830,7 @@ function peoplePage() {
       <input class="field" id="pe-q" type="search" placeholder="Search name, club or role…" value="${esc(PF.q)}" style="flex:1 1 240px">
       <select class="field" id="pe-role">
         <option value="">All roles</option>
-        <option value="director"${PF.role === 'director' ? ' selected' : ''}>Directors</option>
-        <option value="recruit"${PF.role === 'recruit' ? ' selected' : ''}>Recruitment &amp; scouting</option>
-        <option value="manager"${PF.role === 'manager' ? ' selected' : ''}>Management</option>
+        ${GROUPS.map(([k, label]) => `<option value="${k}"${PF.role === k ? ' selected' : ''}>${esc(label)}</option>`).join('')}
       </select>
       <button class="chip${PF.movers ? ' on' : ''}" id="pe-movers">Moved club</button>
       <span class="count" id="pe-count"></span>
@@ -759,7 +847,7 @@ function peopleFiltered() {
       const c = S.careers[slugOf(p.n)];
       if (!c || new Set(c.spells.map(s => s.clubSlug)).size < 2) return false;
     }
-    if (PF.role && !(ROLE_GROUP[PF.role] || /.^/).test(p.r || '')) return false;
+    if (PF.role && p.g !== PF.role) return false;
     if (!q) return true;
     return (p.n || '').toLowerCase().includes(q)
         || (p.club || '').toLowerCase().includes(q)
@@ -779,7 +867,7 @@ function paintPeople(reset) {
     return `<a class="row plain" href="#/people/${esc(slugOf(p.n))}">
       ${c && c.crest ? crestImg(c, 'crest') : `<span class="av">${esc(initials(p.n))}</span>`}
       <div class="who"><b>${esc(p.n)}</b><span>${esc(p.club || '')}${p.nat ? ' · ' + esc(p.nat) : ''}</span></div>
-      <span>${moves > 0 ? `<span class="pill warn">${moves} move${moves === 1 ? '' : 's'}</span> ` : ''}
+      <span>${moves > 0 ? `<span class="pill warn">${moves} club${moves === 1 ? '' : 's'}</span> ` : ''}
         <span class="role${isKeyRole(p.r) ? ' key' : ''}">${esc(p.r || '—')}</span></span>
     </a>`;
   }).join('') || `<p class="empty">Nobody matches.</p>`;
@@ -828,13 +916,13 @@ function personPage(slug) {
     <div class="g3">
       <div class="card stat"><div class="eyebrow">Clubs seen</div><div class="v num">${clubsSeen}</div></div>
       <div class="card stat"><div class="eyebrow">Spells tracked</div><div class="v num">${spells.length}</div></div>
-      <div class="card stat"><div class="eyebrow">First tracked</div>
+      <div class="card stat"><div class="eyebrow">${car && car.src === 'tm' ? 'Career from' : 'First tracked'}</div>
         <div class="v">${car ? esc(fmtMonth(car.spells[0].from)) : 'This scan'}</div></div>
     </div>
 
     <section class="card">
       <div class="hd"><h2>Career</h2>
-        <span class="pill">${car ? 'From the scan history' : 'Current position only'}</span></div>
+        <span class="pill">${car ? (car.src === 'tm' ? 'Full history from Transfermarkt' : 'From the scan history, since May') : 'Current position only'}</span></div>
       ${spells.length ? `<ol class="timeline">${spells.map((sp, i) => {
         const c = clubBySlug(sp.clubSlug);
         return `<li class="tl${i === 0 && !sp.left ? ' now' : ''}">
@@ -846,7 +934,11 @@ function personPage(slug) {
               <span class="role${isKeyRole(sp.role) ? ' key' : ''}">${esc(sp.role || '—')}</span>
             </div>
             <div class="tl-meta">
-              ${sp.from ? `${esc(fmtMonth(sp.from))} — ${(sp.left || i > 0) ? esc(fmtMonth(sp.to)) : 'present'}` : 'Current'}
+              ${sp.from
+                ? (sp.to ? `${esc(fmtMonth(sp.from))} — ${esc(fmtMonth(sp.to))}`
+                         : (i === 0 ? `${esc(fmtMonth(sp.from))} — present`
+                                    : `From ${esc(fmtMonth(sp.from))}`))
+                : 'Current'}
               ${sp.lg ? ` · ${esc(sp.lg)}` : ''}
             </div>
             ${sp.withCount ? `<div class="tl-with">Arrived with ${sp.withCount} other${sp.withCount === 1 ? '' : 's'}: ${sp.with.map(esc).join(', ')}</div>` : ''}
@@ -914,6 +1006,87 @@ function outreachCard(o) {
   </a>`;
 }
 
+/* ── League tables ────────────────────────────────────────────────── */
+const LG = { country: '' };
+
+function leaguesPage() {
+  const withTable = S.leagues.filter(l => l.table && l.table.length);
+  const countries = [...new Set(withTable.map(l => l.country).filter(Boolean))].sort();
+  const list = withTable.filter(l => !LG.country || l.country === LG.country);
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div><h1>League tables</h1><p>${withTable.length} leagues with a live table, scraped with the staff data.</p></div>
+    </div>
+    <div class="filters">
+      <select class="field" id="lg-country"><option value="">All countries</option>
+        ${countries.map(x => `<option${x === LG.country ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>
+      <span class="count">${list.length} shown</span>
+    </div>
+    <div class="grid">
+      ${list.map(l => {
+        const top = l.table[0];
+        const c = clubBySlug(top.slug);
+        return `<a class="card club-card" href="#/leagues/${esc(l.slug)}">
+          <div class="cc-top">
+            ${c ? crestImg(c, 'cc-crest') : `<span class="cc-crest"></span>`}
+            <div class="cc-id">
+              <div class="cc-name">${esc(l.name)}</div>
+              <div class="cc-league">${esc(l.country || '')}${l.tier ? ` · Tier ${l.tier}` : ''}</div>
+            </div>
+          </div>
+          <div class="cc-meta"><span>${l.table.length} clubs</span><span>Top: ${esc(top.club)}</span></div>
+        </a>`;
+      }).join('') || `<p class="empty">No tables for that country.</p>`}
+    </div>
+  </div>`;
+}
+
+function leaguePage(slug) {
+  const l = S.leagues.find(x => x.slug === decodeURIComponent(slug));
+  if (!l || !l.table.length) return `<div class="page"><p class="empty">No table for that league.</p></div>`;
+  const size = l.table.length;
+  // Promotion and relegation lines differ by league; two up and three down is
+  // the common English shape and is drawn as a hint, not a rule.
+  const band = pos => pos <= 2 ? 'up' : pos > size - 3 ? 'down' : '';
+  return `
+  <div class="page">
+    <a class="back" href="#/leagues">${svg('back')} All tables</a>
+    <div class="card chead">
+      <div>
+        <h1>${esc(l.name)}</h1>
+        <div class="meta">
+          ${l.country ? `<span class="pill">${esc(l.country)}</span>` : ''}
+          ${l.tier ? `<span>Tier ${l.tier}</span>` : ''}
+          <span>${size} clubs</span>
+          <span>${l.table.filter(r => (S.clubs.find(c => c.slug === r.slug) || {}).needs?.length).length} recruiting</span>
+        </div>
+      </div>
+    </div>
+    <section class="card">
+      <div class="table-wrap"><table class="tbl">
+        <thead><tr><th style="width:44px">#</th><th>Club</th>
+          <th class="r">P</th><th class="r">W</th><th class="r">D</th><th class="r">L</th>
+          <th class="r">GF</th><th class="r">GA</th><th class="r">GD</th><th class="r">Pts</th>
+          <th class="r">Needs</th></tr></thead>
+        <tbody>${l.table.map(r => {
+          const c = clubBySlug(r.slug);
+          const b = band(r.pos);
+          return `<tr>
+            <td><span class="pos-pill ${b}">${r.pos}</span></td>
+            <td><a class="name" href="#/clubs/${esc(r.slug)}">${c ? crestImg(c, 'crest') : ''}${esc(r.club)}</a></td>
+            <td class="r num">${esc(r.p ?? '')}</td><td class="r num">${esc(r.w ?? '')}</td>
+            <td class="r num">${esc(r.d ?? '')}</td><td class="r num">${esc(r.l ?? '')}</td>
+            <td class="r num">${esc(r.gf ?? '')}</td><td class="r num">${esc(r.ga ?? '')}</td>
+            <td class="r num">${esc(r.gd ?? '')}</td><td class="r num"><b>${esc(r.pts ?? '')}</b></td>
+            <td class="r">${c && c.needs.length ? `<span class="needs" style="justify-content:flex-end">${c.needs.slice(0, 3).map(x => `<span class="need">${esc(x.pos)}</span>`).join('')}${c.needs.length > 3 ? `<span class="need">+${c.needs.length - 3}</span>` : ''}</span>` : ''}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    </section>
+  </div>`;
+}
+
 /* ── Archive ──────────────────────────────────────────────────────── */
 /* Summer 2026 is done. It stays readable, but out of the working screens. */
 function archivePage() {
@@ -941,16 +1114,10 @@ function archivePage() {
     </section>
 
     <section class="card">
-      <div class="hd"><h2>Pages from the previous build</h2></div>
-      <div class="bd">
-        <div class="links">
-          <a class="card link" href="../index.html"><b>Old dashboard</b><span>The original landing page</span></a>
-          <a class="card link" href="../master-database.html"><b>Staff directory</b><span>Full-text staff search</span></a>
-          <a class="card link" href="../all.html"><b>All players</b><span>The 192,000-node table</span></a>
-          <a class="card link" href="../league-tables.html"><b>League tables</b><span>Standings by league</span></a>
-          <a class="card link" href="../summer-2026.html"><b>Summer 2026</b><span>The old window page</span></a>
-          <a class="card link" href="../club-editor.html"><b>Club editor</b><span>Requirement editing</span></a>
-        </div>
+      <div class="hd"><h2>The previous build</h2></div>
+      <div class="howto">
+        <p>The old site is still deployed and still works. Nothing here feeds the current screens, and it is one link rather than a menu because it is a fallback, not a place to work.</p>
+        <a class="btn" href="../index.html">${svg('ext')} Open the previous build</a>
       </div>
     </section>
   </div>`;
@@ -1075,7 +1242,7 @@ function chrome() {
       <a class="nav-item" data-route="/players" href="#/players">${svg('players')} Players<span class="cnt">${n(c.players)}</span></a>
       <a class="nav-item" data-route="/mine" href="#/mine">${svg('mine')} My players<span class="cnt">${n(c.clients)}</span></a>
       <a class="nav-item" data-route="/pipeline" href="#/pipeline">${svg('pipe')} Pipeline<span class="cnt">${n(c.outreach)}</span></a>
-      <div class="nav-label">Reference</div>
+      <a class="nav-item" data-route="/leagues" href="#/leagues">${svg('table')} League tables<span class="cnt">${n(c.leagues)}</span></a>
       <a class="nav-item" data-route="/archive" href="#/archive">${svg('archive')} Archive</a>
       <div class="rail-foot" id="rail-foot"></div>
     </nav>
@@ -1163,8 +1330,10 @@ function afterRoute() {
   render();
   const h = location.hash;
   if (h.includes('/clubs') && !h.includes('/clubs/')) paintGrid();
-  if (/#\/players$/.test(h)) paintPlayers(true);
-  if (h.includes('/people') && !h.match(/\/people\/./)) paintPeople(true);
+  // Not a reset: coming back to a list should keep the rows already loaded,
+  // as well as the scroll position.
+  if (/#\/players$/.test(h)) paintPlayers(false);
+  if (h.includes('/people') && !h.match(/\/people\/./)) paintPeople(false);
 }
 
 if ('serviceWorker' in navigator) {
