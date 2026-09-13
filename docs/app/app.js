@@ -5,7 +5,7 @@
    routing, so it works on GitHub Pages with no server config.
    ═══════════════════════════════════════════════════════════════════ */
 
-const S = { clubs: [], leagues: [], players: [], meta: null, people: [], changes: null, expiring: [], outreach: [], ready: false };
+const S = { clubs: [], leagues: [], players: [], meta: null, people: [], changes: null, expiring: [], outreach: [], careers: {}, ready: false };
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
@@ -62,6 +62,8 @@ const routes = [
   { re: /^\/clubs$/, view: clubsPage },
   { re: /^\/players$/, view: playersPage },
   { re: /^\/pipeline$/, view: pipelinePage },
+  { re: /^\/people\/([^/]+)$/, view: personPage },
+  { re: /^\/people$/, view: peoplePage },
   { re: /^\/today$/, view: todayPage },
   { re: /^\/?$/, view: todayPage },
 ];
@@ -285,6 +287,155 @@ function paintPlayers(reset) {
   if (btn) btn.addEventListener('click', () => { P.shown += PAGE * 4; paintPlayers(); });
 }
 
+
+
+/* ── People ───────────────────────────────────────────────────────── */
+/* The scan history is the thing nobody else has: seven snapshots back to May.
+   A person page turns that into a career, and a club page into a destination. */
+
+const slugOf = n => (n || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+const PF = { q: '', role: '', movers: false, shown: 60 };
+
+function peoplePage() {
+  return `
+  <div class="page">
+    <div class="page-head">
+      <h1>People</h1>
+      <p>Every tracked staff member. ${Object.keys(S.careers).length.toLocaleString()} have a career history across seven scans since May.</p>
+    </div>
+    <div class="filters">
+      <input class="field" id="pe-q" type="search" placeholder="Search name, club or role…" value="${esc(PF.q)}" style="flex:1 1 240px">
+      <select class="field" id="pe-role">
+        <option value="">All roles</option>
+        <option value="director"${PF.role === 'director' ? ' selected' : ''}>Directors</option>
+        <option value="recruit"${PF.role === 'recruit' ? ' selected' : ''}>Recruitment &amp; scouting</option>
+        <option value="manager"${PF.role === 'manager' ? ' selected' : ''}>Management</option>
+      </select>
+      <button class="chip${PF.movers ? ' on' : ''}" id="pe-movers">Moved club</button>
+      <span class="count" id="pe-count"></span>
+    </div>
+    <div id="pe-list" class="rows"></div>
+    <div id="pe-more"></div>
+  </div>`;
+}
+
+const ROLE_GROUP = {
+  director: /director|chief executive|president|chairman|owner/i,
+  recruit: /recruit|scout/i,
+  manager: /manager|head coach|coach/i,
+};
+
+function peopleFiltered() {
+  const q = PF.q.trim().toLowerCase();
+  return S.people.filter(p => {
+    if (PF.movers) {
+      const c = S.careers[slugOf(p.n)];
+      if (!c || new Set(c.spells.map(s => s.clubSlug)).size < 2) return false;
+    }
+    if (PF.role && !(ROLE_GROUP[PF.role] || /.^/).test(p.r || '')) return false;
+    if (!q) return true;
+    return (p.n || '').toLowerCase().includes(q)
+        || (p.club || '').toLowerCase().includes(q)
+        || (p.r || '').toLowerCase().includes(q);
+  });
+}
+
+function paintPeople(reset) {
+  const host = $('#pe-list');
+  if (!host) return;
+  if (reset) PF.shown = 60;
+  const list = peopleFiltered();
+  host.innerHTML = list.slice(0, PF.shown).map(p => {
+    const c = S.clubs.find(x => x.slug === p.clubSlug);
+    const car = S.careers[slugOf(p.n)];
+    const moves = car ? new Set(car.spells.map(s => s.clubSlug)).size - 1 : 0;
+    return `<a class="row" href="#/people/${esc(slugOf(p.n))}">
+      ${c ? crestImg(c, 'row-crest') : ''}
+      <div class="row-main">
+        <div class="row-name">${esc(p.n)}</div>
+        <div class="row-sub">${esc(p.club || '')}${p.nat ? ' · ' + esc(p.nat) : ''}</div>
+      </div>
+      ${moves > 0 ? `<span class="moves">${moves} move${moves === 1 ? '' : 's'}</span>` : ''}
+      <span class="role${isKeyRole(p.r) ? ' key' : ''}">${esc(p.r || '—')}</span>
+    </a>`;
+  }).join('') || `<p class="empty">Nobody matches.</p>`;
+  $('#pe-count').textContent = `${list.length.toLocaleString()} of ${S.people.length.toLocaleString()}`;
+  $('#pe-more').innerHTML = list.length > PF.shown
+    ? `<button class="more" id="pe-more-btn">Show more (${(list.length - PF.shown).toLocaleString()} left)</button>` : '';
+  const b = $('#pe-more-btn');
+  if (b) b.addEventListener('click', () => { PF.shown += 240; paintPeople(); });
+}
+
+function fmtMonth(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+}
+
+function personPage(slug) {
+  slug = decodeURIComponent(slug);
+  const cur = S.people.find(p => slugOf(p.n) === slug);
+  const car = S.careers[slug];
+  if (!cur && !car) return `<div class="page"><p class="empty">Nobody by that name.</p></div>`;
+
+  const name = cur ? cur.n : car.name;
+  const nat = (cur && cur.nat) || (car && car.nat) || '';
+  const tm = (cur && cur.tm) || (car && car.tm) || '';
+  const club = cur ? S.clubs.find(c => c.slug === cur.clubSlug) : null;
+
+  // Newest first reads better for a career: where are they now, then how they got here.
+  const spells = car ? [...car.spells].reverse()
+    : (cur ? [{ club: cur.club, clubSlug: cur.clubSlug, role: cur.r, from: null, to: null }] : []);
+  const clubsSeen = new Set(spells.map(s => s.clubSlug)).size;
+
+  return `
+  <div class="page">
+    <a class="back" href="#/people">${svg('back')} All people</a>
+
+    <div class="club-head">
+      ${club ? crestImg(club, '') : ''}
+      <div>
+        <h1>${esc(name)}</h1>
+        <div class="club-sub">
+          ${cur ? `<span>${esc(cur.r || '')}${cur.club ? ' · ' + esc(cur.club) : ''}</span>`
+                : `<span class="gone">No longer in the scan</span>`}
+          ${nat ? `<span>${esc(nat)}</span>` : ''}
+          ${tm ? `<a href="${esc(tm)}" target="_blank" rel="noopener">Transfermarkt ${svg('ext')}</a>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b>${clubsSeen}</b><span>${clubsSeen === 1 ? 'Club' : 'Clubs'} seen</span></div>
+      <div class="stat"><b>${spells.length}</b><span>${spells.length === 1 ? 'Spell' : 'Spells'}</span></div>
+      ${car ? `<div class="stat"><b>${fmtMonth(car.spells[0].from)}</b><span>First tracked</span></div>` : ''}
+    </div>
+
+    <section class="panel">
+      <h2>Career <em>${car ? 'from the scan history' : 'current only'}</em></h2>
+      ${spells.length ? `<ol class="timeline">${spells.map((sp, i) => {
+        const c = S.clubs.find(x => x.slug === sp.clubSlug);
+        return `<li class="tl${i === 0 && !sp.left ? ' now' : ''}">
+          <div class="tl-dot"></div>
+          <div class="tl-body">
+            <div class="tl-head">
+              ${c ? crestImg(c, 'row-crest') : ''}
+              <a class="tl-club" href="#/clubs/${esc(sp.clubSlug || '')}">${esc(sp.club || '')}</a>
+              <span class="role${isKeyRole(sp.role) ? ' key' : ''}">${esc(sp.role || '—')}</span>
+            </div>
+            <div class="tl-meta">
+              ${sp.from ? `${fmtMonth(sp.from)} — ${(sp.left || i > 0) ? fmtMonth(sp.to) : 'present'}` : 'Current'}
+              ${sp.lg ? ` · ${esc(sp.lg)}` : ''}
+            </div>
+            ${sp.withCount ? `<div class="tl-with">Arrived with ${sp.withCount} other${sp.withCount === 1 ? '' : 's'}: ${sp.with.map(esc).join(', ')}</div>` : ''}
+          </div>
+        </li>`;
+      }).join('')}</ol>`
+      : `<p class="empty">No history recorded.</p>`}
+    </section>
+  </div>`;
+}
 
 /* ── Pipeline ─────────────────────────────────────────────────────── */
 /* Read-only on purpose. Logging happens in scripts/outreach.py, because the
@@ -617,6 +768,7 @@ function chrome() {
       <div class="brand"><b>LPCMI</b><span>Recruitment</span></div>
       <a class="nav-item" data-route="/today" href="#/today">${svg('bolt')} Today</a>
       <a class="nav-item" data-route="/clubs" href="#/clubs">${svg('clubs')} Clubs</a>
+      <a class="nav-item" data-route="/people" href="#/people">${svg('people')} People</a>
       <a class="nav-item" data-route="/players" href="#/players">${svg('players')} Players</a>
       <a class="nav-item" data-route="/pipeline" href="#/pipeline">${svg('pipe')} Pipeline</a>
       <div class="nav-label">Previous build</div>
@@ -655,6 +807,7 @@ document.addEventListener('keydown', e => {
 document.addEventListener('input', e => {
   if (e.target.id === 'f-q') { F.q = e.target.value; paintGrid(); }
   if (e.target.id === 'p-q') { P.q = e.target.value; paintPlayers(true); }
+  if (e.target.id === 'pe-q') { PF.q = e.target.value; paintPeople(true); }
 });
 document.addEventListener('change', e => {
   if (e.target.id === 'f-league') { F.league = e.target.value; paintGrid(); }
@@ -662,6 +815,7 @@ document.addEventListener('change', e => {
   if (e.target.id === 'p-league') { P.league = e.target.value; paintPlayers(true); }
   if (e.target.id === 'p-pos') { P.pos = e.target.value; paintPlayers(true); }
   if (e.target.id === 'p-status') { P.status = e.target.value; paintPlayers(true); }
+  if (e.target.id === 'pe-role') { PF.role = e.target.value; paintPeople(true); }
 });
 
 function sortBy(k) {
@@ -671,7 +825,12 @@ function sortBy(k) {
 }
 document.addEventListener('click', e => {
   const th = e.target.closest('th[data-sort]');
-  if (th) sortBy(th.dataset.sort);
+  if (th) { sortBy(th.dataset.sort); return; }
+  if (e.target.id === 'pe-movers') {
+    PF.movers = !PF.movers;
+    e.target.classList.toggle('on', PF.movers);
+    paintPeople(true);
+  }
 });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -686,6 +845,7 @@ function afterRoute() {
   const h = location.hash;
   if (h.includes('/clubs') && !h.includes('/clubs/')) paintGrid();
   if (h.includes('/players')) paintPlayers(true);
+  if (h.includes('/people') && !h.match(/\/people\/./)) paintPeople(true);
 }
 
 if ('serviceWorker' in navigator) {
@@ -698,8 +858,8 @@ if ('serviceWorker' in navigator) {
   chrome();
   $('#view').innerHTML = `<div class="page"><p class="empty">Loading…</p></div>`;
   try {
-    const [clubs, leagues, meta, changes, expiring, players, outreach] = await Promise.all(
-      ['clubs', 'leagues', 'meta', 'changes', 'expiring', 'players', 'outreach'].map(n =>
+    const [clubs, leagues, meta, changes, expiring, players, outreach, careers] = await Promise.all(
+      ['clubs', 'leagues', 'meta', 'changes', 'expiring', 'players', 'outreach', 'careers'].map(n =>
         fetch(`../data/${n}.json`).then(r => {
           if (!r.ok) throw new Error(`${n}.json ${r.status}`);
           return r.json();
@@ -707,7 +867,7 @@ if ('serviceWorker' in navigator) {
     if (!clubs) throw new Error('clubs.json could not be loaded');
     S.clubs = clubs; S.leagues = leagues || []; S.meta = meta;
     S.changes = changes; S.expiring = expiring || []; S.players = players || [];
-    S.outreach = outreach || [];
+    S.outreach = outreach || []; S.careers = careers || {};
     // Staff search flattens clubs rather than shipping a duplicate bundle.
     S.people = clubs.flatMap(c => c.staff.map(s => ({ ...s, club: c.name, clubSlug: c.slug })));
     S.ready = true;
