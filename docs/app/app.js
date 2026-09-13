@@ -765,17 +765,21 @@ function paintThemeBtn() {
 function chrome() {
   $('.shell').innerHTML = `
     <nav class="rail">
-      <div class="brand"><b>LPCMI</b><span>Recruitment</span></div>
-      <a class="nav-item" data-route="/today" href="#/today">${svg('bolt')} Today</a>
-      <a class="nav-item" data-route="/clubs" href="#/clubs">${svg('clubs')} Clubs</a>
-      <a class="nav-item" data-route="/people" href="#/people">${svg('people')} People</a>
-      <a class="nav-item" data-route="/players" href="#/players">${svg('players')} Players</a>
-      <a class="nav-item" data-route="/pipeline" href="#/pipeline">${svg('pipe')} Pipeline</a>
+      <div class="brand">
+        <small>LPCMI</small>
+        <b>Recruitment<br>Intelligence</b>
+        <span>de Liam</span>
+      </div>
+      <a class="nav-item" data-route="/today" href="#/today"><span class="nv">⚡️</span> Today</a>
+      <a class="nav-item" data-route="/clubs" href="#/clubs"><span class="nv">🏟️</span> Clubs</a>
+      <a class="nav-item" data-route="/people" href="#/people"><span class="nv">👥</span> People</a>
+      <a class="nav-item" data-route="/players" href="#/players"><span class="nv">⚽️</span> Players</a>
+      <a class="nav-item" data-route="/pipeline" href="#/pipeline"><span class="nv">📣</span> Pipeline</a>
       <div class="nav-label">Previous build</div>
-      <a class="nav-item" href="../index.html">${svg('home')} Old dashboard</a>
-      <a class="nav-item" href="../league-tables.html">${svg('trophy')} League tables</a>
-      <a class="nav-item" href="../all.html">${svg('players')} Players</a>
-      <a class="nav-item" href="../master-database.html">${svg('people')} Staff directory</a>
+      <a class="nav-item" href="../index.html"><span class="nv">🗂️</span> Old dashboard</a>
+      <a class="nav-item" href="../league-tables.html"><span class="nv">🏆</span> League tables</a>
+      <a class="nav-item" href="../all.html"><span class="nv">⚽️</span> Players</a>
+      <a class="nav-item" href="../master-database.html"><span class="nv">🔎</span> Staff directory</a>
       <div class="rail-foot" id="rail-foot"></div>
     </nav>
     <div class="main">
