@@ -1,15 +1,17 @@
 /* ═══════════════════════════════════════════════════════════════════
-   LPCMI Recruitment — interface v2
+   LPCMI Recruitment — interface v3
 
    Renders from the JSON bundles written by web/build_data.py. Hash
-   routing, so it works on GitHub Pages with no server config.
+   routing, so it works as a static file with no server config.
    ═══════════════════════════════════════════════════════════════════ */
 
-const S = { clubs: [], leagues: [], players: [], meta: null, people: [], changes: null, expiring: [], outreach: [], careers: {}, ready: false };
+const S = { clubs: [], leagues: [], players: [], meta: null, people: [], changes: null,
+            expiring: [], outreach: [], careers: {}, clients: [], ready: false };
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const n = x => Number(x || 0).toLocaleString('en-GB');
 
 // Who a recruiter actually wants to reach, in order. Ranking beats a single
 // regex here: "Assistant Manager" ends in "Manager", so a naive /manager$/ put
@@ -20,50 +22,57 @@ const ROLE_RANK = [
   /^(manager|head coach)$/i,
   /recruitment|scout/i,
 ];
-
 function roleRank(r) {
   const role = (r || '').trim();
   for (let i = 0; i < ROLE_RANK.length; i++) if (ROLE_RANK[i].test(role)) return i;
   return ROLE_RANK.length;
 }
-
 const isKeyRole = r => roleRank(r) < 3;
 
 const ICON = {
-  home: 'M3 10.5 12 4l9 6.5M5.5 9.5V20h13V9.5',
-  clubs: 'M4 20V7l8-4 8 4v13M9 20v-5h6v5M9 10h.01M15 10h.01',
-  people: 'M16 19v-1.5A3.5 3.5 0 0 0 12.5 14h-5A3.5 3.5 0 0 0 4 17.5V19M10 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M20 19v-1.5a3.5 3.5 0 0 0-2.6-3.4M15.5 4.2a3.5 3.5 0 0 1 0 6.6',
-  players: 'M12 3.5 4.5 7v5c0 4.2 3.1 7.6 7.5 8.5 4.4-.9 7.5-4.3 7.5-8.5V7z',
-  trophy: 'M7 4h10v4a5 5 0 0 1-10 0zM7 5.5H4.5V7a3 3 0 0 0 3 3M17 5.5h2.5V7a3 3 0 0 1-3 3M12 13v4M9 20h6',
+  today: 'M3 4.5h18v16H3zM3 9.5h18M8 2.5v4M16 2.5v4',
+  clubs: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
+  people: 'M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8M4 21c0-4 3.6-7 8-7s8 3 8 7',
+  players: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18',
+  mine: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z',
+  pipe: 'M4 5h5v14H4zM10.5 5h5v9h-5zM17 5h3v6h-3z',
+  archive: 'M3 7h18v4H3zM5 11v9h14v-9M10 15h4',
   search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14M20 20l-4-4',
   sun: 'M12 5V3M12 21v-2M5 12H3M21 12h-2M6.3 6.3 4.9 4.9M19.1 19.1l-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
   moon: 'M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5',
   back: 'M15 18l-6-6 6-6',
   ext: 'M14 5h5v5M19 5l-8 8M18 14v4.5A1.5 1.5 0 0 1 16.5 20h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10',
   menu: 'M4 7h16M4 12h16M4 17h16',
-  bolt: 'M13 3 5 13.5h6L11 21l8-10.5h-6z',
-  pipe: 'M4 6h5v12H4zM10 6h5v8h-5zM16 6h4v5h-4z',
+  plus: 'M12 5v14M5 12h14',
   clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 7.5V12l3 2',
   swap: 'M7 9h12l-3-3M17 15H5l3 3',
   arrowIn: 'M12 4v11M8 11l4 4 4-4M5 20h14',
   arrowOut: 'M12 20V9M8 13l4-4 4 4M5 4h14',
+  chev: 'M9 6l6 6-6 6',
 };
-
 const svg = (name, cls = 'icon') =>
   `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICON[name]}"/></svg>`;
 
-const crestImg = (c, cls) => c.crest
+const crestImg = (c, cls) => c && c.crest
   ? `<img class="${cls}" src="../${esc(c.crest)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
   : `<span class="${cls}" aria-hidden="true"></span>`;
+
+const initials = s => (s || '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const clubBySlug = slug => S.clubs.find(c => c.slug === slug);
+const slugOf = nm => (nm || '').normalize('NFKD').replace(/[̀-ͯ]/g, '')
+  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 /* ── Routing ──────────────────────────────────────────────────────── */
 const routes = [
   { re: /^\/clubs\/([^/]+)$/, view: clubPage },
   { re: /^\/clubs$/, view: clubsPage },
+  { re: /^\/mine\/([^/]+)$/, view: clientPage },
   { re: /^\/players$/, view: playersPage },
+  { re: /^\/mine$/, view: minePage },
   { re: /^\/pipeline$/, view: pipelinePage },
   { re: /^\/people\/([^/]+)$/, view: personPage },
   { re: /^\/people$/, view: peoplePage },
+  { re: /^\/archive$/, view: archivePage },
   { re: /^\/today$/, view: todayPage },
   { re: /^\/?$/, view: todayPage },
 ];
@@ -76,11 +85,12 @@ function render() {
     const m = path.match(r.re);
     if (m) {
       $('#view').innerHTML = r.view(...m.slice(1));
-      document.querySelectorAll('.nav-item[data-route]').forEach(el => {
-        const on = path.startsWith(el.dataset.route);
-        el.toggleAttribute('aria-current', on);
-        if (on) el.setAttribute('aria-current', 'page');
-      });
+      const items = [...document.querySelectorAll('.nav-item[data-route]')];
+      items.forEach(el => el.removeAttribute('aria-current'));
+      const best = items
+        .filter(el => path === el.dataset.route || path.startsWith(el.dataset.route + '/'))
+        .sort((a, b) => b.dataset.route.length - a.dataset.route.length)[0];
+      if (best) best.setAttribute('aria-current', 'page');
       window.scrollTo(0, 0);
       $('.shell').dataset.rail = '';
       return;
@@ -89,115 +99,527 @@ function render() {
   $('#view').innerHTML = `<div class="page"><p class="empty">Nothing here.</p></div>`;
 }
 
-
-/* ── Today ────────────────────────────────────────────────────────── */
+/* ── Shared bits ──────────────────────────────────────────────────── */
 function fmtSince(d) {
   if (!d || d.length !== 8) return '';
   const dt = new Date(`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`);
   return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
 }
-
-function clubBySlug(slug) { return S.clubs.find(c => c.slug === slug); }
-
-function changeRow(kind, r) {
-  const to = r.toSlug || r.clubSlug;
-  const c = clubBySlug(to);
-  const sub = kind === 'move'
-    ? `${esc(r.from)} → ${esc(r.to)}`
-    : esc(r.club || '');
-  return `<a class="row" href="#/clubs/${esc(to || '')}">
-    <span class="chg ${kind}">${svg(kind === 'move' ? 'swap' : kind === 'in' ? 'arrowIn' : 'arrowOut')}</span>
-    ${c ? crestImg(c, 'row-crest') : ''}
-    <div class="row-main">
-      <div class="row-name">${esc(r.n)}</div>
-      <div class="row-sub">${sub}</div>
-    </div>
-    <span class="role${isKeyRole(r.r) ? ' key' : ''}">${esc(r.r || '—')}</span>
-  </a>`;
+function fmtMonth(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
 }
-
-function todayPage() {
-  const ch = S.changes;
-  const since = ch && ch.since ? fmtSince(ch.since) : null;
-  const moves = ch ? ch.moves : [];
-  const arrivals = ch ? ch.arrivals : [];
-  const departures = ch ? ch.departures : [];
-  const total = moves.length + arrivals.length + departures.length;
-
-  // Expiring contracts matter most where the club has said it needs that role.
-  const needSlugs = new Set(S.clubs.filter(c => c.needs.length).map(c => c.slug));
-  const exp = S.expiring.filter(p => p.months <= 12);
-  const expHot = exp.filter(p => needSlugs.has(p.clubSlug));
-
-  return `
-  <div class="page">
-    <div class="page-head">
-      <h1>Today</h1>
-      <p>${total
-        ? `${total} staff change${total === 1 ? '' : 's'} since ${esc(since)}, across ${ch.clubsCompared} clubs compared.`
-        : `No staff changes since ${esc(since || 'the last scan')}.`}</p>
-    </div>
-
-    <div class="stats">
-      <div class="stat"><b>${moves.length}</b><span>Moves</span></div>
-      <div class="stat up"><b>${arrivals.length}</b><span>Arrivals</span></div>
-      <div class="stat down"><b>${departures.length}</b><span>Departures</span></div>
-      <div class="stat"><b>${expHot.length}</b><span>Expiring at a club that is recruiting</span></div>
-    </div>
-
-    <div class="cols">
-      <div style="display:grid;gap:18px">
-        ${section('Moves', 'move', moves, 'Nobody changed club.')}
-        ${section('Arrivals', 'in', arrivals, 'No new appointments.')}
-        ${section('Departures', 'out', departures, 'Nobody left.')}
-      </div>
-
-      <section class="panel">
-        <h2>${svg('clock')} Contracts running down <em>${expHot.length}</em></h2>
-        ${expHot.length ? expHot.slice(0, 40).map(p => {
-          const c = clubBySlug(p.clubSlug);
-          return `<a class="row" href="#/clubs/${esc(p.clubSlug)}">
-            ${c ? crestImg(c, 'row-crest') : ''}
-            <div class="row-main">
-              <div class="row-name">${esc(p.n)}</div>
-              <div class="row-sub">${esc(p.pos || '')} · ${esc(p.club || '')}</div>
-            </div>
-            <span class="role${p.months <= 6 ? ' hot' : ''}">${esc(p.exp || '')}</span>
-          </a>`;
-        }).join('')
-        : `<p class="empty">Nothing expiring within a year at a club with an open requirement.</p>`}
-      </section>
-    </div>
-  </div>`;
-}
-
-function section(title, kind, rows, emptyText) {
-  return `<section class="panel">
-    <h2>${title} <em>${rows.length}</em></h2>
-    ${rows.length ? rows.slice(0, 25).map(r => changeRow(kind, r)).join('')
-                  : `<p class="empty">${esc(emptyText)}</p>`}
-  </section>`;
-}
-
-
-/* ── Players ──────────────────────────────────────────────────────── */
-/* 3,381 rows. The old page rendered every one into the markup, which is how
-   all.html reached 192,099 DOM nodes. This renders a window of them and grows
-   it on scroll, so the node count stays in the hundreds however long the list. */
-
-const P = { q: '', league: '', pos: '', status: '', sort: 'n', dir: 1, shown: 60 };
-const PAGE = 60;
-
+const EXPKEY = v => {
+  const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(String(v || ''));
+  return m ? +`${m[3]}${m[2]}${m[1]}` : Infinity;
+};
 const MV = v => {
   const m = /([\d.]+)\s*(m|k|bn)?/i.exec(String(v || ''));
   if (!m) return -1;
   const mult = { bn: 1e9, m: 1e6, k: 1e3 }[(m[2] || '').toLowerCase()] || 1;
   return parseFloat(m[1]) * mult;
 };
-const EXPKEY = v => {
-  const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(String(v || ''));
-  return m ? +`${m[3]}${m[2]}${m[1]}` : Infinity;
+function zone(c) {
+  if (!c.table) return '';
+  const total = (S.leagues.find(l => l.name === c.lg)?.table || []).length;
+  if (c.table.pos <= 2) return 'up';
+  if (total && c.table.pos > total - 3) return 'down';
+  return '';
+}
+// One window everywhere. Changing it here changes the whole app.
+const WINDOW = () => (S.meta && S.meta.window) || { label: 'January 2027' };
+
+/* ── Today ────────────────────────────────────────────────────────── */
+function changeRow(kind, r) {
+  const to = r.toSlug || r.clubSlug;
+  const c = clubBySlug(to);
+  const sub = kind === 'move'
+    ? `${esc(r.r || '')} · <em>${esc(r.from)}</em><span class="arrow">→</span><em>${esc(r.to)}</em>`
+    : `${esc(r.r || '')} · <em>${esc(r.club || '')}</em>`;
+  const pill = kind === 'in' ? '<span class="pill good">Joined</span>'
+    : kind === 'out' ? '<span class="pill bad">Left</span>'
+    : '<span class="pill warn">Moved</span>';
+  return `<a class="row" href="#/clubs/${esc(to || '')}">
+    <i class="bar ${kind === 'move' ? 'mv' : kind}"></i>
+    ${c && c.crest ? crestImg(c, 'crest') : `<span class="av">${esc(initials(r.n))}</span>`}
+    <div class="who"><b>${esc(r.n)}</b><span>${sub}</span></div>
+    ${pill}
+  </a>`;
+}
+
+// Clubs worth a call: they listed a need, and somebody in the scanned squad at
+// that club is running out of contract. The join is the whole point.
+const NEED_TO_SCAN = { GK: 'Goalkeeper', RB: 'Right-Back', RWB: 'Right-Back' };
+
+function callList() {
+  const out = [];
+  for (const c of S.clubs) {
+    if (!c.needs.length) continue;
+    const codes = new Set(c.needs.map(x => (x.pos || '').toUpperCase()));
+    const want = [...codes].map(k => NEED_TO_SCAN[k]).filter(Boolean);
+    if (!want.length) continue;
+    const hits = S.expiring.filter(p => p.clubSlug === c.slug && want.includes(p.pos));
+    if (!hits.length) continue;
+    const key = [...c.staff].sort((a, b) => roleRank(a.r) - roleRank(b.r))[0];
+    out.push({ c, hits, key: key && isKeyRole(key.r) ? key : null,
+               soon: Math.min(...hits.map(h => h.months)) });
+  }
+  return out.sort((a, b) => a.soon - b.soon || b.hits.length - a.hits.length).slice(0, 12);
+}
+
+function todayPage() {
+  const ch = S.changes || { moves: [], arrivals: [], departures: [] };
+  const since = ch.since ? fmtSince(ch.since) : 'the last scan';
+  const total = ch.moves.length + ch.arrivals.length + ch.departures.length;
+
+  // Counted over every expiring contract by the builder, not the 400 shipped.
+  const buckets = ((S.meta && S.meta.expiringDates) || []).map(b => ({
+    lab: b.d, v: b.n, cls: b.m <= 3 ? 'hot' : b.m <= 6 ? 'warm' : '',
+  }));
+  const bmax = Math.max(1, ...buckets.map(b => b.v));
+  const soonest = buckets.length ? buckets[0] : null;
+
+  const due = S.outreach.filter(isDue);
+  const reqs = (S.meta && S.meta.counts.requirements) || 0;
+  const reqClubs = S.clubs.filter(c => c.needs.length).length;
+  const topNeed = (() => {
+    const t = {};
+    S.clubs.forEach(c => c.needs.forEach(x => { t[x.pos] = (t[x.pos] || 0) + 1; }));
+    const best = Object.entries(t).sort((a, b) => b[1] - a[1])[0];
+    return best ? best[0] : '—';
+  })();
+
+  const rows = [...ch.moves.map(r => ['move', r]), ...ch.departures.map(r => ['out', r]),
+                ...ch.arrivals.map(r => ['in', r])];
+  const calls = callList();
+  const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div><h1>Today</h1><p>${esc(today)} · changes since the ${esc(since)} scan · preparing for ${esc(WINDOW().label)}</p></div>
+    </div>
+
+    <div class="kpis">
+      <div class="card kpi">
+        <span class="eyebrow">Staff changes this week</span><span class="v num">${total}</span>
+        <span class="d">
+          <span class="pill good">${ch.arrivals.length} in</span>
+          <span class="pill bad">${ch.departures.length} out</span>
+          <span class="pill warn">${ch.moves.length} moved</span>
+        </span>
+      </div>
+      <div class="card kpi">
+        <span class="eyebrow">Expiring within 12 months</span>
+        <span class="v num">${n((S.meta && S.meta.counts.expiring) || S.expiring.length)}</span>
+        <span class="d">${soonest ? `<b>${n(soonest.v)}</b> of them on ${esc(soonest.lab)}` : ''}</span>
+      </div>
+      <div class="card kpi">
+        <span class="eyebrow">Open requirements</span><span class="v num">${n(reqs)}</span>
+        <span class="d">at ${reqClubs} clubs · most wanted <b>${esc(topNeed)}</b></span>
+      </div>
+      <div class="card kpi">
+        <span class="eyebrow">Follow-ups due</span>
+        <span class="v num${due.length ? ' bad' : ''}">${due.length}</span>
+        <span class="d">of ${S.outreach.length} in the pipeline</span>
+      </div>
+    </div>
+
+    <div class="g2">
+      <section class="card">
+        <div class="hd"><h2>Staff movement</h2>
+          <span class="pill">${ch.clubsCompared || 0} clubs compared</span></div>
+        ${rows.length ? rows.slice(0, 14).map(([k, r]) => changeRow(k, r)).join('')
+                      : `<p class="empty">Nothing moved since the last scan.</p>`}
+      </section>
+
+      <div class="stack">
+        <section class="card">
+          <div class="hd"><h2>When contracts end</h2>
+            <a class="more" href="#/players">Players ${svg('chev')}</a></div>
+          <div class="bars">
+            ${buckets.map(b => `<div class="brow">
+              <span class="lab">${b.lab}</span>
+              <span class="trk"><i class="${b.cls}" style="width:${Math.round(b.v / bmax * 100)}%"></i></span>
+              <span class="n num">${n(b.v)}</span></div>`).join('')}
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="hd"><h2>My players</h2><a class="more" href="#/mine">All ${svg('chev')}</a></div>
+          ${S.clients.length ? S.clients.map(cl => {
+            const top = cl.live;
+            return `<a class="row plain" href="#/mine/${esc(cl.slug)}">
+              <span class="av">${esc(initials(cl.name))}</span>
+              <div class="who"><b>${esc(cl.name)}</b><span>${esc(cl.pos)} · ${esc(cl.club || '')}</span></div>
+              <span class="pill acc">${top} club${top === 1 ? '' : 's'} to call</span>
+            </a>`;
+          }).join('') : `<p class="empty">No clients loaded.</p>`}
+        </section>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="hd"><h2>Clubs to call this week</h2>
+        <span class="pill">A listed requirement plus a contract running down in the same position</span></div>
+      ${calls.length ? `<div class="table-wrap"><table class="tbl">
+        <thead><tr><th>Club</th><th>League</th><th>Needs</th><th>Running down there</th><th class="r">Key contact</th></tr></thead>
+        <tbody>${calls.map(({ c, hits, key }) => `<tr>
+          <td><a class="name" href="#/clubs/${esc(c.slug)}">${crestImg(c, 'crest')}${esc(c.name)}</a></td>
+          <td>${esc(c.lg || '')}${c.table ? ` <span class="pill num">${c.table.pos}</span>` : ''}</td>
+          <td><span class="needs">${c.needs.slice(0, 4).map(x => `<span class="need">${esc(x.pos)}</span>`).join('')}${c.needs.length > 4 ? `<span class="need">+${c.needs.length - 4}</span>` : ''}</span></td>
+          <td class="num">${hits.length} player${hits.length === 1 ? '' : 's'}, soonest ${hits[0].exp ? esc(hits[0].exp) : esc(hits[0].months + ' mo')}</td>
+          <td class="r">${key ? `<div class="name stacked">${esc(key.n)}<small>${esc(key.r)}</small></div>`
+                               : `<span class="role">No senior contact listed</span>`}</td>
+        </tr>`).join('')}</tbody></table></div>`
+      : `<p class="empty">Nothing joins up this week. Every club with a requirement has cover in that position.</p>`}
+    </section>
+  </div>`;
+}
+
+/* ── Clubs index ──────────────────────────────────────────────────── */
+const F = { q: '', country: '', league: '', need: '', tier: '' };
+
+function clubsPage() {
+  const countries = [...new Set(S.clubs.map(c => c.country).filter(Boolean))].sort();
+  const leagues = [...new Set(S.clubs
+    .filter(c => !F.country || c.country === F.country)
+    .map(c => c.lg).filter(Boolean))].sort();
+  const needs = [...new Set(S.clubs.flatMap(c => c.needs.map(x => x.pos)))].sort();
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div><h1>Clubs</h1><p>Every tracked club, with its staff, requirements and league position in one place.</p></div>
+    </div>
+    <div class="filters">
+      <input class="field" id="f-q" type="search" placeholder="Search clubs…" value="${esc(F.q)}" style="flex:1 1 200px">
+      <select class="field" id="f-country"><option value="">All countries</option>
+        ${countries.map(x => `<option${x === F.country ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>
+      <select class="field" id="f-league"><option value="">All leagues</option>
+        ${leagues.map(x => `<option${x === F.league ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>
+      <select class="field" id="f-tier"><option value="">Any English tier</option>
+        ${[1,2,3,4,5,6].map(t => `<option value="${t}"${String(t) === F.tier ? ' selected' : ''}>Tier ${t}</option>`).join('')}</select>
+      <select class="field" id="f-need"><option value="">Any requirement</option>
+        ${needs.map(x => `<option${x === F.need ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>
+      ${(F.q || F.country || F.league || F.need || F.tier) ? `<button class="chip on" id="f-clear">Clear</button>` : ''}
+      <span class="count" id="f-count"></span>
+    </div>
+    <div class="grid" id="club-grid"></div>
+  </div>`;
+}
+
+function filtered() {
+  const q = F.q.trim().toLowerCase();
+  return S.clubs.filter(c =>
+    (!q || c.name.toLowerCase().includes(q) || (c.lg || '').toLowerCase().includes(q)) &&
+    (!F.country || c.country === F.country) &&
+    (!F.league || c.lg === F.league) &&
+    (!F.tier || String(c.tier || '') === F.tier) &&
+    (!F.need || c.needs.some(x => x.pos === F.need)));
+}
+
+function clubCard(c) {
+  return `<a class="card club-card" href="#/clubs/${esc(c.slug)}"${c.colour ? ` style="--club:${esc(c.colour)}"` : ''}>
+    <div class="cc-top">
+      ${crestImg(c, 'cc-crest')}
+      <div class="cc-id">
+        <div class="cc-name">${esc(c.name)}</div>
+        <div class="cc-league">${esc(c.lg || '—')}${c.country ? ' · ' + esc(c.country) : ''}</div>
+      </div>
+      ${c.table ? `<span class="pos-pill ${zone(c)}">${c.table.pos}</span>` : ''}
+    </div>
+    ${c.needs.length ? `<div class="needs">${c.needs.slice(0, 7).map(x =>
+      `<span class="need">${esc(x.pos)}</span>`).join('')}</div>` : ''}
+    <div class="cc-meta">
+      <span>${c.staff.length} staff</span>
+      ${c.squadSize ? `<span>${c.squadSize} tracked</span>` : ''}
+      ${c.outreach ? `<span>${c.outreach} contacted</span>` : ''}
+    </div>
+  </a>`;
+}
+
+function paintGrid() {
+  const grid = $('#club-grid');
+  if (!grid) return;
+  const list = filtered();
+  grid.innerHTML = list.length ? list.map(clubCard).join('')
+                               : `<p class="empty">No clubs match those filters.</p>`;
+  const cnt = $('#f-count');
+  if (cnt) cnt.textContent = `${n(list.length)} of ${n(S.clubs.length)}`;
+}
+
+/* ── Pitch map ────────────────────────────────────────────────────── */
+/* A requirement list is hard to read; a pitch is not. Coordinates are the
+   position's home on a 4-2-3-1, in percentages of the pitch box. */
+const PITCH = {
+  GK:  [50, 89, 'GK'],  CB:  [50, 78, 'CB'],  'CB-L': [36, 78, 'CB'], 'CB-R': [64, 78, 'CB'],
+  LB:  [17, 73, 'LB'],  RB:  [83, 73, 'RB'],  'WB-L': [15, 64, 'WB'], 'WB-R': [85, 64, 'WB'],
+  RFB: [83, 73, 'RB'],
+  DM:  [50, 60, 'DM'],  CM:  [33, 47, 'CM'],  AM: [50, 36, 'AM'],
+  LW:  [17, 33, 'LW'],  RW:  [83, 33, 'RW'],  W: [78, 42, 'W'],
+  ST:  [50, 17, 'ST'],  CF:  [50, 17, 'CF'],
 };
+// Codes in the data carry qualifiers ("CM #8", "GK 04+", "#9 CF").
+function pitchKey(code) {
+  const raw = (code || '').toUpperCase().trim();
+  if (PITCH[raw]) return raw;
+  const cleaned = raw.replace(/#\d+|\d{2}\+|\//g, ' ').trim();
+  if (PITCH[cleaned]) return cleaned;
+  for (const k of ['CB-L', 'CB-R', 'WB-L', 'WB-R', 'GK', 'CB', 'LB', 'RB', 'DM', 'CM', 'AM', 'LW', 'RW', 'ST', 'CF', 'W'])
+    if (cleaned.split(/\s+/).includes(k)) return k;
+  return null;
+}
+
+function pitchMap(needs) {
+  const wanted = new Map();
+  needs.forEach(x => { const k = pitchKey(x.pos); if (k) wanted.set(k, x); });
+  const base = ['GK', 'LB', 'CB-L', 'CB-R', 'RB', 'DM', 'CM', 'AM', 'LW', 'RW', 'ST'];
+  const keys = [...new Set([...base, ...wanted.keys()])];
+  return `<div class="pitch" role="img" aria-label="Pitch showing the positions this club is recruiting">
+    <svg viewBox="0 0 68 105" preserveAspectRatio="none">
+      <rect x="0.5" y="0.5" width="67" height="104"/>
+      <line x1="0" y1="52.5" x2="68" y2="52.5"/>
+      <circle cx="34" cy="52.5" r="9.15"/>
+      <rect x="13.84" y="0.5" width="40.32" height="16.5"/>
+      <rect x="24.84" y="0.5" width="18.32" height="5.5"/>
+      <rect x="13.84" y="88" width="40.32" height="16.5"/>
+      <rect x="24.84" y="99" width="18.32" height="5.5"/>
+    </svg>
+    ${keys.map(k => {
+      const p = PITCH[k]; if (!p) return '';
+      const on = wanted.has(k);
+      return `<span class="pos${on ? ' need' : ''}" style="left:${p[0]}%;top:${p[1]}%"
+        title="${esc(on ? (wanted.get(k).label || k) : k)}">${esc(p[2])}</span>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ── Club page ────────────────────────────────────────────────────── */
+function clubPage(slug) {
+  const c = clubBySlug(decodeURIComponent(slug));
+  if (!c) return `<div class="page"><p class="empty">Club not found.</p></div>`;
+
+  const staff = [...c.staff].sort((a, b) =>
+    roleRank(a.r) - roleRank(b.r) || (a.n || '').localeCompare(b.n || ''));
+  const groups = [
+    ['Decision makers', s => roleRank(s.r) < 1 || /^(manager|head coach|chief executive|president|owner)$/i.test(s.r || '')],
+    ['Recruitment and scouting', s => /recruit|scout/i.test(s.r || '')],
+    ['Everyone else', () => true],
+  ];
+  const used = new Set();
+  const grouped = groups.map(([label, test]) => {
+    const rows = staff.filter(s => !used.has(s) && test(s));
+    rows.forEach(s => used.add(s));
+    return [label, rows];
+  }).filter(([, rows]) => rows.length);
+
+  const squad = Object.entries(c.squad).sort((a, b) => b[1] - a[1]);
+  const smax = Math.max(1, ...squad.map(s => s[1]));
+  const t = c.table;
+  const exp = S.expiring.filter(p => p.clubSlug === c.slug);
+  const byType = {};
+  c.needs.forEach(x => { byType[x.type || 'other'] = (byType[x.type || 'other'] || 0) + 1; });
+  const lead = Object.entries(byType).sort((a, b) => b[1] - a[1])[0];
+
+  return `
+  <div class="page">
+    <a class="back" href="#/clubs">${svg('back')} All clubs</a>
+
+    <div class="card chead"${c.colour ? ` style="--club:${esc(c.colour)}"` : ''}>
+      ${crestImg(c, 'crest lg')}
+      <div>
+        <h1>${esc(c.name)}</h1>
+        <div class="meta">
+          <span class="pill">${esc(c.lg || 'League unknown')}</span>
+          ${c.country ? `<span>${esc(c.country)}</span>` : ''}
+          <span>${c.staff.length} staff</span>
+          <span>${c.needs.length} requirement${c.needs.length === 1 ? '' : 's'}</span>
+          ${c.outreach ? `<span class="pill acc">${c.outreach} in pipeline</span>` : ''}
+        </div>
+      </div>
+      <div class="actions">
+        ${c.tm ? `<a class="btn" href="${esc(c.tm)}" target="_blank" rel="noopener">${svg('ext')} Transfermarkt</a>` : ''}
+        ${c.staffUrl ? `<a class="btn" href="${esc(c.staffUrl)}" target="_blank" rel="noopener">${svg('ext')} Staff page</a>` : ''}
+      </div>
+    </div>
+
+    <div class="g3">
+      <div class="card stat">
+        <div class="eyebrow">League position</div>
+        <div class="v num">${t ? t.pos : '—'}${t ? `<small>${t.pts ?? '—'} pts from ${t.p ?? '—'}</small>` : ''}</div>
+        ${t ? `<div class="sub">W${t.w ?? '—'} D${t.d ?? '—'} L${t.l ?? '—'} · GD ${t.gd ?? '—'}</div>`
+            : `<div class="sub">No table for this league.</div>`}
+      </div>
+      <div class="card stat">
+        <div class="eyebrow">Squad scanned</div>
+        <div class="v num">${c.squadSize}${squad.length ? `<small>${squad.map(s => s[0].replace('Goalkeeper', 'GK').replace('Right-Back', 'RB') + ' ' + s[1]).join(' · ')}</small>` : ''}</div>
+        <div class="sub">The squad scan covers goalkeepers and right-backs only.</div>
+      </div>
+      <div class="card stat">
+        <div class="eyebrow">Contracts running down</div>
+        <div class="v num">${exp.length}</div>
+        <div class="sub">${exp.length ? esc(exp.slice(0, 2).map(p => `${p.n} (${p.exp})`).join(' · ')) : 'Nobody tracked here is inside 12 months.'}</div>
+      </div>
+    </div>
+
+    <section class="card" style="margin-bottom:16px">
+      <div class="hd"><h2>What they are looking for</h2>
+        <span class="pill">Requirement list, ${esc(WINDOW().label)} window</span></div>
+      ${c.needs.length ? `<div class="pitchwrap">
+        ${pitchMap(c.needs)}
+        <div class="needlist">
+          <h3>${c.needs.length} position${c.needs.length === 1 ? '' : 's'}${lead ? ` · ${esc(lead[0])} heavy` : ''}</h3>
+          ${c.needs.map(x => {
+            const scan = NEED_TO_SCAN[(x.pos || '').toUpperCase()];
+            const have = scan ? (c.squad[scan] || 0) : null;
+            return `<div class="needrow">
+              <span class="tag">${esc(x.pos)}</span>
+              <div><b>${esc(x.label || x.pos)}</b><small>${esc(x.type ? x.type[0].toUpperCase() + x.type.slice(1) : '')}</small></div>
+              <span class="sq">${have === null ? '' : `in squad <b>${have}</b>`}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : `<p class="empty">No requirements recorded for this club.</p>`}
+    </section>
+
+    <div class="g2">
+      <section class="card">
+        <div class="hd"><h2>Staff</h2><span class="pill">${c.staff.length}</span></div>
+        ${grouped.length ? `<div class="table-wrap"><table class="tbl"><tbody>
+          ${grouped.map(([label, rows]) => `<tr class="group"><td colspan="4">${esc(label)} · ${rows.length}</td></tr>
+            ${rows.map(s => `<tr>
+              <td><a class="name" href="#/people/${esc(slugOf(s.n))}">${esc(s.n)}</a></td>
+              <td>${esc(s.r || '—')}</td>
+              <td>${esc(s.nat || '')}</td>
+              <td class="r">${s.tm ? `<a class="ext" href="${esc(s.tm)}" target="_blank" rel="noopener"
+                   aria-label="Transfermarkt profile for ${esc(s.n)}">${svg('ext')}</a>` : ''}</td>
+            </tr>`).join('')}`).join('')}
+        </tbody></table></div>` : `<p class="empty">No staff recorded.</p>`}
+      </section>
+
+      <section class="card">
+        <div class="hd"><h2>Squad depth</h2><span class="pill">${c.squadSize} tracked</span></div>
+        ${squad.length ? `<div class="depth">${squad.map(([pos, v]) => `
+          <div class="bar-row${v <= 1 ? ' thin' : ''}">
+            <span>${esc(pos)}</span>
+            <span class="bar"><i style="width:${Math.round(v / smax * 100)}%"></i></span>
+            <b class="num">${v}</b>
+          </div>`).join('')}</div>` : `<p class="empty">No squad data for this club.</p>`}
+      </section>
+    </div>
+  </div>`;
+}
+
+/* ── My players ───────────────────────────────────────────────────── */
+function minePage() {
+  if (!S.clients.length) return `<div class="page"><p class="empty">No clients loaded.</p></div>`;
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div><h1>My players</h1><p>Each one with the clubs worth calling for ${esc(WINDOW().label)}, ranked on what the scan actually shows.</p></div>
+    </div>
+    <div class="clients">
+      ${S.clients.map(cl => {
+        const live = cl.live;
+        return `<a class="card client" href="#/mine/${esc(cl.slug)}">
+          <div class="top">
+            <span class="av">${esc(initials(cl.name))}</span>
+            <div><div class="nm">${esc(cl.name)}</div>
+              <div class="sb">${esc(cl.pos)} · ${esc(cl.club || '')}</div></div>
+          </div>
+          <div class="facts">
+            ${cl.age ? `<span class="pill">${esc(cl.age)}</span>` : ''}
+            ${cl.height ? `<span class="pill">${esc(cl.height)}</span>` : ''}
+            ${cl.foot ? `<span class="pill">${esc(cl.foot)} footed</span>` : ''}
+            ${cl.deal ? `<span class="pill acc">${esc(cl.deal)}</span>` : ''}
+          </div>
+          <div class="sb">${live} of ${cl.candidates.length} clubs at loan level are worth a call.</div>
+          <span class="cta">Open his list ${svg('chev')}</span>
+        </a>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+const MINE = { shown: 25, only: false };
+
+function clientPage(slug) {
+  const cl = S.clients.find(c => c.slug === decodeURIComponent(slug));
+  if (!cl) return `<div class="page"><p class="empty">No such player.</p></div>`;
+  const floor = cl.scanned ? 70 : 30;
+  const live = cl.candidates.filter(x => x.score >= floor);
+  const list = (MINE.only ? live : cl.candidates).slice(0, MINE.shown);
+  const smax = Math.max(1, ...cl.candidates.map(x => x.score));
+  const prior = S.outreach.filter(o => o.player === cl.name);
+
+  return `
+  <div class="page">
+    <a class="back" href="#/mine">${svg('back')} My players</a>
+
+    <div class="card chead">
+      <span class="av" style="width:56px;height:56px;font-size:18px">${esc(initials(cl.name))}</span>
+      <div>
+        <h1>${esc(cl.name)}</h1>
+        <div class="meta">
+          <span class="pill acc">${esc(cl.pos)}</span>
+          <span>${esc(cl.club || '')}</span>
+          ${cl.age ? `<span>${esc(cl.age)} years old</span>` : ''}
+          ${cl.height ? `<span>${esc(cl.height)}</span>` : ''}
+          ${cl.foot ? `<span>${esc(cl.foot)} footed</span>` : ''}
+          ${cl.nat ? `<span>${esc(cl.nat)}</span>` : ''}
+          ${cl.tm ? `<a href="${esc(cl.tm)}" target="_blank" rel="noopener">Transfermarkt ${svg('ext')}</a>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <div class="g3">
+      <div class="card stat"><div class="eyebrow">Contract</div>
+        <div class="v">${esc(cl.exp || '—')}</div>
+        <div class="sub">${esc(cl.expNote || '')}</div></div>
+      <div class="card stat"><div class="eyebrow">Clubs worth calling</div>
+        <div class="v num">${live.length}<small>of ${cl.candidates.length} clubs at loan level</small></div>
+        <div class="sub">Tiers 4 to 6: League Two, National League, North and South.</div></div>
+      <div class="card stat"><div class="eyebrow">Already contacted</div>
+        <div class="v num">${prior.length}</div>
+        <div class="sub">${prior.length ? esc([...new Set(prior.map(p => p.club))].join(' · ')) : 'Nothing logged for him yet.'}</div></div>
+    </div>
+
+    ${cl.notes ? `<div class="callout info">${esc(cl.notes)}</div>` : ''}
+    ${cl.scanned
+      ? `<div class="callout">Scoring uses the live squad scan for his position, plus each club's own requirement list. A club with no reason listed simply has nothing in the data pointing at it, not a negative verdict.</div>`
+      : `<div class="callout"><b>Scoring is partial for this position.</b> The squad scan covers goalkeepers and right-backs only, so midfield depth and contracts cannot be read. Ranking below uses each club's published requirement list alone, which is why the ceiling is 30.</div>`}
+
+    <section class="card">
+      <div class="hd"><h2>Clubs to approach</h2>
+        <button class="chip${MINE.only ? ' on' : ''}" id="mine-only">Only clubs with a reason</button>
+        <span class="count">${list.length} shown</span></div>
+      <div class="table-wrap"><table class="tbl">
+        <thead><tr><th>Club</th><th>League</th><th>Why</th><th class="r">Contact</th><th class="r">Fit</th></tr></thead>
+        <tbody>${list.map(x => {
+          const c = clubBySlug(x.slug);
+          return `<tr>
+            <td><a class="name" href="#/clubs/${esc(x.slug)}">${c ? crestImg(c, 'crest') : ''}${esc(x.name)}</a></td>
+            <td>${esc(x.lg)}${x.pos ? ` <span class="pill num">${x.pos}</span>` : ''}</td>
+            <td><span class="why">${x.why.map(w => `<span class="${esc(w.k)}">${esc(w.t)}</span>`).join('')}</span></td>
+            <td class="r">${x.contact ? `<div class="name stacked">${esc(x.contact.n)}<small>${esc(x.contact.r)}</small></div>`
+                                       : `<span class="role">—</span>`}</td>
+            <td class="r"><span class="score"><i style="--w:${Math.round(x.score / smax * 100)}%"></i>${x.score}</span></td>
+          </tr>`;
+        }).join('')}</tbody></table></div>
+      ${((MINE.only ? live : cl.candidates).length > MINE.shown)
+        ? `<button class="more" id="mine-more">Show more</button>` : ''}
+    </section>
+
+    ${cl.summer2026 && cl.summer2026.length ? `<p class="count" style="margin-top:14px">
+      His ${cl.summer2026.length}-club Summer 2026 shortlist is in <a href="#/archive" style="color:var(--acc);font-weight:600">Archive</a>.</p>` : ''}
+  </div>`;
+}
+
+/* ── Players ──────────────────────────────────────────────────────── */
+/* 3,381 rows. The old page rendered every one into the markup, which is how
+   all.html reached 192,099 DOM nodes. This renders a window and grows it. */
+const P = { q: '', league: '', pos: '', status: '', sort: 'n', dir: 1, shown: 60 };
+const PAGE = 60;
 
 const COLS = [
   { k: 'n',   label: 'Player',   get: p => p.n },
@@ -215,9 +637,22 @@ function playersPage() {
   return `
   <div class="page">
     <div class="page-head">
-      <h1>Players</h1>
-      <p>Every tracked player. Sort any column; the list loads as you scroll.</p>
+      <div><h1>Players</h1><p>Every tracked player. Sort any column; the list loads as you scroll.</p></div>
+      <div class="actions"><a class="btn pri" href="#/mine">${svg('mine')} My players</a></div>
     </div>
+
+    <div class="clients">
+      ${S.clients.map(cl => {
+        const live = cl.live;
+        return `<a class="card client" href="#/mine/${esc(cl.slug)}">
+          <div class="top"><span class="av">${esc(initials(cl.name))}</span>
+            <div><div class="nm">${esc(cl.name)}</div><div class="sb">${esc(cl.pos)} · ${esc(cl.club || '')}</div></div></div>
+          <div class="sb">${live} club${live === 1 ? '' : 's'} worth calling for ${esc(WINDOW().label)}.</div>
+          <span class="cta">Open his list ${svg('chev')}</span>
+        </a>`;
+      }).join('')}
+    </div>
+
     <div class="filters">
       <input class="field" id="p-q" type="search" placeholder="Search player or club…" value="${esc(P.q)}" style="flex:1 1 200px">
       <select class="field" id="p-league"><option value="">All leagues</option>
@@ -231,14 +666,16 @@ function playersPage() {
       </select>
       <span class="count" id="p-count"></span>
     </div>
-    <div class="table-wrap">
-      <table class="tbl">
-        <thead><tr>${COLS.map(c =>
-          `<th data-sort="${c.k}" class="${P.sort === c.k ? 'on' : ''}" tabindex="0" role="button">
-             ${esc(c.label)}<i>${P.sort === c.k ? (P.dir > 0 ? '▴' : '▾') : ''}</i></th>`).join('')}
-        </tr></thead>
-        <tbody id="p-body"></tbody>
-      </table>
+    <div class="card">
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr>${COLS.map(c =>
+            `<th data-sort="${c.k}" class="${P.sort === c.k ? 'on' : ''}" tabindex="0" role="button">
+               ${esc(c.label)}<i>${P.sort === c.k ? (P.dir > 0 ? '▴' : '▾') : ''}</i></th>`).join('')}
+          </tr></thead>
+          <tbody id="p-body"></tbody>
+        </table>
+      </div>
     </div>
     <div id="p-more"></div>
   </div>`;
@@ -246,17 +683,16 @@ function playersPage() {
 
 function playersFiltered() {
   const q = P.q.trim().toLowerCase();
-  let list = S.players.filter(p =>
+  const list = S.players.filter(p =>
     (!q || (p.n || '').toLowerCase().includes(q) || (p.club || '').toLowerCase().includes(q)) &&
     (!P.league || p.lg === P.league) &&
     (!P.pos || p.pos === P.pos) &&
     (P.status !== 'loan' || /on loan/i.test(p.status || '')) &&
-    (P.status !== 'expiring' || EXPKEY(p.exp) <= 20270911));
+    (P.status !== 'expiring' || EXPKEY(p.exp) <= 20270913));
   const col = COLS.find(c => c.k === P.sort) || COLS[0];
   return list.sort((a, b) => {
     const x = col.get(a), y = col.get(b);
-    const r = col.num ? x - y : String(x || '').localeCompare(String(y || ''));
-    return r * P.dir;
+    return (col.num ? x - y : String(x || '').localeCompare(String(y || ''))) * P.dir;
   });
 }
 
@@ -265,13 +701,12 @@ function paintPlayers(reset) {
   if (!body) return;
   if (reset) P.shown = PAGE;
   const list = playersFiltered();
-  const slice = list.slice(0, P.shown);
-  body.innerHTML = slice.map(p => {
-    const soon = EXPKEY(p.exp) <= 20270911;
+  body.innerHTML = list.slice(0, P.shown).map(p => {
+    const soon = EXPKEY(p.exp) <= 20270913;
     const loan = /on loan/i.test(p.status || '');
     return `<tr>
       <td><a href="${esc(p.tm || '#')}" target="_blank" rel="noopener">${esc(p.n)}</a>
-        ${loan ? '<span class="tag">Loan</span>' : ''}</td>
+        ${loan ? '<span class="pill">Loan</span>' : ''}</td>
       <td><a href="#/clubs/${esc(p.clubSlug)}">${esc(p.club || '')}</a></td>
       <td>${esc(p.pos || '')}</td>
       <td class="num">${esc(p.age || '')}</td>
@@ -279,31 +714,27 @@ function paintPlayers(reset) {
       <td class="num${soon ? ' hot' : ''}">${esc(p.exp || '')}</td>
       <td class="num">${esc(p.mv || '')}</td>
     </tr>`;
-  }).join('');
-  $('#p-count').textContent = `${list.length.toLocaleString()} of ${S.players.length.toLocaleString()}`;
+  }).join('') || `<tr><td colspan="7"><p class="empty">Nobody matches.</p></td></tr>`;
+  $('#p-count').textContent = `${n(list.length)} of ${n(S.players.length)}`;
   $('#p-more').innerHTML = list.length > P.shown
-    ? `<button class="more" id="p-more-btn">Show more (${(list.length - P.shown).toLocaleString()} left)</button>` : '';
+    ? `<button class="more" id="p-more-btn">Show more (${n(list.length - P.shown)} left)</button>` : '';
   const btn = $('#p-more-btn');
   if (btn) btn.addEventListener('click', () => { P.shown += PAGE * 4; paintPlayers(); });
 }
 
-
-
 /* ── People ───────────────────────────────────────────────────────── */
-/* The scan history is the thing nobody else has: seven snapshots back to May.
-   A person page turns that into a career, and a club page into a destination. */
-
-const slugOf = n => (n || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
 const PF = { q: '', role: '', movers: false, shown: 60 };
+const ROLE_GROUP = {
+  director: /director|chief executive|president|chairman|owner/i,
+  recruit: /recruit|scout/i,
+  manager: /manager|head coach|coach/i,
+};
 
 function peoplePage() {
   return `
   <div class="page">
     <div class="page-head">
-      <h1>People</h1>
-      <p>Every tracked staff member. ${Object.keys(S.careers).length.toLocaleString()} have a career history across seven scans since May.</p>
+      <div><h1>People</h1><p>Every tracked staff member. ${n(Object.keys(S.careers).length)} have a career history across the scan snapshots.</p></div>
     </div>
     <div class="filters">
       <input class="field" id="pe-q" type="search" placeholder="Search name, club or role…" value="${esc(PF.q)}" style="flex:1 1 240px">
@@ -316,16 +747,10 @@ function peoplePage() {
       <button class="chip${PF.movers ? ' on' : ''}" id="pe-movers">Moved club</button>
       <span class="count" id="pe-count"></span>
     </div>
-    <div id="pe-list" class="rows"></div>
+    <div class="card" id="pe-list"></div>
     <div id="pe-more"></div>
   </div>`;
 }
-
-const ROLE_GROUP = {
-  director: /director|chief executive|president|chairman|owner/i,
-  recruit: /recruit|scout/i,
-  manager: /manager|head coach|coach/i,
-};
 
 function peopleFiltered() {
   const q = PF.q.trim().toLowerCase();
@@ -348,29 +773,21 @@ function paintPeople(reset) {
   if (reset) PF.shown = 60;
   const list = peopleFiltered();
   host.innerHTML = list.slice(0, PF.shown).map(p => {
-    const c = S.clubs.find(x => x.slug === p.clubSlug);
+    const c = clubBySlug(p.clubSlug);
     const car = S.careers[slugOf(p.n)];
     const moves = car ? new Set(car.spells.map(s => s.clubSlug)).size - 1 : 0;
-    return `<a class="row" href="#/people/${esc(slugOf(p.n))}">
-      ${c ? crestImg(c, 'row-crest') : ''}
-      <div class="row-main">
-        <div class="row-name">${esc(p.n)}</div>
-        <div class="row-sub">${esc(p.club || '')}${p.nat ? ' · ' + esc(p.nat) : ''}</div>
-      </div>
-      ${moves > 0 ? `<span class="moves">${moves} move${moves === 1 ? '' : 's'}</span>` : ''}
-      <span class="role${isKeyRole(p.r) ? ' key' : ''}">${esc(p.r || '—')}</span>
+    return `<a class="row plain" href="#/people/${esc(slugOf(p.n))}">
+      ${c && c.crest ? crestImg(c, 'crest') : `<span class="av">${esc(initials(p.n))}</span>`}
+      <div class="who"><b>${esc(p.n)}</b><span>${esc(p.club || '')}${p.nat ? ' · ' + esc(p.nat) : ''}</span></div>
+      <span>${moves > 0 ? `<span class="pill warn">${moves} move${moves === 1 ? '' : 's'}</span> ` : ''}
+        <span class="role${isKeyRole(p.r) ? ' key' : ''}">${esc(p.r || '—')}</span></span>
     </a>`;
   }).join('') || `<p class="empty">Nobody matches.</p>`;
-  $('#pe-count').textContent = `${list.length.toLocaleString()} of ${S.people.length.toLocaleString()}`;
+  $('#pe-count').textContent = `${n(list.length)} of ${n(S.people.length)}`;
   $('#pe-more').innerHTML = list.length > PF.shown
-    ? `<button class="more" id="pe-more-btn">Show more (${(list.length - PF.shown).toLocaleString()} left)</button>` : '';
+    ? `<button class="more" id="pe-more-btn">Show more (${n(list.length - PF.shown)} left)</button>` : '';
   const b = $('#pe-more-btn');
   if (b) b.addEventListener('click', () => { PF.shown += 240; paintPeople(); });
-}
-
-function fmtMonth(d) {
-  if (!d) return '';
-  return new Date(d).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
 }
 
 function personPage(slug) {
@@ -382,9 +799,9 @@ function personPage(slug) {
   const name = cur ? cur.n : car.name;
   const nat = (cur && cur.nat) || (car && car.nat) || '';
   const tm = (cur && cur.tm) || (car && car.tm) || '';
-  const club = cur ? S.clubs.find(c => c.slug === cur.clubSlug) : null;
+  const club = cur ? clubBySlug(cur.clubSlug) : null;
 
-  // Newest first reads better for a career: where are they now, then how they got here.
+  // Newest first: where are they now, then how they got here.
   const spells = car ? [...car.spells].reverse()
     : (cur ? [{ club: cur.club, clubSlug: cur.clubSlug, role: cur.r, from: null, to: null }] : []);
   const clubsSeen = new Set(spells.map(s => s.clubSlug)).size;
@@ -393,46 +810,49 @@ function personPage(slug) {
   <div class="page">
     <a class="back" href="#/people">${svg('back')} All people</a>
 
-    <div class="club-head">
-      ${club ? crestImg(club, '') : ''}
+    <div class="card chead"${club && club.colour ? ` style="--club:${esc(club.colour)}"` : ''}>
+      ${club && club.crest ? crestImg(club, 'crest lg')
+        : `<span class="av" style="width:56px;height:56px;font-size:18px">${esc(initials(name))}</span>`}
       <div>
         <h1>${esc(name)}</h1>
-        <div class="club-sub">
-          ${cur ? `<span>${esc(cur.r || '')}${cur.club ? ' · ' + esc(cur.club) : ''}</span>`
-                : `<span class="gone">No longer in the scan</span>`}
+        <div class="meta">
+          ${cur ? `<span class="pill${isKeyRole(cur.r) ? ' acc' : ''}">${esc(cur.r || '')}</span>
+                   <span>${esc(cur.club || '')}</span>`
+                : `<span class="pill bad">No longer in the scan</span>`}
           ${nat ? `<span>${esc(nat)}</span>` : ''}
           ${tm ? `<a href="${esc(tm)}" target="_blank" rel="noopener">Transfermarkt ${svg('ext')}</a>` : ''}
         </div>
       </div>
     </div>
 
-    <div class="stats">
-      <div class="stat"><b>${clubsSeen}</b><span>${clubsSeen === 1 ? 'Club' : 'Clubs'} seen</span></div>
-      <div class="stat"><b>${spells.length}</b><span>${spells.length === 1 ? 'Spell' : 'Spells'}</span></div>
-      ${car ? `<div class="stat"><b>${fmtMonth(car.spells[0].from)}</b><span>First tracked</span></div>` : ''}
+    <div class="g3">
+      <div class="card stat"><div class="eyebrow">Clubs seen</div><div class="v num">${clubsSeen}</div></div>
+      <div class="card stat"><div class="eyebrow">Spells tracked</div><div class="v num">${spells.length}</div></div>
+      <div class="card stat"><div class="eyebrow">First tracked</div>
+        <div class="v">${car ? esc(fmtMonth(car.spells[0].from)) : 'This scan'}</div></div>
     </div>
 
-    <section class="panel">
-      <h2>Career <em>${car ? 'from the scan history' : 'current only'}</em></h2>
+    <section class="card">
+      <div class="hd"><h2>Career</h2>
+        <span class="pill">${car ? 'From the scan history' : 'Current position only'}</span></div>
       ${spells.length ? `<ol class="timeline">${spells.map((sp, i) => {
-        const c = S.clubs.find(x => x.slug === sp.clubSlug);
+        const c = clubBySlug(sp.clubSlug);
         return `<li class="tl${i === 0 && !sp.left ? ' now' : ''}">
           <div class="tl-dot"></div>
-          <div class="tl-body">
+          <div>
             <div class="tl-head">
-              ${c ? crestImg(c, 'row-crest') : ''}
+              ${c && c.crest ? crestImg(c, 'crest') : ''}
               <a class="tl-club" href="#/clubs/${esc(sp.clubSlug || '')}">${esc(sp.club || '')}</a>
               <span class="role${isKeyRole(sp.role) ? ' key' : ''}">${esc(sp.role || '—')}</span>
             </div>
             <div class="tl-meta">
-              ${sp.from ? `${fmtMonth(sp.from)} — ${(sp.left || i > 0) ? fmtMonth(sp.to) : 'present'}` : 'Current'}
+              ${sp.from ? `${esc(fmtMonth(sp.from))} — ${(sp.left || i > 0) ? esc(fmtMonth(sp.to)) : 'present'}` : 'Current'}
               ${sp.lg ? ` · ${esc(sp.lg)}` : ''}
             </div>
             ${sp.withCount ? `<div class="tl-with">Arrived with ${sp.withCount} other${sp.withCount === 1 ? '' : 's'}: ${sp.with.map(esc).join(', ')}</div>` : ''}
           </div>
         </li>`;
-      }).join('')}</ol>`
-      : `<p class="empty">No history recorded.</p>`}
+      }).join('')}</ol>` : `<p class="empty">No history recorded.</p>`}
     </section>
   </div>`;
 }
@@ -441,220 +861,98 @@ function personPage(slug) {
 /* Read-only on purpose. Logging happens in scripts/outreach.py, because the
    reason the old web form went unused was that filling it in was slower than
    not bothering. The web side is for seeing where everything stands. */
-
 const STAGES = [
   { k: 'to_contact', label: 'To contact' },
   { k: 'contacted',  label: 'Contacted' },
   { k: 'in_talks',   label: 'In talks' },
   { k: 'rejected',   label: 'Rejected' },
 ];
-
-const today = () => new Date().toISOString().slice(0, 10);
-const isDue = o => o.follow_up_date && o.follow_up_date <= today() && o.status !== 'rejected';
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const isDue = o => o.follow_up_date && o.follow_up_date <= todayISO() && o.status !== 'rejected';
 
 function pipelinePage() {
   const all = S.outreach;
-  if (!all.length) {
-    return `<div class="page">
-      <div class="page-head"><h1>Pipeline</h1>
-        <p>Nothing logged yet.</p></div>
-      <div class="panel"><div class="howto">
-        <p>Log a contact from the terminal, and it appears here on the next deploy:</p>
-        <pre>python3 scripts/outreach.py add "James Hicks" \\
-    --player "Tom Nixon" --method whatsapp --note "keen"</pre>
-        <p>Club, role and league are filled in from the scan, so a name is usually enough.</p>
-      </div></div></div>`;
-  }
   const due = all.filter(isDue);
   return `
   <div class="page">
     <div class="page-head">
-      <h1>Pipeline</h1>
-      <p>${all.length} contact${all.length === 1 ? '' : 's'} logged${due.length ? `, ${due.length} needing a follow-up` : ''}.</p>
+      <div><h1>Pipeline</h1>
+        <p>${all.length} conversation${all.length === 1 ? '' : 's'} logged${due.length ? `, ${due.length} needing a follow-up` : ''}.</p></div>
     </div>
-    <div class="board">
+    ${all.length ? `<div class="board">
       ${STAGES.map(st => {
         const rows = all.filter(o => o.status === st.k);
         return `<section class="col">
           <h2 class="col-head ${st.k}">${esc(st.label)} <em>${rows.length}</em></h2>
-          ${rows.length ? rows.map(outreachCard).join('')
-                        : `<p class="col-empty">None</p>`}
+          ${rows.length ? rows.map(outreachCard).join('') : `<p class="col-empty">None</p>`}
         </section>`;
       }).join('')}
-    </div>
+    </div>` : `<div class="card"><div class="howto">
+        <p>Nothing logged yet. Log a contact from the terminal and it appears here on the next deploy:</p>
+        <pre>python3 scripts/outreach.py add "Danny Cowley" \\
+    --player "Harry French" --method whatsapp --note "keen"</pre>
+        <p>Club, role and league are filled in from the scan, so a name is usually enough.</p>
+      </div></div>`}
   </div>`;
 }
 
 function outreachCard(o) {
-  const c = S.clubs.find(x => x.slug === o.clubSlug);
+  const c = clubBySlug(o.clubSlug);
   return `<a class="o-card${isDue(o) ? ' due' : ''}" href="#/clubs/${esc(o.clubSlug || '')}">
-    <div class="o-top">
-      ${c ? crestImg(c, 'row-crest') : ''}
-      <div class="row-main">
-        <div class="row-name">${esc(o.contact_name)}</div>
-        <div class="row-sub">${esc(o.contact_role || '')}</div>
-      </div>
+    ${o.player ? `<div class="p">${esc(o.player)}</div>` : ''}
+    <div class="c">
+      ${c && c.crest ? crestImg(c, 'crest') : `<span class="av">${esc(initials(o.contact_name))}</span>`}
+      <span>${esc(o.contact_name)}<small> · ${esc(o.club || '')}</small></span>
     </div>
-    <div class="o-club">${esc(o.club || '')}</div>
-    ${o.player ? `<div class="o-for">for ${esc(o.player)}</div>` : ''}
-    ${o.notes ? `<p class="o-note">${esc(o.notes)}</p>` : ''}
-    <div class="o-foot">
-      <span class="o-method">${esc(o.method || '')}</span>
-      ${isDue(o) ? `<span class="o-due">Follow up</span>`
-                 : (o.follow_up_date ? `<span>${esc(o.follow_up_date)}</span>` : '')}
+    ${o.contact_role ? `<div class="note">${esc(o.contact_role)}</div>` : ''}
+    ${o.notes ? `<p class="note">${esc(o.notes)}</p>` : ''}
+    <div class="f">
+      <span>${esc(o.method || '')}${o.deal_type ? ' · ' + esc(o.deal_type) : ''}</span>
+      ${isDue(o) ? `<span class="due">Due ${esc(o.follow_up_date)}</span>`
+                 : (o.follow_up_date ? `<span class="when">${esc(o.follow_up_date)}</span>` : '')}
     </div>
   </a>`;
 }
 
-/* ── Clubs index ──────────────────────────────────────────────────── */
-const F = { q: '', league: '', need: '' };
-
-function clubsPage() {
-  const leagues = [...new Set(S.clubs.map(c => c.lg).filter(Boolean))].sort();
-  const needs = [...new Set(S.clubs.flatMap(c => c.needs.map(n => n.pos)))].sort();
+/* ── Archive ──────────────────────────────────────────────────────── */
+/* Summer 2026 is done. It stays readable, but out of the working screens. */
+function archivePage() {
   return `
   <div class="page">
     <div class="page-head">
-      <h1>Clubs</h1>
-      <p>Every tracked club, with its staff, requirements and league position in one place.</p>
+      <div><h1>Archive</h1><p>Finished windows and the pages from the previous build. Nothing here feeds the live screens.</p></div>
     </div>
-    <div class="filters">
-      <input class="field" id="f-q" type="search" placeholder="Search clubs…" value="${esc(F.q)}" style="flex:1 1 220px">
-      <select class="field" id="f-league"><option value="">All leagues</option>
-        ${leagues.map(l => `<option${l === F.league ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>
-      <select class="field" id="f-need"><option value="">Any requirement</option>
-        ${needs.map(n => `<option${n === F.need ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>
-      <span class="count" id="f-count"></span>
-    </div>
-    <div class="grid" id="club-grid"></div>
-  </div>`;
-}
 
-function filtered() {
-  const q = F.q.trim().toLowerCase();
-  return S.clubs.filter(c =>
-    (!q || c.name.toLowerCase().includes(q) || (c.lg || '').toLowerCase().includes(q)) &&
-    (!F.league || c.lg === F.league) &&
-    (!F.need || c.needs.some(n => n.pos === F.need)));
-}
-
-function zone(c) {
-  if (!c.table) return '';
-  const total = (S.leagues.find(l => l.name === c.lg)?.table || []).length;
-  if (c.table.pos <= 2) return 'up';
-  if (total && c.table.pos > total - 3) return 'down';
-  return '';
-}
-
-function clubCard(c) {
-  const staffN = c.staff.length;
-  return `<a class="club-card" href="#/clubs/${esc(c.slug)}">
-    <div class="cc-top">
-      ${crestImg(c, 'cc-crest')}
-      <div class="cc-id">
-        <div class="cc-name">${esc(c.name)}</div>
-        <div class="cc-league">${esc(c.lg || '—')}</div>
+    <section class="card" style="margin-bottom:16px">
+      <div class="hd"><h2>Summer 2026 window</h2><span class="pill">Closed</span></div>
+      <div class="howto">
+        <p>The requirement lists gathered for summer 2026 still drive the club pages, because a club that wanted a left-back in June usually still wants one in January. The player shortlists built for that window are kept here as a record.</p>
       </div>
-      ${c.table ? `<div class="pos-pill ${zone(c)}">${c.table.pos}</div>` : ''}
-    </div>
-    ${c.needs.length ? `<div class="needs">${c.needs.slice(0, 7).map(n =>
-      `<span class="need">${esc(n.pos)}</span>`).join('')}</div>` : ''}
-    <div class="cc-meta">
-      <span>${staffN} staff</span>
-      ${c.squadSize ? `<span>${c.squadSize} tracked</span>` : ''}
-    </div>
-  </a>`;
-}
+      ${S.clients.filter(cl => cl.summer2026 && cl.summer2026.length).map(cl => `
+        <div class="hd"><h2>${esc(cl.name)} · ${cl.summer2026.length} club shortlist</h2></div>
+        <div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Club</th><th>League</th><th>Deal</th><th>Reasoning at the time</th><th class="r">Score</th></tr></thead>
+          <tbody>${cl.summer2026.map(t => `<tr>
+            <td>${esc(t.club)}</td><td>${esc(t.league || '')}</td><td>${esc(t.deal || '')}</td>
+            <td>${esc((t.reasons || [])[0] || '')}</td>
+            <td class="r num">${esc(t.score ?? '')}</td>
+          </tr>`).join('')}</tbody>
+        </table></div>`).join('') || `<p class="empty">No shortlists archived.</p>`}
+    </section>
 
-function paintGrid() {
-  const list = filtered();
-  const grid = $('#club-grid');
-  if (!grid) return;
-  grid.innerHTML = list.length
-    ? list.map(clubCard).join('')
-    : `<p class="empty">No clubs match those filters.</p>`;
-  $('#f-count').textContent = `${list.length} of ${S.clubs.length}`;
-}
-
-/* ── Club page ────────────────────────────────────────────────────── */
-function clubPage(slug) {
-  const c = S.clubs.find(x => x.slug === decodeURIComponent(slug));
-  if (!c) return `<div class="page"><p class="empty">Club not found.</p></div>`;
-
-  const staff = [...c.staff].sort((a, b) =>
-    roleRank(a.r) - roleRank(b.r) || (a.n || '').localeCompare(b.n || ''));
-
-  const squad = Object.entries(c.squad).sort((a, b) => b[1] - a[1]);
-  const max = Math.max(1, ...squad.map(s => s[1]));
-  const t = c.table;
-  const z = zone(c);
-
-  return `
-  <div class="page">
-    <a class="back" href="#/clubs">${svg('back')} All clubs</a>
-
-    <div class="club-head">
-      ${crestImg(c, '')}
-      <div>
-        <h1>${esc(c.name)}</h1>
-        <div class="club-sub">
-          <span>${esc(c.lg || 'League unknown')}</span>
-          ${c.tm ? `<a href="${esc(c.tm)}" target="_blank" rel="noopener">Transfermarkt ${svg('ext')}</a>` : ''}
-          ${c.staffUrl ? `<a href="${esc(c.staffUrl)}" target="_blank" rel="noopener">Staff page ${svg('ext')}</a>` : ''}
+    <section class="card">
+      <div class="hd"><h2>Pages from the previous build</h2></div>
+      <div class="bd">
+        <div class="links">
+          <a class="card link" href="../index.html"><b>Old dashboard</b><span>The original landing page</span></a>
+          <a class="card link" href="../master-database.html"><b>Staff directory</b><span>Full-text staff search</span></a>
+          <a class="card link" href="../all.html"><b>All players</b><span>The 192,000-node table</span></a>
+          <a class="card link" href="../league-tables.html"><b>League tables</b><span>Standings by league</span></a>
+          <a class="card link" href="../summer-2026.html"><b>Summer 2026</b><span>The old window page</span></a>
+          <a class="card link" href="../club-editor.html"><b>Club editor</b><span>Requirement editing</span></a>
         </div>
       </div>
-    </div>
-
-    <div class="stats">
-      ${t ? `<div class="stat ${z}"><b>${t.pos}</b><span>Position</span></div>
-             <div class="stat"><b>${t.pts ?? '—'}</b><span>Points</span></div>
-             <div class="stat"><b>${t.p ?? '—'}</b><span>Played</span></div>
-             <div class="stat"><b>${t.gd ?? '—'}</b><span>Goal diff</span></div>` : ''}
-      <div class="stat"><b>${c.staff.length}</b><span>Staff</span></div>
-      <div class="stat"><b>${c.needs.length}</b><span>Requirements</span></div>
-    </div>
-
-    <div class="cols">
-      <section class="panel">
-        <h2>Staff <em>${c.staff.length}</em></h2>
-        ${staff.length ? staff.map(s => `
-          <div class="row">
-            <div class="row-main">
-              <div class="row-name">${esc(s.n)}</div>
-              ${s.nat ? `<div class="row-sub">${esc(s.nat)}</div>` : ''}
-            </div>
-            <span class="role${isKeyRole(s.r) ? ' key' : ''}">${esc(s.r || '—')}</span>
-            ${s.tm ? `<a class="ext" href="${esc(s.tm)}" target="_blank" rel="noopener"
-                        aria-label="Transfermarkt profile for ${esc(s.n)}">${svg('ext')}</a>` : ''}
-          </div>`).join('') : `<p class="empty">No staff recorded.</p>`}
-      </section>
-
-      <div style="display:grid;gap:18px">
-        <section class="panel">
-          <h2>Requirements <em>${c.needs.length}</em></h2>
-          ${c.needs.length ? c.needs.map(n => `
-            <div class="row">
-              <div class="row-main">
-                <div class="row-name">${esc(n.label || n.pos)}</div>
-                ${n.type ? `<div class="row-sub">${esc(n.type[0].toUpperCase() + n.type.slice(1))}</div>` : ''}
-              </div>
-              <span class="need">${esc(n.pos)}</span>
-            </div>`).join('')
-            : `<p class="empty">No requirements set.</p>`}
-        </section>
-
-        <section class="panel">
-          <h2>Squad depth <em>${c.squadSize} tracked</em></h2>
-          ${squad.length ? `<div class="bars">${squad.map(([pos, n]) => `
-            <div class="bar-row${n === 1 ? ' thin' : ''}">
-              <span>${esc(pos)}</span>
-              <div class="bar"><i style="width:${Math.round(n / max * 100)}%"></i></div>
-              <b>${n}</b>
-            </div>`).join('')}</div>`
-            : `<p class="empty">No squad data.</p>`}
-        </section>
-      </div>
-    </div>
+    </section>
   </div>`;
 }
 
@@ -675,16 +973,18 @@ function openPalette() {
   input.focus();
   paintPalette('');
 }
-
-function closePalette() { $('.scrim')?.remove(); }
+function closePalette() { const s = $('.scrim'); if (s) s.remove(); }
 
 function search(q) {
   q = q.trim().toLowerCase();
   if (!q) return S.clubs.slice(0, 8).map(c => ({ kind: 'Club', c }));
   const out = [];
+  for (const cl of S.clients) {
+    if ((cl.name || '').toLowerCase().includes(q)) out.push({ kind: 'Mine', cl });
+  }
   for (const c of S.clubs) {
-    if (c.name.toLowerCase().includes(q)) out.push({ kind: 'Club', c });
     if (out.length >= 7) break;
+    if (c.name.toLowerCase().includes(q)) out.push({ kind: 'Club', c });
   }
   for (const l of S.leagues) {
     if (out.length >= 10) break;
@@ -700,13 +1000,17 @@ function search(q) {
 function paintPalette(q) {
   palHits = search(q); palSel = 0;
   $('#pal-out').innerHTML = palHits.length ? palHits.map((h, i) => {
-    if (h.kind === 'Club') return `<div class="result" data-i="${i}" data-sel="${i === 0 ? 1 : 0}">
-      ${crestImg(h.c, '')}<div class="r-main"><div class="r-name">${esc(h.c.name)}</div>
+    const sel = i === 0 ? 1 : 0;
+    if (h.kind === 'Club') return `<div class="result" data-i="${i}" data-sel="${sel}">
+      ${crestImg(h.c, 'crest')}<div class="r-main"><div class="r-name">${esc(h.c.name)}</div>
       <div class="r-sub">${esc(h.c.lg || '')}</div></div><span class="r-kind">Club</span></div>`;
-    if (h.kind === 'League') return `<div class="result" data-i="${i}" data-sel="${i === 0 ? 1 : 0}">
+    if (h.kind === 'League') return `<div class="result" data-i="${i}" data-sel="${sel}">
       <div class="r-main"><div class="r-name">${esc(h.l.name)}</div>
       <div class="r-sub">${h.l.clubs.length} clubs</div></div><span class="r-kind">League</span></div>`;
-    return `<div class="result" data-i="${i}" data-sel="${i === 0 ? 1 : 0}">
+    if (h.kind === 'Mine') return `<div class="result" data-i="${i}" data-sel="${sel}">
+      <span class="av">${esc(initials(h.cl.name))}</span><div class="r-main"><div class="r-name">${esc(h.cl.name)}</div>
+      <div class="r-sub">${esc(h.cl.pos)} · ${esc(h.cl.club || '')}</div></div><span class="r-kind">My player</span></div>`;
+    return `<div class="result" data-i="${i}" data-sel="${sel}">
       <div class="r-main"><div class="r-name">${esc(h.p.n)}</div>
       <div class="r-sub">${esc(h.p.r || '')} · ${esc(h.p.club)}</div></div><span class="r-kind">Staff</span></div>`;
   }).join('') : `<p class="empty">Nothing found.</p>`;
@@ -720,15 +1024,16 @@ function choose(i) {
   if (!h) return;
   closePalette();
   if (h.kind === 'Club') go(`#/clubs/${h.c.slug}`);
-  else if (h.kind === 'Staff') go(`#/clubs/${h.p.clubSlug}`);
-  else { F.league = h.l.name; F.q = ''; go('#/clubs'); setTimeout(paintGrid, 0); }
+  else if (h.kind === 'Mine') go(`#/mine/${h.cl.slug}`);
+  else if (h.kind === 'Staff') go(`#/people/${slugOf(h.p.n)}`);
+  else { F.league = h.l.name; F.q = ''; F.country = ''; go('#/clubs'); setTimeout(paintGrid, 0); }
 }
 
 function movePal(d) {
-  const rows = $('#pal-out')?.querySelectorAll('.result') || [];
+  const rows = $('#pal-out') ? $('#pal-out').querySelectorAll('.result') : [];
   if (!rows.length) return;
   palSel = (palSel + d + rows.length) % rows.length;
-  rows.forEach((r, i) => r.dataset.sel = i === palSel ? 1 : 0);
+  rows.forEach((r, i) => { r.dataset.sel = i === palSel ? 1 : 0; });
   rows[palSel].scrollIntoView({ block: 'nearest' });
 }
 
@@ -740,20 +1045,17 @@ function paintNet() {
 /* ── Theme ────────────────────────────────────────────────────────── */
 function initTheme() {
   let t = null;
-  try { t = localStorage.getItem('lp-theme'); } catch {}
+  try { t = localStorage.getItem('lp-theme'); } catch (e) {}
   if (t) document.documentElement.dataset.theme = t;
-  paintThemeBtn();
 }
-
 function toggleTheme() {
   const cur = document.documentElement.dataset.theme
     || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = next;
-  try { localStorage.setItem('lp-theme', next); } catch {}
+  try { localStorage.setItem('lp-theme', next); } catch (e) {}
   paintThemeBtn();
 }
-
 function paintThemeBtn() {
   const dark = (document.documentElement.dataset.theme
     || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
@@ -763,23 +1065,18 @@ function paintThemeBtn() {
 
 /* ── Boot ─────────────────────────────────────────────────────────── */
 function chrome() {
+  const c = (S.meta && S.meta.counts) || {};
   $('.shell').innerHTML = `
     <nav class="rail">
-      <div class="brand">
-        <small>LPCMI</small>
-        <b>Recruitment<br>Intelligence</b>
-        <span>de Liam</span>
-      </div>
-      <a class="nav-item" data-route="/today" href="#/today"><span class="nv">⚡️</span> Today</a>
-      <a class="nav-item" data-route="/clubs" href="#/clubs"><span class="nv">🏟️</span> Clubs</a>
-      <a class="nav-item" data-route="/people" href="#/people"><span class="nv">👥</span> People</a>
-      <a class="nav-item" data-route="/players" href="#/players"><span class="nv">⚽️</span> Players</a>
-      <a class="nav-item" data-route="/pipeline" href="#/pipeline"><span class="nv">📣</span> Pipeline</a>
-      <div class="nav-label">Previous build</div>
-      <a class="nav-item" href="../index.html"><span class="nv">🗂️</span> Old dashboard</a>
-      <a class="nav-item" href="../league-tables.html"><span class="nv">🏆</span> League tables</a>
-      <a class="nav-item" href="../all.html"><span class="nv">⚽️</span> Players</a>
-      <a class="nav-item" href="../master-database.html"><span class="nv">🔎</span> Staff directory</a>
+      <div class="brand"><span class="mark">LP</span><span><b>LPCMI</b><small>Recruitment</small></span></div>
+      <a class="nav-item" data-route="/today" href="#/today">${svg('today')} Today</a>
+      <a class="nav-item" data-route="/clubs" href="#/clubs">${svg('clubs')} Clubs<span class="cnt">${n(c.clubs)}</span></a>
+      <a class="nav-item" data-route="/people" href="#/people">${svg('people')} People<span class="cnt">${n(c.staff)}</span></a>
+      <a class="nav-item" data-route="/players" href="#/players">${svg('players')} Players<span class="cnt">${n(c.players)}</span></a>
+      <a class="nav-item" data-route="/mine" href="#/mine">${svg('mine')} My players<span class="cnt">${n(c.clients)}</span></a>
+      <a class="nav-item" data-route="/pipeline" href="#/pipeline">${svg('pipe')} Pipeline<span class="cnt">${n(c.outreach)}</span></a>
+      <div class="nav-label">Reference</div>
+      <a class="nav-item" data-route="/archive" href="#/archive">${svg('archive')} Archive</a>
       <div class="rail-foot" id="rail-foot"></div>
     </nav>
     <div class="main">
@@ -813,13 +1110,18 @@ document.addEventListener('input', e => {
   if (e.target.id === 'p-q') { P.q = e.target.value; paintPlayers(true); }
   if (e.target.id === 'pe-q') { PF.q = e.target.value; paintPeople(true); }
 });
+
 document.addEventListener('change', e => {
-  if (e.target.id === 'f-league') { F.league = e.target.value; paintGrid(); }
-  if (e.target.id === 'f-need') { F.need = e.target.value; paintGrid(); }
-  if (e.target.id === 'p-league') { P.league = e.target.value; paintPlayers(true); }
-  if (e.target.id === 'p-pos') { P.pos = e.target.value; paintPlayers(true); }
-  if (e.target.id === 'p-status') { P.status = e.target.value; paintPlayers(true); }
-  if (e.target.id === 'pe-role') { PF.role = e.target.value; paintPeople(true); }
+  const id = e.target.id;
+  // Country narrows the league list, so the whole filter bar is redrawn.
+  if (id === 'f-country') { F.country = e.target.value; F.league = ''; $('#view').innerHTML = clubsPage(); paintGrid(); return; }
+  if (id === 'f-league') { F.league = e.target.value; paintGrid(); }
+  if (id === 'f-tier') { F.tier = e.target.value; paintGrid(); }
+  if (id === 'f-need') { F.need = e.target.value; paintGrid(); }
+  if (id === 'p-league') { P.league = e.target.value; paintPlayers(true); }
+  if (id === 'p-pos') { P.pos = e.target.value; paintPlayers(true); }
+  if (id === 'p-status') { P.status = e.target.value; paintPlayers(true); }
+  if (id === 'pe-role') { PF.role = e.target.value; paintPeople(true); }
 });
 
 function sortBy(k) {
@@ -827,6 +1129,7 @@ function sortBy(k) {
   $('#view').innerHTML = playersPage();
   paintPlayers(true);
 }
+
 document.addEventListener('click', e => {
   const th = e.target.closest('th[data-sort]');
   if (th) { sortBy(th.dataset.sort); return; }
@@ -834,8 +1137,20 @@ document.addEventListener('click', e => {
     PF.movers = !PF.movers;
     e.target.classList.toggle('on', PF.movers);
     paintPeople(true);
+    return;
+  }
+  if (e.target.id === 'f-clear') {
+    F.q = ''; F.country = ''; F.league = ''; F.need = ''; F.tier = '';
+    $('#view').innerHTML = clubsPage(); paintGrid();
+    return;
+  }
+  if (e.target.id === 'mine-only' || e.target.id === 'mine-more') {
+    if (e.target.id === 'mine-only') { MINE.only = !MINE.only; MINE.shown = 25; }
+    else MINE.shown += 40;
+    render();
   }
 });
+
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter' && e.key !== ' ') return;
   const th = e.target.closest && e.target.closest('th[data-sort]');
@@ -848,7 +1163,7 @@ function afterRoute() {
   render();
   const h = location.hash;
   if (h.includes('/clubs') && !h.includes('/clubs/')) paintGrid();
-  if (h.includes('/players')) paintPlayers(true);
+  if (/#\/players$/.test(h)) paintPlayers(true);
   if (h.includes('/people') && !h.match(/\/people\/./)) paintPeople(true);
 }
 
@@ -859,32 +1174,34 @@ if ('serviceWorker' in navigator) {
 
 (async function boot() {
   initTheme();
-  chrome();
-  $('#view').innerHTML = `<div class="page"><p class="empty">Loading…</p></div>`;
+  $('.shell').innerHTML = `<div class="page"><p class="empty">Loading…</p></div>`;
   try {
-    const [clubs, leagues, meta, changes, expiring, players, outreach, careers] = await Promise.all(
-      ['clubs', 'leagues', 'meta', 'changes', 'expiring', 'players', 'outreach', 'careers'].map(n =>
-        fetch(`../data/${n}.json`).then(r => {
-          if (!r.ok) throw new Error(`${n}.json ${r.status}`);
+    const names = ['clubs', 'leagues', 'meta', 'changes', 'expiring', 'players', 'outreach', 'careers', 'clients'];
+    const [clubs, leagues, meta, changes, expiring, players, outreach, careers, clients] =
+      await Promise.all(names.map(nm =>
+        fetch(`../data/${nm}.json`).then(r => {
+          if (!r.ok) throw new Error(`${nm}.json ${r.status}`);
           return r.json();
         }).catch(() => null)));
     if (!clubs) throw new Error('clubs.json could not be loaded');
     S.clubs = clubs; S.leagues = leagues || []; S.meta = meta;
     S.changes = changes; S.expiring = expiring || []; S.players = players || [];
-    S.outreach = outreach || []; S.careers = careers || {};
+    S.outreach = outreach || []; S.careers = careers || {}; S.clients = clients || [];
     // Staff search flattens clubs rather than shipping a duplicate bundle.
     S.people = clubs.flatMap(c => c.staff.map(s => ({ ...s, club: c.name, clubSlug: c.slug })));
     S.ready = true;
-    const n = meta.counts;
+
+    chrome();
+    const cnt = meta.counts;
     $('#rail-foot').innerHTML =
-      `<p><b>${n.clubs}</b> clubs · <b>${n.staff.toLocaleString()}</b> staff</p>
-       <p><b>${n.players.toLocaleString()}</b> players · <b>${n.leagues}</b> leagues</p>
+      `<p><span class="dot"></span>Scan <b>${esc(new Date(meta.updated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))}</b></p>
+       <p>${cnt.leagues} leagues · ${n(cnt.clubs)} clubs</p>
        <p id="net"></p>`;
     paintNet();
     addEventListener('online', paintNet);
     addEventListener('offline', paintNet);
     afterRoute();
   } catch (err) {
-    $('#view').innerHTML = `<div class="page"><p class="empty">Could not load data.<br>${esc(err.message)}</p></div>`;
+    $('.shell').innerHTML = `<div class="page"><p class="empty">Could not load data.<br>${esc(err.message)}</p></div>`;
   }
 })();

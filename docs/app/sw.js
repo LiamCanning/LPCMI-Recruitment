@@ -12,7 +12,7 @@
    The cache name carries a version. Bumping it evicts everything on activate.
 */
 
-const VERSION = 'lpcmi-v1';
+const VERSION = 'lpcmi-v3';
 const SHELL = [
   './',
   './index.html',
